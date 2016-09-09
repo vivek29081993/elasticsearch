@@ -20,7 +20,6 @@
 package org.elasticsearch.action.get;
 
 import com.google.common.base.Joiner;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.Version;
@@ -52,7 +51,8 @@ import java.nio.charset.StandardCharsets;
  */
 public class GetRequest extends SingleShardOperationRequest<GetRequest> {
 
-    public static final NStringEntity EMPTY_ENTITY = new NStringEntity("", StandardCharsets.UTF_8);
+    private static final NStringEntity EMPTY_ENTITY = new NStringEntity("", StandardCharsets.UTF_8);
+
     private String type;
     private String id;
     private String routing;
@@ -374,6 +374,4 @@ public class GetRequest extends SingleShardOperationRequest<GetRequest> {
     public RestRequest.Method getRestMethod() {
         return RestRequest.Method.GET;
     }
-
-
 }

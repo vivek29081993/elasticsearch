@@ -1,12 +1,12 @@
 package org.elasticsearch.client.rest;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.*;
 import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.rest.support.HttpUtils;
 import org.elasticsearch.client.rest.support.InternalRestClient;
 import org.elasticsearch.client.rest.support.RestResponse;
 import org.elasticsearch.client.support.AbstractClient;
@@ -17,8 +17,6 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 
 /**
  * @author Brandon Kearby
@@ -36,7 +34,11 @@ public class RestClient extends AbstractClient implements Client {
 
     @Override
     public void close() throws ElasticsearchException {
-
+        try {
+            internalRestClient.close();
+        } catch (IOException e) {
+            throw new ElasticsearchException(e.getMessage(), e);
+        }
     }
 
     @Override
@@ -59,7 +61,7 @@ public class RestClient extends AbstractClient implements Client {
             System.out.println("response = " + restResponse);
             Response response = action.newResponse();
             //todo replace with streaming BytesReference
-            String content = read(restResponse.getEntity());
+            String content = HttpUtils.readUtf8(restResponse.getEntity());
             XContentParser parser = XContentHelper.createParser(new BytesArray(content));
             response.readFrom(parser);
             listener.onResponse(response);
@@ -69,16 +71,6 @@ public class RestClient extends AbstractClient implements Client {
         }
     }
 
-    private String read(HttpEntity entity) throws IOException {
-        char[] buffer = new char[8192];
-        StringBuilder builder = new StringBuilder();
-        InputStreamReader reader = new InputStreamReader(entity.getContent(), Charset.forName("UTF-8"));
-
-        for (int read; (read = reader.read(buffer)) >= 0; ) {
-            builder.append(buffer, 0, read);
-        }
-        return builder.toString();
-    }
 
     @Override
     public ThreadPool threadPool() {

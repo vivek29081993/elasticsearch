@@ -20,13 +20,21 @@
 package org.elasticsearch.action.bulk;
 
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentParsable;
+import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A response of a bulk execution. Holding a response for each item responding (in order) of the
@@ -37,6 +45,7 @@ public class BulkResponse extends ActionResponse implements Iterable<BulkItemRes
 
     private BulkItemResponse[] responses;
     private long tookInMillis;
+    private boolean errors;
 
     BulkResponse() {
     }
@@ -117,4 +126,44 @@ public class BulkResponse extends ActionResponse implements Iterable<BulkItemRes
         }
         out.writeVLong(tookInMillis);
     }
+
+
+
+    enum JsonFields implements XContentParsable<BulkResponse> {
+        took {
+            @Override
+            public void apply(XContentParser parser, BulkResponse response) throws IOException {
+                response.tookInMillis = parser.longValue();
+            }
+        },
+        errors {
+            @Override
+            public void apply(XContentParser parser, BulkResponse response) throws IOException {
+                response.errors = parser.booleanValue();
+            }
+        },
+        items {
+            @Override
+            public void apply(XContentParser parser, BulkResponse response) throws IOException {
+                List<BulkItemResponse> items = Lists.newArrayList();
+                for (parser.nextToken(); parser.currentToken() != XContentParser.Token.END_ARRAY; parser.nextToken()) {
+                    BulkItemResponse item = new BulkItemResponse();
+                    item.readFrom(parser);
+                    items.add(item);
+                }
+                response.responses = items.toArray(new BulkItemResponse[items.size()]);
+            }
+        };
+
+        static Map<String, XContentParsable<BulkResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (BulkResponse.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, BulkResponse.JsonFields.fields, this);
+    }
+
 }

@@ -19,23 +19,34 @@
 
 package org.elasticsearch.action.bulk;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentParsable;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a single item response for an action executed as part of the bulk API. Holds the index/type/id
  * of the relevant action, and if it has failed or not (with the failure message incase it failed).
  */
 public class BulkItemResponse implements Streamable {
+
 
     /**
      * Represents a failure.
@@ -299,4 +310,27 @@ public class BulkItemResponse implements Streamable {
             RestStatus.writeTo(out, failure.getStatus());
         }
     }
+
+    public void readFrom(XContentParser parser) throws IOException {
+        if (parser.currentToken() == XContentParser.Token.START_OBJECT) {
+            parser.nextToken();
+        }
+        this.opType = parser.currentName();
+        if (IndexRequest.BULK_TYPE.equals(this.opType)) {
+            this.response = new IndexResponse();
+        }
+        else if (UpdateRequest.BULK_TYPE.equals(this.opType)) {
+            this.response = new UpdateResponse();
+        }
+        else if (DeleteRequest.BULK_TYPE.equals(this.opType)) {
+            this.response = new DeleteResponse();
+        }
+        else {
+            throw new IllegalStateException("Unknown bulk action: " + this.opType);
+        }
+        this.response.readFrom(parser);
+        parser.nextToken(); // END_OBJECT
+    }
+
+
 }

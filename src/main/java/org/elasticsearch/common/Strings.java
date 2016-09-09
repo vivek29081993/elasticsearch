@@ -1063,4 +1063,17 @@ public class Strings {
     public static String base64UUID() {
         return TIME_UUID_GENERATOR.getBase64UUID();
     }
+
+    /**
+     * Appends the given values t
+     * @param values
+     * @return
+     */
+    public static String join(String... values) {
+        StringBuilder builder = new StringBuilder();
+        for (String value : values) {
+            builder.append(value);
+        }
+        return builder.toString();
+    }
 }

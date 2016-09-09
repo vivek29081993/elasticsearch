@@ -96,6 +96,10 @@ public abstract class ActionRequest<T extends ActionRequest> extends TransportRe
         throw new UnsupportedOperationException("Implement me in " + this.getClass());
     }
 
+    public HttpEntity getBulkRestEntity() throws IOException {
+        throw new UnsupportedOperationException("Implement me in " + this.getClass());
+    }
+
     public HttpEntity getRestEntity() throws IOException {
         return EMPTY_ENTITY;
     }
@@ -103,4 +107,6 @@ public abstract class ActionRequest<T extends ActionRequest> extends TransportRe
     public Header[] getRestHeaders() {
         return EMPTY_HEADERS;
     }
+
+
 }

@@ -22,6 +22,7 @@ package org.elasticsearch.action;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.transport.TransportResponse;
 
 import java.io.IOException;
@@ -42,6 +43,10 @@ public abstract class ActionResponse extends TransportResponse {
     }
 
     public void readFrom(XContentParser parser) throws IOException {
+        throw new UnsupportedOperationException("Implement me in: " + this.getClass().getName());
+    }
+
+    public RestStatus getBulkStatus() {
         throw new UnsupportedOperationException("Implement me in: " + this.getClass().getName());
     }
 }
