@@ -21,12 +21,12 @@ package org.elasticsearch.action.get;
 
 import com.google.common.base.Joiner;
 import org.apache.http.HttpEntity;
-import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.ValidateActions;
 import org.elasticsearch.action.support.single.shard.SingleShardOperationRequest;
+import org.elasticsearch.client.rest.support.HttpUtils;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -36,7 +36,6 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.search.fetch.source.FetchSourceContext;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 /**
  * A request to get a document (its source) from an index based on its type (optional) and id. Best created using
@@ -50,8 +49,6 @@ import java.nio.charset.StandardCharsets;
  * @see org.elasticsearch.client.Client#get(GetRequest)
  */
 public class GetRequest extends SingleShardOperationRequest<GetRequest> {
-
-    private static final NStringEntity EMPTY_ENTITY = new NStringEntity("", StandardCharsets.UTF_8);
 
     private String type;
     private String id;
@@ -367,7 +364,7 @@ public class GetRequest extends SingleShardOperationRequest<GetRequest> {
 
     @Override
     public HttpEntity getRestEntity() {
-        return EMPTY_ENTITY;
+        return HttpUtils.EMPTY_ENTITY;
     }
 
     @Override

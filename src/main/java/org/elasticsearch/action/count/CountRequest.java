@@ -19,6 +19,10 @@
 
 package org.elasticsearch.action.count;
 
+import com.google.common.base.Joiner;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.Version;
@@ -26,6 +30,7 @@ import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.support.QuerySourceBuilder;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationRequest;
 import org.elasticsearch.client.Requests;
+import org.elasticsearch.client.rest.support.HttpUtils;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
@@ -35,10 +40,12 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.rest.RestRequest;
 
 import static org.elasticsearch.search.internal.SearchContext.DEFAULT_TERMINATE_AFTER;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -280,4 +287,29 @@ public class CountRequest extends BroadcastOperationRequest<CountRequest> {
         }
         return "[" + Arrays.toString(indices) + "]" + Arrays.toString(types) + ", source[" + sSource + "]";
     }
+
+    @Override
+    public String getRestEndPoint() {
+        String indicesCsv = Joiner.on(',').join(this.indices);
+        String typesCsv = Joiner.on(',').join(this.types);
+        return Joiner.on('/').join(indicesCsv, typesCsv, "_count");
+    }
+
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.GET;
+    }
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        if (source != null) {
+            return new NStringEntity(XContentHelper.convertToJson(source, false), StandardCharsets.UTF_8);
+        }
+        else {
+            return HttpUtils.EMPTY_ENTITY;
+        }
+    }
+
+
 }

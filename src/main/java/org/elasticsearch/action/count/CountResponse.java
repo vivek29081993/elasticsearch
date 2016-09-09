@@ -19,15 +19,21 @@
 
 package org.elasticsearch.action.count;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ShardOperationFailedException;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentParsable;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The response of the count action.
@@ -99,4 +105,32 @@ public class CountResponse extends BroadcastOperationResponse {
             out.writeBoolean(terminatedEarly);
         }
     }
+
+    enum JsonFields implements XContentParsable<CountResponse> {
+        count {
+            @Override
+            public void apply(XContentParser parser, CountResponse response) throws IOException {
+                response.count = parser.longValue();
+            }
+        },
+        _shards {
+            @Override
+            public void apply(XContentParser parser, CountResponse response) throws IOException {
+                //todo
+            }
+        };
+
+        static Map<String, XContentParsable<CountResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (CountResponse.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, CountResponse.JsonFields.fields, this);
+    }
+
 }
