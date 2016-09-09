@@ -21,6 +21,7 @@ package org.elasticsearch.action.index;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.collect.Maps;
 import org.apache.http.HttpEntity;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.*;
@@ -71,6 +72,8 @@ import static org.elasticsearch.action.ValidateActions.addValidationError;
  * @see org.elasticsearch.client.Client#index(IndexRequest)
  */
 public class IndexRequest extends ShardReplicationOperationRequest<IndexRequest> implements DocumentRequest<IndexRequest> {
+
+    public static final String BULK_TYPE = "index";
 
     /**
      * Operation type controls if the type of the index operation.
@@ -741,6 +744,20 @@ public class IndexRequest extends ShardReplicationOperationRequest<IndexRequest>
     @Override
     public RestRequest.Method getRestMethod() {
         return RestRequest.Method.PUT;
+    }
+
+    @Override
+    public HttpEntity getBulkRestEntity() throws IOException {
+        Map<String, Object> payload = Maps.newLinkedHashMap();
+        Map<String, Object> actionMetadata = Maps.newLinkedHashMap();
+        actionMetadata.put("_index", index);
+        actionMetadata.put("_type", type);
+        actionMetadata.put("_id", id);
+        payload.put(BULK_TYPE, actionMetadata);
+        String json = XContentHelper.convertToJson(payload, false);
+
+        String fullPayload = Strings.join(json, "\n", XContentHelper.convertToJson(source, false), "\n");
+        return new NStringEntity(fullPayload, StandardCharsets.UTF_8);
     }
 
     @Override

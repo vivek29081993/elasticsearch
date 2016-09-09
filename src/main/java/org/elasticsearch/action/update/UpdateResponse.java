@@ -28,6 +28,7 @@ import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParsable;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.get.GetResult;
+import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 import java.util.Map;
@@ -42,6 +43,7 @@ public class UpdateResponse extends ActionResponse {
     private long version;
     private boolean created;
     private GetResult getResult;
+    private RestStatus bulkStatus;
 
     public UpdateResponse() {
 
@@ -96,7 +98,10 @@ public class UpdateResponse extends ActionResponse {
      */
     public boolean isCreated() {
         return this.created;
+    }
 
+    public RestStatus getBulkStatus() {
+        return bulkStatus;
     }
 
     @Override
@@ -153,6 +158,13 @@ public class UpdateResponse extends ActionResponse {
                 response.version = parser.intValue();
             }
         },
+        status {
+            @Override
+            public void apply(XContentParser parser, UpdateResponse response) throws IOException {
+                response.bulkStatus = RestStatus.valueOf(parser.intValue());
+            }
+        },
+
         created {
             @Override
             public void apply(XContentParser parser, UpdateResponse response) throws IOException {

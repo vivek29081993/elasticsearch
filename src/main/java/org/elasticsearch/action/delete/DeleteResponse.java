@@ -26,6 +26,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParsable;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 import java.util.Map;
@@ -43,6 +44,7 @@ public class DeleteResponse extends ActionResponse {
     private String type;
     private long version;
     private boolean found;
+    private RestStatus bulkStatus;
 
     public DeleteResponse() {
 
@@ -91,6 +93,10 @@ public class DeleteResponse extends ActionResponse {
         return found;
     }
 
+    public RestStatus getBulkStatus() {
+        return bulkStatus;
+    }
+
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
@@ -134,6 +140,12 @@ public class DeleteResponse extends ActionResponse {
             @Override
             public void apply(XContentParser parser, DeleteResponse response) throws IOException {
                 response.version = parser.intValue();
+            }
+        },
+        status {
+            @Override
+            public void apply(XContentParser parser, DeleteResponse response) throws IOException {
+                response.bulkStatus = RestStatus.valueOf(parser.intValue());
             }
         },
         found {

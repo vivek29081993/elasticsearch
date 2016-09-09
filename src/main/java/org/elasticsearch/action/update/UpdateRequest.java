@@ -54,6 +54,7 @@ import static org.elasticsearch.action.ValidateActions.addValidationError;
  */
 public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> implements DocumentRequest<UpdateRequest> {
 
+    public static final String BULK_TYPE = "update";
     private String type;
     private String id;
     @Nullable
@@ -749,7 +750,27 @@ public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> 
     }
 
     @Override
+    public HttpEntity getBulkRestEntity() throws IOException {
+        Map<String, Object> payload = Maps.newLinkedHashMap();
+        Map<String, Object> actionMetadata = Maps.newLinkedHashMap();
+        actionMetadata.put("_index", index);
+        actionMetadata.put("_type", type);
+        actionMetadata.put("_id", id);
+        payload.put(BULK_TYPE, actionMetadata);
+        String json = XContentHelper.convertToJson(payload, false);
+
+        String fullPayload = Strings.join(json, "\n", XContentHelper.convertToJson(getPayload(), false), "\n");
+        return new NStringEntity(fullPayload, StandardCharsets.UTF_8);
+    }
+
+    @Override
     public HttpEntity getRestEntity() throws IOException {
+        Map<String, Object> payload = getPayload();
+        return new NStringEntity(XContentHelper.convertToJson(payload, false), StandardCharsets.UTF_8);
+
+    }
+
+    private Map<String, Object> getPayload() {
         Map<String, Object>  payload = Maps.newLinkedHashMap();
         if (this.doc != null) {
             payload.put("doc", this.doc.sourceAsMap());
@@ -763,7 +784,9 @@ public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> 
         if (this.upsertRequest != null) {
             payload.put("upsert", this.upsertRequest.sourceAsMap());
         }
-        return new NStringEntity(XContentHelper.convertToJson(payload, false), StandardCharsets.UTF_8);
-
+        if (payload.isEmpty()) {
+            throw new IllegalStateException("Nothing to update. No doc, script or upsert provided");
+        }
+        return payload;
     }
 }

@@ -21,11 +21,13 @@ package org.elasticsearch.action.index;
 
 import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParsable;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 import java.util.Map;
@@ -43,6 +45,7 @@ public class IndexResponse extends ActionResponse {
     private String type;
     private long version;
     private boolean created;
+    private RestStatus bulkStatus;
 
     public IndexResponse() {
 
@@ -91,6 +94,10 @@ public class IndexResponse extends ActionResponse {
         return this.created;
     }
 
+    public RestStatus getBulkStatus() {
+        return bulkStatus;
+    }
+
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
@@ -134,6 +141,12 @@ public class IndexResponse extends ActionResponse {
             @Override
             public void apply(XContentParser parser, IndexResponse response) throws IOException {
                 response.version = parser.intValue();
+            }
+        },
+        status {
+            @Override
+            public void apply(XContentParser parser, IndexResponse response) throws IOException {
+                response.bulkStatus = RestStatus.valueOf(parser.intValue());
             }
         },
         created {

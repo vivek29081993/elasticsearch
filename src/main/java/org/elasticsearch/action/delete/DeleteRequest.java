@@ -21,19 +21,23 @@ package org.elasticsearch.action.delete;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.DocumentRequest;
 import org.elasticsearch.action.support.replication.ShardReplicationOperationRequest;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.uid.Versions;
-import org.elasticsearch.common.xcontent.*;
+import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.index.VersionType;
 import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
@@ -51,6 +55,7 @@ import static org.elasticsearch.action.ValidateActions.addValidationError;
  */
 public class DeleteRequest extends ShardReplicationOperationRequest<DeleteRequest> implements DocumentRequest<DeleteRequest> {
 
+    public static final String BULK_TYPE = "delete";
     private String type;
     private String id;
     @Nullable
@@ -261,4 +266,19 @@ public class DeleteRequest extends ShardReplicationOperationRequest<DeleteReques
     public RestRequest.Method getRestMethod() {
         return RestRequest.Method.DELETE;
     }
+
+    @Override
+    public HttpEntity getBulkRestEntity() throws IOException {
+        Map<String, Object> payload = Maps.newLinkedHashMap();
+        Map<String, Object> actionMetadata = Maps.newLinkedHashMap();
+        actionMetadata.put("_index", index);
+        actionMetadata.put("_type", type);
+        actionMetadata.put("_id", id);
+        payload.put(BULK_TYPE, actionMetadata);
+        String json = XContentHelper.convertToJson(payload, false);
+
+        String fullPayload = Strings.join(json, "\n");
+        return new NStringEntity(fullPayload, StandardCharsets.UTF_8);
+    }
+
 }

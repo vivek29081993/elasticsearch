@@ -2,6 +2,9 @@ package org.elasticsearch.client.rest;
 
 import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionFuture;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
@@ -93,21 +96,56 @@ public class RestClientTest {
         client.update(updateRequest);
         GetResponse updatedDocument = getDocument(document.getId());
         assertEquals(source.get("datePretty"), updatedDocument.getSourceAsMap().get("datePretty"));
+    }
 
+    @Test
+    public void testBulkIndex() throws ExecutionException, InterruptedException {
+        BulkRequest request = new BulkRequest();
+        int count = 10000;
+        for (int i = 0; i < count; i++) {
+            request.add(newIndexRequest());
+        }
+        BulkResponse bulkItemResponse = client.bulk(request).get();
+        assertEquals(count, bulkItemResponse.getItems().length);
+        for (BulkItemResponse itemResponse : bulkItemResponse.getItems()) {
+            assertFalse("Item failed to index", itemResponse.isFailed());
+        }
+    }
 
+    @Test
+    public void testBulkWithErrors() throws ExecutionException, InterruptedException {
+        BulkRequest request = new BulkRequest();
+        int count = 10000;
+        for (int i = 0; i < count; i++) {
+            IndexRequest indexRequest = newIndexRequest();
+            request.add(indexRequest);
+            DeleteRequest deleteRequest = new DeleteRequest(indexRequest.index(), indexRequest.type(), indexRequest.id());
+            request.add(deleteRequest);
+            request.add(deleteRequest);
+        }
+        BulkResponse bulkItemResponse = client.bulk(request).get();
+        assertEquals(count, bulkItemResponse.getItems().length);
+        for (BulkItemResponse itemResponse : bulkItemResponse.getItems()) {
+            assertFalse("Item failed to index", itemResponse.isFailed());
+        }
     }
 
 
 
     private IndexResponse indexTestDocument() throws InterruptedException, ExecutionException {
+        IndexRequest request = newIndexRequest();
+        IndexResponse indexResponse = this.client.index(request).get();
+        assertTrue(indexResponse.isCreated());
+
+        return indexResponse;
+    }
+
+    private IndexRequest newIndexRequest() {
         String id = UUID.randomUUID().toString();
         IndexRequest request = new IndexRequest(INDEX, TYPE, id);
         Map<String, Object> source = Maps.newHashMap();
         source.put("datePretty", "2016-02-28T05:30:00+05:30");
         request.source(source);
-        IndexResponse indexResponse = this.client.index(request).get();
-        assertTrue(indexResponse.isCreated());
-
-        return indexResponse;
+        return request;
     }
 }

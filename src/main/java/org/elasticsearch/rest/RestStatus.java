@@ -19,10 +19,12 @@
 
 package org.elasticsearch.rest;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
 import java.io.IOException;
+import java.util.Map;
 
 public enum RestStatus {
     /**
@@ -493,5 +495,20 @@ public enum RestStatus {
 
     public static void writeTo(StreamOutput out, RestStatus status) throws IOException {
         out.writeString(status.name());
+    }
+
+    static Map<Integer, RestStatus> statusByCode = Maps.newLinkedHashMap();
+    static {
+        for (RestStatus restStatus : values()) {
+            statusByCode.put(restStatus.getStatus(), restStatus);
+        }
+    }
+
+    public static RestStatus valueOf(Integer code) {
+        RestStatus restStatus = statusByCode.get(code);
+        if (restStatus == null) {
+            throw new IllegalArgumentException("Unknown status of:" + code);
+        }
+        return restStatus;
     }
 }
