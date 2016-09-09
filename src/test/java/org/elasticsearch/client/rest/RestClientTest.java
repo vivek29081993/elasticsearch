@@ -8,6 +8,7 @@ import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -79,6 +80,21 @@ public class RestClientTest {
 
         GetResponse getResponse = getDocument(indexResponse.getId());
         assertFalse("Document should not exist", getResponse.isExists());
+    }
+
+    @Test
+    public void testUpdate() throws ExecutionException, InterruptedException {
+        IndexResponse indexResponse = indexTestDocument();
+        GetResponse document = getDocument(indexResponse.getId());
+        UpdateRequest updateRequest = new UpdateRequest(document.getIndex(), document.getType(), document.getId());
+        Map<String, Object> source = document.getSourceAsMap();
+        source.put("datePretty", "2017-02-28T05:30:00+05:30");
+        updateRequest.doc(source);
+        client.update(updateRequest);
+        GetResponse updatedDocument = getDocument(document.getId());
+        assertEquals(source.get("datePretty"), updatedDocument.getSourceAsMap().get("datePretty"));
+
+
     }
 
 

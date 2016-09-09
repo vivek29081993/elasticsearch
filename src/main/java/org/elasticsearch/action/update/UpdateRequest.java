@@ -34,14 +34,15 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.uid.Versions;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.index.VersionType;
+import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.script.ScriptParameterParser;
+import org.elasticsearch.script.ScriptParameterParser.ScriptParameterValue;
 import org.elasticsearch.script.ScriptService;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
@@ -578,6 +579,7 @@ public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> 
     }
 
     public UpdateRequest source(BytesReference source) throws Exception {
+        ScriptParameterParser scriptParameterParser = new ScriptParameterParser();
         XContentType xContentType = XContentFactory.xContentType(source);
         try (XContentParser parser = XContentFactory.xContent(xContentType).createParser(source)) {
             XContentParser.Token token = parser.nextToken();
@@ -588,16 +590,8 @@ public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> 
             while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
                 if (token == XContentParser.Token.FIELD_NAME) {
                     currentFieldName = parser.currentName();
-                } else if ("script".equals(currentFieldName)) {
-                    script = parser.textOrNull();
-                    scriptType = ScriptService.ScriptType.INLINE;
-                } else if ("script_id".equals(currentFieldName)) {
-                    script = parser.textOrNull();
-                    scriptType = ScriptService.ScriptType.INDEXED;
                 } else if ("params".equals(currentFieldName)) {
                     scriptParams = parser.map();
-                } else if ("lang".equals(currentFieldName)) {
-                    scriptLang = parser.text();
                 } else if ("scripted_upsert".equals(currentFieldName)) {
                     scriptedUpsert = parser.booleanValue();
                 } else if ("upsert".equals(currentFieldName)) {
@@ -612,8 +606,16 @@ public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> 
                     docAsUpsert(parser.booleanValue());
                 } else if ("detect_noop".equals(currentFieldName)) {
                     detectNoop(parser.booleanValue());
+                } else {
+                    scriptParameterParser.token(currentFieldName, token, parser);
                 }
             }
+            ScriptParameterValue scriptValue = scriptParameterParser.getDefaultScriptParameterValue();
+            if (scriptValue != null) {
+                script = scriptValue.script();
+                scriptType = scriptValue.scriptType();
+            }
+            scriptLang = scriptParameterParser.lang();
         }
         return this;
     }
@@ -732,4 +734,33 @@ public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> 
         }
     }
 
+
+    @Override
+    public String getRestEndPoint() {
+        return Joiner.on('/').join(index(), type(), id(), "_update");
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.POST;
+    }
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        Map<String, Object>  payload = Maps.newLinkedHashMap();
+        if (this.doc != null) {
+            payload.put("doc", this.doc.sourceAsMap());
+            payload.put("doc_as_upsert", this.docAsUpsert);
+            payload.put("detect_noop", this.detectNoop);
+        }
+        else if (Strings.hasLength(script)) {
+            payload.put("scripted_upsert", scriptedUpsert);
+            payload.put("script", this.script);
+        }
+        if (this.upsertRequest != null) {
+            payload.put("upsert", this.upsertRequest.sourceAsMap());
+        }
+        return new NStringEntity(XContentHelper.convertToJson(payload, false), StandardCharsets.UTF_8);
+
+    }
 }

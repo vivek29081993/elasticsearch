@@ -19,12 +19,18 @@
 
 package org.elasticsearch.action.update;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentParsable;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.get.GetResult;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  */
@@ -121,4 +127,48 @@ public class UpdateResponse extends ActionResponse {
             getResult.writeTo(out);
         }
     }
+
+    enum JsonFields implements XContentParsable<UpdateResponse> {
+        _index {
+            @Override
+            public void apply(XContentParser parser, UpdateResponse response) throws IOException {
+                response.index = parser.text();
+            }
+        },
+        _type {
+            @Override
+            public void apply(XContentParser parser, UpdateResponse response) throws IOException {
+                response.type = parser.text();
+            }
+        },
+        _id {
+            @Override
+            public void apply(XContentParser parser, UpdateResponse response) throws IOException {
+                response.id = parser.text();
+            }
+        },
+        _version {
+            @Override
+            public void apply(XContentParser parser, UpdateResponse response) throws IOException {
+                response.version = parser.intValue();
+            }
+        },
+        created {
+            @Override
+            public void apply(XContentParser parser, UpdateResponse response) throws IOException {
+                response.created = parser.booleanValue();
+            }
+        };
+
+        static Map<String, XContentParsable<UpdateResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (UpdateResponse.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, UpdateResponse.JsonFields.fields, this);
+    }
+
 }
