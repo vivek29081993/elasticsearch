@@ -19,16 +19,26 @@
 
 package org.elasticsearch.action;
 
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.transport.TransportRequest;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  *
  */
 public abstract class ActionRequest<T extends ActionRequest> extends TransportRequest {
+
+    public static final Header[] EMPTY_HEADERS = new Header[0];
+    public static final NStringEntity EMPTY_ENTITY = new NStringEntity("", StandardCharsets.UTF_8);
 
     private boolean listenerThreaded = false;
 
@@ -72,5 +82,25 @@ public abstract class ActionRequest<T extends ActionRequest> extends TransportRe
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
+    }
+
+    public String getRestEndPoint() {
+        throw new UnsupportedOperationException("Implement me");
+    }
+
+    public Map<String, String> getRestParams() {
+        return Collections.emptyMap();
+    }
+
+    public RestRequest.Method getRestMethod() {
+        throw new UnsupportedOperationException("Implement me");
+    }
+
+    public HttpEntity getRestEntity() throws IOException {
+        return EMPTY_ENTITY;
+    }
+
+    public Header[] getRestHeaders() {
+        return EMPTY_HEADERS;
     }
 }

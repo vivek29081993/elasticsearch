@@ -19,11 +19,16 @@
 
 package org.elasticsearch.action.index;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentParsable;
+import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * A response of an index operation,
@@ -105,4 +110,50 @@ public class IndexResponse extends ActionResponse {
         out.writeLong(version);
         out.writeBoolean(created);
     }
+
+    enum JsonFields implements XContentParsable<IndexResponse> {
+        _index {
+            @Override
+            public void apply(XContentParser parser, IndexResponse response) throws IOException {
+                response.index = parser.text();
+            }
+        },
+        _type {
+            @Override
+            public void apply(XContentParser parser, IndexResponse response) throws IOException {
+                response.type = parser.text();
+            }
+        },
+        _id {
+            @Override
+            public void apply(XContentParser parser, IndexResponse response) throws IOException {
+                response.id = parser.text();
+            }
+        },
+        _version {
+            @Override
+            public void apply(XContentParser parser, IndexResponse response) throws IOException {
+                response.version = parser.intValue();
+            }
+        },
+        created {
+            @Override
+            public void apply(XContentParser parser, IndexResponse response) throws IOException {
+                response.created = parser.booleanValue();
+            }
+        };
+
+        static Map<String, XContentParsable<IndexResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, JsonFields.fields, this);
+    }
+
 }

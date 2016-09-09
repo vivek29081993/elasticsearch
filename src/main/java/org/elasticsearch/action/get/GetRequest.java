@@ -19,6 +19,10 @@
 
 package org.elasticsearch.action.get;
 
+import com.google.common.base.Joiner;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -29,9 +33,11 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.uid.Versions;
 import org.elasticsearch.index.VersionType;
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.search.fetch.source.FetchSourceContext;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * A request to get a document (its source) from an index based on its type (optional) and id. Best created using
@@ -46,6 +52,7 @@ import java.io.IOException;
  */
 public class GetRequest extends SingleShardOperationRequest<GetRequest> {
 
+    public static final NStringEntity EMPTY_ENTITY = new NStringEntity("", StandardCharsets.UTF_8);
     private String type;
     private String id;
     private String routing;
@@ -352,5 +359,21 @@ public class GetRequest extends SingleShardOperationRequest<GetRequest> {
     public String toString() {
         return "get [" + index + "][" + type + "][" + id + "]: routing [" + routing + "]";
     }
+
+    @Override
+    public String getRestEndPoint() {
+        return Joiner.on('/').join(index(), type(), id());
+    }
+
+    @Override
+    public HttpEntity getRestEntity() {
+        return EMPTY_ENTITY;
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.GET;
+    }
+
 
 }

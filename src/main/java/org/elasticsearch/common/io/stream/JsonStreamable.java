@@ -17,31 +17,16 @@
  * under the License.
  */
 
-package org.elasticsearch.action;
-
-import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.transport.TransportResponse;
+package org.elasticsearch.common.io.stream;
 
 import java.io.IOException;
 
 /**
- * Base class for responses to action requests.
+ *
  */
-public abstract class ActionResponse extends TransportResponse {
+public interface JsonStreamable {
 
-    @Override
-    public void readFrom(StreamInput in) throws IOException {
-        super.readFrom(in);
-    }
+    void readFromJson(StreamInput in) throws IOException;
 
-    @Override
-    public void writeTo(StreamOutput out) throws IOException {
-        super.writeTo(out);
-    }
-
-    public void readFrom(XContentParser parser) throws IOException {
-        throw new UnsupportedOperationException("Implement me");
-    }
+    void writeToJson(StreamOutput out) throws IOException;
 }

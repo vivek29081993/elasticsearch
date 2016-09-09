@@ -21,10 +21,12 @@ package org.elasticsearch.transport;
 
 import com.carrotsearch.hppc.ObjectObjectOpenHashMap;
 import org.elasticsearch.common.ContextHolder;
+import org.elasticsearch.common.io.stream.JsonStreamable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
 import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.common.xcontent.json.JsonXContent;
 
 import java.io.IOException;
 import java.util.Collections;
