@@ -771,11 +771,17 @@ public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> 
         Map<String, Object>  payload = Maps.newLinkedHashMap();
         if (this.doc != null) {
             payload.put("doc", this.doc.sourceAsMap());
-            payload.put("doc_as_upsert", this.docAsUpsert);
-            payload.put("detect_noop", this.detectNoop);
+            if (this.docAsUpsert) {
+                payload.put("doc_as_upsert", Boolean.TRUE);
+            }
+            if (this.detectNoop) {
+                payload.put("detect_noop", Boolean.TRUE);
+            }
         }
         else if (Strings.hasLength(script)) {
-            payload.put("scripted_upsert", scriptedUpsert);
+            if (this.scriptedUpsert) {
+                payload.put("scripted_upsert", Boolean.TRUE);
+            }
             payload.put("script", this.script);
         }
         if (this.upsertRequest != null) {

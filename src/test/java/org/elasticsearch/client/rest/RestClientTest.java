@@ -5,6 +5,8 @@ import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.count.CountRequest;
+import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
@@ -37,7 +39,7 @@ public class RestClientTest {
 
     @Test
     public void testGet() throws ExecutionException, InterruptedException {
-        IndexResponse indexResponse = indexTestDocument();
+        IndexResponse indexResponse = indexDocument();
         String id = indexResponse.getId();
 
         GetResponse getResponse = getDocument(id);
@@ -70,7 +72,7 @@ public class RestClientTest {
     @Test
     public void testDelete() throws ExecutionException, InterruptedException {
         // add test doc
-        IndexResponse indexResponse = indexTestDocument();
+        IndexResponse indexResponse = indexDocument();
 
         // delete the test doc
         DeleteRequest deleteRequest = new DeleteRequest(indexResponse.getIndex(), indexResponse.getType(), indexResponse.getId());
@@ -87,7 +89,7 @@ public class RestClientTest {
 
     @Test
     public void testUpdate() throws ExecutionException, InterruptedException {
-        IndexResponse indexResponse = indexTestDocument();
+        IndexResponse indexResponse = indexDocument();
         GetResponse document = getDocument(indexResponse.getId());
         UpdateRequest updateRequest = new UpdateRequest(document.getIndex(), document.getType(), document.getId());
         Map<String, Object> source = document.getSourceAsMap();
@@ -130,9 +132,24 @@ public class RestClientTest {
         }
     }
 
+    @Test
+    public void testCount() throws ExecutionException, InterruptedException {
+        indexDocument();
+        CountRequest request;
+        request = new CountRequest(INDEX);
+        request.types(TYPE);
+        CountResponse countResponse = client.count(request).get();
+        assertTrue(countResponse.getCount() > 0);
+
+        request = new CountRequest();
+        request.types();
+        countResponse = client.count(request).get();
+        assertTrue(countResponse.getCount() > 0);
+    }
 
 
-    private IndexResponse indexTestDocument() throws InterruptedException, ExecutionException {
+
+    private IndexResponse indexDocument() throws InterruptedException, ExecutionException {
         IndexRequest request = newIndexRequest();
         IndexResponse indexResponse = this.client.index(request).get();
         assertTrue(indexResponse.isCreated());
