@@ -16,32 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.elasticsearch.client.rest.support;
 
-package org.elasticsearch.action;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 
-import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.transport.TransportResponse;
-
-import java.io.IOException;
+import java.net.URI;
 
 /**
- * Base class for responses to action requests.
+ * Allows to send DELETE requests providing a body (not supported out of the box)
  */
-public abstract class ActionResponse extends TransportResponse {
+final class HttpDeleteWithEntity extends HttpEntityEnclosingRequestBase {
 
-    @Override
-    public void readFrom(StreamInput in) throws IOException {
-        super.readFrom(in);
+    static final String METHOD_NAME = HttpDelete.METHOD_NAME;
+
+    HttpDeleteWithEntity(final URI uri) {
+        setURI(uri);
     }
 
     @Override
-    public void writeTo(StreamOutput out) throws IOException {
-        super.writeTo(out);
-    }
-
-    public void readFrom(XContentParser parser) throws IOException {
-        throw new UnsupportedOperationException("Implement me");
+    public String getMethod() {
+        return METHOD_NAME;
     }
 }

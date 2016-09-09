@@ -20,6 +20,7 @@
 package org.elasticsearch.common.xcontent;
 
 import org.apache.lucene.util.BytesRef;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.common.lease.Releasable;
 
 import java.io.IOException;

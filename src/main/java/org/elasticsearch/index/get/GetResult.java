@@ -20,19 +20,19 @@
 package org.elasticsearch.index.get;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.compress.CompressorFactory;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
-import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.search.lookup.SourceLookup;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -196,6 +196,7 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
         return fields.values().iterator();
     }
 
+
     static final class Fields {
         static final XContentBuilderString _INDEX = new XContentBuilderString("_index");
         static final XContentBuilderString _TYPE = new XContentBuilderString("_type");
@@ -203,6 +204,17 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
         static final XContentBuilderString _VERSION = new XContentBuilderString("_version");
         static final XContentBuilderString FOUND = new XContentBuilderString("found");
         static final XContentBuilderString FIELDS = new XContentBuilderString("fields");
+
+        static final Map<String, XContentBuilderString> ALL = new HashMap<>();
+        static {
+            add(_INDEX,_TYPE, _ID, _VERSION, FOUND, FIELDS);
+        }
+
+        private static void add(XContentBuilderString... fields) {
+            for (XContentBuilderString field : fields) {
+                ALL.put(field.underscore().getValue(), field);
+            }
+        }
     }
 
     public XContentBuilder toXContentEmbedded(XContentBuilder builder, Params params) throws IOException {
@@ -259,6 +271,65 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
         return result;
     }
 
+    public static GetResult readGetResult(XContentParser parser) throws IOException {
+        GetResult result = new GetResult();
+        result.readFrom(parser);
+        return result;
+    }
+
+    enum JsonFields implements XContentParsable<GetResult> {
+        _index {
+            @Override
+            public void apply(XContentParser parser, GetResult response) throws IOException {
+                response.index = parser.text();
+            }
+        },
+        _type {
+            @Override
+            public void apply(XContentParser parser, GetResult response) throws IOException {
+                response.type = parser.text();
+            }
+        },
+        _id {
+            @Override
+            public void apply(XContentParser parser, GetResult response) throws IOException {
+                response.id = parser.text();
+            }
+        },
+        _version {
+            @Override
+            public void apply(XContentParser parser, GetResult response) throws IOException {
+                response.version = parser.intValue();
+            }
+        },
+        found {
+            @Override
+            public void apply(XContentParser parser, GetResult response) throws IOException {
+                response.exists = parser.booleanValue();
+            }
+        },
+        _source {
+            @Override
+            public void apply(XContentParser parser, GetResult response) throws IOException {
+                XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
+                jsonBuilder.copyCurrentStructure(parser);
+                response.source = jsonBuilder.bytes();
+            }
+        };
+        static Map<String, XContentParsable<GetResult>> fields = Maps.newLinkedHashMap();
+        static {
+            for (JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, JsonFields.fields, this);
+    }
+
+
+
     @Override
     public void readFrom(StreamInput in) throws IOException {
         index = in.readSharedString();
@@ -283,6 +354,7 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
             }
         }
     }
+
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {

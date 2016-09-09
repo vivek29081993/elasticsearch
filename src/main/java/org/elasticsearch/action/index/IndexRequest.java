@@ -20,6 +20,9 @@
 package org.elasticsearch.action.index;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.*;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -41,8 +44,10 @@ import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.index.VersionType;
 import org.elasticsearch.index.mapper.MapperParsingException;
 import org.elasticsearch.index.mapper.internal.TimestampFieldMapper;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
 
@@ -721,5 +726,25 @@ public class IndexRequest extends ShardReplicationOperationRequest<IndexRequest>
             // ignore
         }
         return "index {[" + index + "][" + type + "][" + id + "], source[" + sSource + "]}";
+    }
+
+    @Override
+    public String getRestEndPoint() {
+        return Joiner.on('/').join(index(), type(), id());
+    }
+
+    @Override
+    public Map<String, String> getRestParams() {
+        return super.getRestParams();
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.PUT;
+    }
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        return new NStringEntity(XContentHelper.convertToJson(source, false), StandardCharsets.UTF_8);
     }
 }

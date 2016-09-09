@@ -26,6 +26,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.get.GetField;
 import org.elasticsearch.index.get.GetResult;
 
@@ -168,4 +169,11 @@ public class GetResponse extends ActionResponse implements Iterable<GetField>, T
         super.writeTo(out);
         getResult.writeTo(out);
     }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        getResult = GetResult.readGetResult(parser);
+    }
+
+
 }

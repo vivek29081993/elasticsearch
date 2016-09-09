@@ -21,8 +21,10 @@ package org.elasticsearch.common.xcontent;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
+import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.Tuple;
@@ -45,6 +47,8 @@ import static org.elasticsearch.common.xcontent.ToXContent.EMPTY_PARAMS;
  */
 @SuppressWarnings("unchecked")
 public class XContentHelper {
+
+    private static final Logger log = Logger.getLogger(XContentHelper.class);
 
     public static XContentParser createParser(BytesReference bytes) throws IOException {
         if (bytes.hasArray()) {
@@ -476,5 +480,25 @@ public class XContentHelper {
                 }
             }
         }
+    }
+
+    public static <T> void populate(XContentParser parser, Map<String, XContentParsable<T>> fields, T o) throws IOException {
+        XContentParser.Token token = parser.nextToken();
+        if (token == XContentParser.Token.START_OBJECT) {
+            while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
+                if (token == XContentParser.Token.FIELD_NAME) {
+                    String currentFieldName = parser.currentName();
+                    token = parser.nextToken();
+                    XContentParsable xContentParsable = fields.get(currentFieldName);
+                    if (xContentParsable != null) {
+                        xContentParsable.apply(parser, o);
+                    }
+                    else {
+                        log.warn("Skipping unknown field: " + currentFieldName);
+                    }
+                }
+            }
+        }
+
     }
 }
