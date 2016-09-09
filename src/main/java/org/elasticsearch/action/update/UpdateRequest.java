@@ -19,7 +19,10 @@
 
 package org.elasticsearch.action.update;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.DocumentRequest;
@@ -34,16 +37,15 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.uid.Versions;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.index.VersionType;
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.script.ScriptParameterParser;
 import org.elasticsearch.script.ScriptParameterParser.ScriptParameterValue;
 import org.elasticsearch.script.ScriptService;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
@@ -735,4 +737,33 @@ public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> 
         }
     }
 
+
+    @Override
+    public String getRestEndPoint() {
+        return Joiner.on('/').join(index(), type(), id(), "_update");
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.POST;
+    }
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        Map<String, Object>  payload = Maps.newLinkedHashMap();
+        if (this.doc != null) {
+            payload.put("doc", this.doc.sourceAsMap());
+            payload.put("doc_as_upsert", this.docAsUpsert);
+            payload.put("detect_noop", this.detectNoop);
+        }
+        else if (Strings.hasLength(script)) {
+            payload.put("scripted_upsert", scriptedUpsert);
+            payload.put("script", this.script);
+        }
+        if (this.upsertRequest != null) {
+            payload.put("upsert", this.upsertRequest.sourceAsMap());
+        }
+        return new NStringEntity(XContentHelper.convertToJson(payload, false), StandardCharsets.UTF_8);
+
+    }
 }

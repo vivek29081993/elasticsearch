@@ -24,7 +24,6 @@ import com.google.common.collect.Maps;
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.Tuple;
@@ -131,6 +130,15 @@ public class XContentHelper {
         } catch (IOException e) {
             throw new ElasticsearchParseException("Failed to parse content to map", e);
         }
+    }
+
+    public static String convertToJson(Map<String, Object> map, boolean prettyPrint) throws IOException {
+        XContentBuilder builder = XContentFactory.jsonBuilder();
+        builder.map(map);
+        if (prettyPrint) {
+            builder.prettyPrint();
+        }
+        return builder.string();
     }
 
     public static String convertToJson(BytesReference bytes, boolean reformatJson) throws IOException {

@@ -42,6 +42,6 @@ public abstract class ActionResponse extends TransportResponse {
     }
 
     public void readFrom(XContentParser parser) throws IOException {
-        throw new UnsupportedOperationException("Implement me");
+        throw new UnsupportedOperationException("Implement me in: " + this.getClass().getName());
     }
 }
