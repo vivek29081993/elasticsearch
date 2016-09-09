@@ -19,6 +19,8 @@
 
 package org.elasticsearch.action.delete;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.DocumentRequest;
@@ -27,9 +29,12 @@ import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.uid.Versions;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.index.VersionType;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
@@ -245,5 +250,15 @@ public class DeleteRequest extends ShardReplicationOperationRequest<DeleteReques
     @Override
     public String toString() {
         return "delete {[" + index + "][" + type + "][" + id + "]}";
+    }
+
+    @Override
+    public String getRestEndPoint() {
+        return Joiner.on('/').join(index(), type(), id());
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.DELETE;
     }
 }

@@ -85,7 +85,7 @@ public abstract class ActionRequest<T extends ActionRequest> extends TransportRe
     }
 
     public String getRestEndPoint() {
-        throw new UnsupportedOperationException("Implement me");
+        throw new UnsupportedOperationException("Implement me in " + this.getClass());
     }
 
     public Map<String, String> getRestParams() {
@@ -93,7 +93,7 @@ public abstract class ActionRequest<T extends ActionRequest> extends TransportRe
     }
 
     public RestRequest.Method getRestMethod() {
-        throw new UnsupportedOperationException("Implement me");
+        throw new UnsupportedOperationException("Implement me in " + this.getClass());
     }
 
     public HttpEntity getRestEntity() throws IOException {

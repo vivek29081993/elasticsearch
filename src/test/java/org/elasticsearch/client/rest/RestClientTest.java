@@ -2,6 +2,8 @@ package org.elasticsearch.client.rest;
 
 import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionFuture;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -20,7 +22,7 @@ import static org.junit.Assert.*;
  *         September 08, 2016
  */
 public class RestClientTest {
-    public static final String INDEX = "bm_content_p9993342_v11_20150702_0000";
+    public static final String INDEX = "test";
     public static final String TYPE = "stats";
     private RestClient client;
 
@@ -31,17 +33,21 @@ public class RestClientTest {
 
     @Test
     public void testGet() throws ExecutionException, InterruptedException {
-        //bm_content_p9993342_v11_20150702_0000/stats/38630590-4242-4397-a1bb-d647218aea06:2016-2-28
-        String id = "38630590-4242-4397-a1bb-d647218aea06:2016-2-28";
+        IndexResponse indexResponse = indexTestDocument();
+        String id = indexResponse.getId();
+
+        GetResponse getResponse = getDocument(id);
+        assertEquals(id, getResponse.getId());
+    }
+
+    private GetResponse getDocument(String id) throws InterruptedException, ExecutionException {
         GetRequest getRequest = new GetRequest(INDEX, TYPE, id);
         ActionFuture<GetResponse> getResponseActionFuture = this.client.get(getRequest);
-        GetResponse getResponse = getResponseActionFuture.get();
-        assertEquals(id, getResponse.getId());
+        return getResponseActionFuture.get();
     }
 
     @Test
     public void testIndex() throws ExecutionException, InterruptedException {
-        //bm_content_p9993342_v11_20150702_0000/stats/38630590-4242-4397-a1bb-d647218aea06:2016-2-28
         String id = UUID.randomUUID().toString();
         IndexRequest request = new IndexRequest(INDEX, TYPE, id);
         Map<String, Object> source = Maps.newHashMap();
@@ -52,11 +58,40 @@ public class RestClientTest {
         assertEquals(INDEX, indexResponse.getIndex());
         assertEquals(TYPE, indexResponse.getType());
 
-        GetRequest getRequest = new GetRequest(INDEX, TYPE, id);
-        ActionFuture<GetResponse> getResponseActionFuture = this.client.get(getRequest);
-        GetResponse getResponse = getResponseActionFuture.get();
+        GetResponse getResponse = getDocument(id);
         assertEquals(id, getResponse.getId());
         assertEquals(source.get("datePretty"), getResponse.getSourceAsMap().get("datePretty"));
+    }
 
+    @Test
+    public void testDelete() throws ExecutionException, InterruptedException {
+        // add test doc
+        IndexResponse indexResponse = indexTestDocument();
+
+        // delete the test doc
+        DeleteRequest deleteRequest = new DeleteRequest(indexResponse.getIndex(), indexResponse.getType(), indexResponse.getId());
+        DeleteResponse deleteResponse = client.delete(deleteRequest).get();
+
+        assertEquals(indexResponse.getId(), deleteResponse.getId());
+        assertEquals(INDEX, deleteResponse.getIndex());
+        assertEquals(TYPE, deleteResponse.getType());
+        assertTrue("Document should be found", deleteResponse.isFound());
+
+        GetResponse getResponse = getDocument(indexResponse.getId());
+        assertFalse("Document should not exist", getResponse.isExists());
+    }
+
+
+
+    private IndexResponse indexTestDocument() throws InterruptedException, ExecutionException {
+        String id = UUID.randomUUID().toString();
+        IndexRequest request = new IndexRequest(INDEX, TYPE, id);
+        Map<String, Object> source = Maps.newHashMap();
+        source.put("datePretty", "2016-02-28T05:30:00+05:30");
+        request.source(source);
+        IndexResponse indexResponse = this.client.index(request).get();
+        assertTrue(indexResponse.isCreated());
+
+        return indexResponse;
     }
 }

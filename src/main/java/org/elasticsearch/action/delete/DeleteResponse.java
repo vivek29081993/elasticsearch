@@ -19,11 +19,16 @@
 
 package org.elasticsearch.action.delete;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentParsable;
+import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * The response of the delete action.
@@ -105,4 +110,48 @@ public class DeleteResponse extends ActionResponse {
         out.writeLong(version);
         out.writeBoolean(found);
     }
+
+    enum JsonFields implements XContentParsable<DeleteResponse> {
+        _index {
+            @Override
+            public void apply(XContentParser parser, DeleteResponse response) throws IOException {
+                response.index = parser.text();
+            }
+        },
+        _type {
+            @Override
+            public void apply(XContentParser parser, DeleteResponse response) throws IOException {
+                response.type = parser.text();
+            }
+        },
+        _id {
+            @Override
+            public void apply(XContentParser parser, DeleteResponse response) throws IOException {
+                response.id = parser.text();
+            }
+        },
+        _version {
+            @Override
+            public void apply(XContentParser parser, DeleteResponse response) throws IOException {
+                response.version = parser.intValue();
+            }
+        },
+        found {
+            @Override
+            public void apply(XContentParser parser, DeleteResponse response) throws IOException {
+                response.found = parser.booleanValue();
+            }
+        };
+
+        static Map<String, XContentParsable<DeleteResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (DeleteResponse.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, DeleteResponse.JsonFields.fields, this);
+    }
+
 }
