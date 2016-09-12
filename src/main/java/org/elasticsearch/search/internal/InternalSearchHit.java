@@ -20,6 +20,8 @@
 package org.elasticsearch.search.internal;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.ElasticsearchParseException;
@@ -32,9 +34,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.text.StringAndBytesText;
 import org.elasticsearch.common.text.Text;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
-import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.index.fielddata.fieldcomparator.BytesRefFieldComparatorSource;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
@@ -44,6 +44,7 @@ import org.elasticsearch.search.lookup.SourceLookup;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import static org.elasticsearch.common.lucene.Lucene.readExplanation;
@@ -87,7 +88,7 @@ public class InternalSearchHit implements SearchHit {
     private Map<String, Object> sourceAsMap;
     private byte[] sourceAsBytes;
 
-    private InternalSearchHit() {
+    InternalSearchHit() {
 
     }
 
@@ -373,6 +374,62 @@ public class InternalSearchHit implements SearchHit {
     @Override
     public String[] getMatchedQueries() {
         return this.matchedQueries;
+    }
+
+    enum JsonFields implements XContentParsable<InternalSearchHit> {
+        _index {
+            @Override
+            public void apply(XContentParser parser, InternalSearchHit hit) throws IOException {
+                hit.shard = SearchShardTarget.readSearchShardTarget(parser.text());
+            }
+        },
+        _type {
+            @Override
+            public void apply(XContentParser parser, InternalSearchHit hit) throws IOException {
+                hit.type = new StringAndBytesText(parser.text());
+            }
+        },
+        _source {
+            @Override
+            public void apply(XContentParser parser, InternalSearchHit hit) throws IOException {
+                XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
+                jsonBuilder.copyCurrentStructure(parser);
+                hit.source = jsonBuilder.bytes();
+            }
+        },
+        _score {
+            @Override
+            public void apply(XContentParser parser, InternalSearchHit hit) throws IOException {
+                if (parser.currentToken() != XContentParser.Token.VALUE_NULL) {
+                    hit.score = parser.floatValue();
+                }
+            }
+        },
+        sort {
+            @Override
+            public void apply(XContentParser parser, InternalSearchHit hit) throws IOException {
+                hit.sortValues = parser.array();
+            }
+        },
+        _id {
+            @Override
+            public void apply(XContentParser parser, InternalSearchHit hits) throws IOException {
+                hits.id = new StringAndBytesText(parser.text());
+            }
+        };
+
+        static Map<String, XContentParsable<InternalSearchHit>> fields = Maps.newLinkedHashMap();
+
+        static {
+            for (InternalSearchHit.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, InternalSearchHit.JsonFields.fields, this);
     }
 
     public static class Fields {

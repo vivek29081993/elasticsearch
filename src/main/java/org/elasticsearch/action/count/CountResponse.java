@@ -26,6 +26,7 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.FromXContent;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParsable;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -38,7 +39,7 @@ import java.util.Map;
 /**
  * The response of the count action.
  */
-public class CountResponse extends BroadcastOperationResponse {
+public class CountResponse extends BroadcastOperationResponse implements FromXContent {
 
     private boolean terminatedEarly;
     private long count;

@@ -19,6 +19,9 @@
 
 package org.elasticsearch.action.search;
 
+import com.google.common.base.Joiner;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.Version;
@@ -27,6 +30,7 @@ import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Requests;
+import org.elasticsearch.client.rest.support.HttpUtils;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
@@ -36,11 +40,14 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 
@@ -630,6 +637,28 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
 
         if (out.getVersion().onOrAfter(Version.V_1_4_0_Beta1)) {
             out.writeOptionalBoolean(queryCache);
+        }
+    }
+
+    @Override
+    public String getRestEndPoint() {
+        String indicesCsv = Joiner.on(',').join(this.indices);
+        String typesCsv = Joiner.on(',').join(this.types);
+        return Joiner.on('/').join(indicesCsv, typesCsv, "_search");
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.POST;
+    }
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        if (source != null) {
+            return new NStringEntity(XContentHelper.convertToJson(source, false), StandardCharsets.UTF_8);
+        }
+        else {
+            return HttpUtils.EMPTY_ENTITY;
         }
     }
 }

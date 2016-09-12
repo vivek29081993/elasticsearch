@@ -21,6 +21,7 @@ package org.elasticsearch.action;
 
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.FromXContent;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.transport.TransportResponse;
@@ -30,7 +31,7 @@ import java.io.IOException;
 /**
  * Base class for responses to action requests.
  */
-public abstract class ActionResponse extends TransportResponse {
+public abstract class ActionResponse extends TransportResponse implements FromXContent {
 
     @Override
     public void readFrom(StreamInput in) throws IOException {

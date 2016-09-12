@@ -20,14 +20,18 @@
 package org.elasticsearch.search;
 
 import org.elasticsearch.common.io.stream.Streamable;
+import org.elasticsearch.common.xcontent.FromXContent;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentParser;
+
+import java.io.IOException;
 
 /**
  * The hits of a search request.
  *
  *
  */
-public interface SearchHits extends Streamable, ToXContent, Iterable<SearchHit> {
+public interface SearchHits extends Streamable, ToXContent, FromXContent, Iterable<SearchHit> {
 
     /**
      * The total number of hits that matches the search request.
@@ -63,4 +67,6 @@ public interface SearchHits extends Streamable, ToXContent, Iterable<SearchHit> 
      * The hits of the search request (based on the search type, and from / size provided).
      */
     public SearchHit[] getHits();
+
+
 }
