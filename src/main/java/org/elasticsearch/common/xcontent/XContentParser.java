@@ -135,6 +135,9 @@ public interface XContentParser extends Releasable {
 
     Map<String, Object> mapOrderedAndClose() throws IOException;
 
+    Object[] array() throws IOException;
+
+
     String text() throws IOException;
 
     String textOrNull() throws IOException;

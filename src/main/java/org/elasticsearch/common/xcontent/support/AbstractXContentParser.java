@@ -19,6 +19,7 @@
 
 package org.elasticsearch.common.xcontent.support;
 
+import com.google.common.collect.Lists;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.common.Booleans;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -229,6 +230,25 @@ public abstract class AbstractXContentParser implements XContentParser {
         } finally {
             close();
         }
+    }
+
+    @Override
+    public Object[] array() throws IOException {
+        List<Object> items = Lists.newArrayList();
+        assert currentToken() == Token.START_ARRAY;
+
+        for (nextToken(); currentToken() != Token.END_ARRAY; nextToken()) {
+            if (currentToken().isValue()) {
+                items.add(this.objectBytes());
+            }
+            else if (currentToken() == Token.START_OBJECT) {
+                items.add(mapOrdered());
+            }
+            else {
+                throw new IllegalStateException("Current Token: " + currentToken());
+            }
+        }
+        return items.toArray(new Object[items.size()]);
     }
 
 

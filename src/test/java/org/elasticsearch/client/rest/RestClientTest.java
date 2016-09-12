@@ -13,7 +13,17 @@ import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.QuerySourceBuilder;
 import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.index.query.ConstantScoreQueryBuilder;
+import org.elasticsearch.index.query.FilteredQueryBuilder;
+import org.elasticsearch.index.query.IdsQueryBuilder;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.sort.SortOrder;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -134,7 +144,7 @@ public class RestClientTest {
 
     @Test
     public void testCount() throws ExecutionException, InterruptedException {
-        indexDocument();
+        IndexResponse indexResponse = indexDocument();
         CountRequest request;
         request = new CountRequest(INDEX);
         request.types(TYPE);
@@ -145,6 +155,26 @@ public class RestClientTest {
         request.types();
         countResponse = client.count(request).get();
         assertTrue(countResponse.getCount() > 0);
+
+        request = new CountRequest();
+        request.source(new QuerySourceBuilder().setQuery(new IdsQueryBuilder().addIds(indexResponse.getId())));
+
+        request.types();
+        countResponse = client.count(request).get();
+        assertTrue(countResponse.getCount() == 1);
+    }
+
+    @Test
+    public void testSearch() throws ExecutionException, InterruptedException {
+        indexDocument();
+
+        SearchRequestBuilder search = client.prepareSearch(INDEX).addSort("datePretty", SortOrder.DESC);
+        SearchResponse response = client.search(search.request()).get();
+        SearchHits hits = response.getHits();
+        assertNotNull(hits);
+        SearchHit[] hits1 = hits.hits();
+        assertNotNull(hits1);
+        assertTrue(hits1.length > 0);
     }
 
 

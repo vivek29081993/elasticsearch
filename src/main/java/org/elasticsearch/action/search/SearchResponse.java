@@ -19,6 +19,7 @@
 
 package org.elasticsearch.action.search;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -32,9 +33,10 @@ import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.search.suggest.Suggest;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static org.elasticsearch.action.search.ShardSearchFailure.readShardSearchFailure;
-import static org.elasticsearch.search.internal.InternalSearchResponse.readInternalSearchResponse;
+import static org.elasticsearch.search.internal.InternalSearchResponse.newInternalSearchResponse;
 
 /**
  * A response of a search request.
@@ -240,7 +242,7 @@ public class SearchResponse extends ActionResponse implements StatusToXContent {
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
-        internalResponse = readInternalSearchResponse(in);
+        internalResponse = newInternalSearchResponse(in);
         totalShards = in.readVInt();
         successfulShards = in.readVInt();
         int size = in.readVInt();
@@ -284,4 +286,48 @@ public class SearchResponse extends ActionResponse implements StatusToXContent {
             return "{ \"error\" : \"" + e.getMessage() + "\"}";
         }
     }
+
+    enum JsonFields implements XContentParsable<SearchResponse> {
+        took {
+            @Override
+            public void apply(XContentParser parser, SearchResponse response) throws IOException {
+                response.tookInMillis = parser.longValue();
+            }
+        },
+        timed_out {
+            @Override
+            public void apply(XContentParser parser, SearchResponse response) throws IOException {
+                response.internalResponse = newInternalSearchResponse(parser.booleanValue());
+            }
+
+        },
+        hits {
+            @Override
+            public void apply(XContentParser parser, SearchResponse response) throws IOException {
+                response.internalResponse.readFrom(parser);
+            }
+
+        },
+        _shards {
+            @Override
+            public void apply(XContentParser parser, SearchResponse response) throws IOException {
+                Map<String, Object> shardInfo = parser.map();
+                response.totalShards = (Integer) shardInfo.get("total");
+                response.successfulShards = (Integer) shardInfo.get("successful");
+            }
+        };
+
+        static Map<String, XContentParsable<SearchResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (SearchResponse.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, SearchResponse.JsonFields.fields, this);
+    }
+
 }

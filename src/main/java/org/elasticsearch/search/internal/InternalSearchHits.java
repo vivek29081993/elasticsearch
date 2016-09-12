@@ -21,10 +21,13 @@ package org.elasticsearch.search.internal;
 
 import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.SearchShardTarget;
@@ -32,6 +35,7 @@ import org.elasticsearch.search.SearchShardTarget;
 import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import static org.elasticsearch.search.SearchShardTarget.readSearchShardTarget;
@@ -152,6 +156,7 @@ public class InternalSearchHits implements SearchHits {
         return hits();
     }
 
+
     @Override
     public Iterator<SearchHit> iterator() {
         return Iterators.forArray(hits());
@@ -198,10 +203,65 @@ public class InternalSearchHits implements SearchHits {
         return hits;
     }
 
+    public static InternalSearchHits readSearchHits(XContentParser parser) throws IOException {
+        InternalSearchHits hits = new InternalSearchHits();
+        hits.readFrom(parser);
+        return hits;
+    }
+    
     @Override
     public void readFrom(StreamInput in) throws IOException {
         readFrom(in, streamContext().streamShardTarget(StreamContext.ShardTargetType.LOOKUP));
     }
+
+
+    enum JsonFields implements XContentParsable<InternalSearchHits> {
+        total {
+            @Override
+            public void apply(XContentParser parser, InternalSearchHits hits) throws IOException {
+                hits.totalHits = parser.longValue();
+            }
+        },
+        hits {
+            @Override
+            public void apply(XContentParser parser, InternalSearchHits hits) throws IOException {
+                if (hits.totalHits == 0 ) {
+                    hits.hits = EMPTY;
+                }
+                else {
+                    List<InternalSearchHit> items = Lists.newArrayList();
+                    for (parser.nextToken(); parser.currentToken() != XContentParser.Token.END_ARRAY; parser.nextToken()) {
+                        InternalSearchHit item = new InternalSearchHit();
+                        item.readFrom(parser);
+                        items.add(item);
+                    }
+                    hits.hits = items.toArray(new InternalSearchHit[items.size()]);
+                }
+            }
+        },
+        max_score {
+            @Override
+            public void apply(XContentParser parser, InternalSearchHits hits) throws IOException {
+                if (parser.currentToken() != XContentParser.Token.VALUE_NULL) {
+                    hits.maxScore = parser.floatValue();
+                }
+            }
+        };
+
+        static Map<String, XContentParsable<InternalSearchHits>> fields = Maps.newLinkedHashMap();
+        static {
+            for (InternalSearchHits.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, InternalSearchHits.JsonFields.fields, this);
+    }
+
+
 
     public void readFrom(StreamInput in, StreamContext context) throws IOException {
         totalHits = in.readVLong();

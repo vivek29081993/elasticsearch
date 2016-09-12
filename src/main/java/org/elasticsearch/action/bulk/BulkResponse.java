@@ -162,6 +162,8 @@ public class BulkResponse extends ActionResponse implements Iterable<BulkItemRes
             }
         }
     }
+
+    @Override
     public void readFrom(XContentParser parser) throws IOException {
         XContentHelper.populate(parser, BulkResponse.JsonFields.fields, this);
     }

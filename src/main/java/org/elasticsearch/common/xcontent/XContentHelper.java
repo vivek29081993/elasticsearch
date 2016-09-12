@@ -488,19 +488,20 @@ public class XContentHelper {
     }
 
     public static <T> void populate(XContentParser parser, Map<String, XContentParsable<T>> fields, T o) throws IOException {
-        XContentParser.Token token = parser.nextToken();
-        if (token == XContentParser.Token.START_OBJECT) {
-            while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
-                if (token == XContentParser.Token.FIELD_NAME) {
-                    String currentFieldName = parser.currentName();
-                    token = parser.nextToken();
-                    XContentParsable xContentParsable = fields.get(currentFieldName);
-                    if (xContentParsable != null) {
-                        xContentParsable.apply(parser, o);
-                    }
-                    else {
-                        log.warn("Skipping unknown field: " + currentFieldName);
-                    }
+        XContentParser.Token token = null;
+        if (parser.currentToken() == null) {
+            token = parser.nextToken();
+        }
+        while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
+            if (token == XContentParser.Token.FIELD_NAME) {
+                String currentFieldName = parser.currentName();
+                token = parser.nextToken();
+                XContentParsable xContentParsable = fields.get(currentFieldName);
+                if (xContentParsable != null) {
+                    xContentParsable.apply(parser, o);
+                }
+                else {
+                    log.warn("Skipping unknown field: " + currentFieldName);
                 }
             }
         }

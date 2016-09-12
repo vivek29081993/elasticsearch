@@ -147,4 +147,10 @@ public class SearchShardTarget implements Streamable, Serializable, Comparable<S
         }
         return "[" + nodeId + "][" + index + "][" + shardId + "]";
     }
+
+    public static SearchShardTarget readSearchShardTarget(String index) {
+        SearchShardTarget searchShardTarget = new SearchShardTarget();
+        searchShardTarget.index = new StringAndBytesText(index);
+        return searchShardTarget;
+    }
 }

@@ -32,6 +32,7 @@ import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
+import org.elasticsearch.common.xcontent.FromXContent;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParsable;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -45,7 +46,7 @@ import java.util.Map;
  * Represents a single item response for an action executed as part of the bulk API. Holds the index/type/id
  * of the relevant action, and if it has failed or not (with the failure message incase it failed).
  */
-public class BulkItemResponse implements Streamable {
+public class BulkItemResponse implements Streamable, FromXContent {
 
 
     /**
@@ -311,6 +312,7 @@ public class BulkItemResponse implements Streamable {
         }
     }
 
+    @Override
     public void readFrom(XContentParser parser) throws IOException {
         if (parser.currentToken() == XContentParser.Token.START_OBJECT) {
             parser.nextToken();

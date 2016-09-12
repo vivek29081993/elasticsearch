@@ -25,6 +25,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.InternalAggregations;
@@ -108,11 +109,18 @@ public class InternalSearchResponse implements Streamable, ToXContent {
         return builder;
     }
 
-    public static InternalSearchResponse readInternalSearchResponse(StreamInput in) throws IOException {
+    public static InternalSearchResponse newInternalSearchResponse(StreamInput in) throws IOException {
         InternalSearchResponse response = new InternalSearchResponse();
         response.readFrom(in);
         return response;
     }
+
+
+    public void readFrom(XContentParser parser) throws IOException {
+        hits = readSearchHits(parser);
+
+    }
+
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
@@ -160,5 +168,11 @@ public class InternalSearchResponse implements Streamable, ToXContent {
             out.writeOptionalBoolean(terminatedEarly);
 
         }
+    }
+
+    public static InternalSearchResponse newInternalSearchResponse(boolean timedOut) throws IOException {
+        InternalSearchResponse internalSearchResponse = new InternalSearchResponse();
+        internalSearchResponse.timedOut = timedOut;
+        return internalSearchResponse;
     }
 }
