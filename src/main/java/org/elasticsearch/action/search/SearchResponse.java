@@ -304,7 +304,14 @@ public class SearchResponse extends ActionResponse implements StatusToXContent {
         hits {
             @Override
             public void apply(XContentParser parser, SearchResponse response) throws IOException {
-                response.internalResponse.readFrom(parser);
+                response.internalResponse.readHits(parser);
+            }
+
+        },
+        aggregations {
+            @Override
+            public void apply(XContentParser parser, SearchResponse response) throws IOException {
+                response.internalResponse.readAggregations(parser);
             }
 
         },

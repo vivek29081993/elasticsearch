@@ -40,6 +40,7 @@ import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.nio.client.methods.HttpAsyncMethods;
 import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
 import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
+import org.apache.lucene.util.CollectionUtil;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -81,7 +82,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>
  * Requests can be traced by enabling trace logging for "tracer". The trace logger outputs requests and responses in curl format.
  */
-public class InternalRestClient implements Closeable {
+public class    InternalRestClient implements Closeable {
 
     private static final Log logger = LogFactory.getLog(InternalRestClient.class);
 
@@ -397,7 +398,7 @@ public class InternalRestClient implements Closeable {
                 //last resort: if there are no good hosts to use, return a single dead one, the one that's closest to being retried
                 List<Map.Entry<HttpHost, DeadHostState>> sortedHosts = new ArrayList<>(blacklist.entrySet());
                 if (sortedHosts.size() > 0) {
-                    Collections.sort(sortedHosts, new Comparator<Map.Entry<HttpHost, DeadHostState>>() {
+                    CollectionUtil.introSort(sortedHosts, new Comparator<Map.Entry<HttpHost, DeadHostState>>() {
                         @Override
                         public int compare(Map.Entry<HttpHost, DeadHostState> o1, Map.Entry<HttpHost, DeadHostState> o2) {
                             return Long.compare(o1.getValue().getDeadUntilNanos(), o2.getValue().getDeadUntilNanos());

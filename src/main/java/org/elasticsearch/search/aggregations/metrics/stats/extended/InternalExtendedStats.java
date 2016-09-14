@@ -20,8 +20,10 @@ package org.elasticsearch.search.aggregations.metrics.stats.extended;
 
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilderString;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.metrics.stats.InternalStats;
@@ -42,7 +44,18 @@ public class InternalExtendedStats extends InternalStats implements ExtendedStat
             result.readFrom(in);
             return result;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) {
+            InternalExtendedStats result = new InternalExtendedStats();
+            result.readFrom(in);
+            return result;
+        }
     };
+
+    public void readFrom(XContentObject in) {
+        throw new UnsupportedOperationException();
+    }
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());

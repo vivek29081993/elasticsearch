@@ -22,10 +22,13 @@ import org.elasticsearch.Version;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.StringText;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
+import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatter;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatterStreams;
@@ -48,7 +51,15 @@ public class DoubleTerms extends InternalTerms {
             buckets.readFrom(in);
             return buckets;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) throws IOException {
+            DoubleTerms buckets = new DoubleTerms();
+            buckets.readFrom(in);
+            return buckets;
+        }
     };
+
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
@@ -111,6 +122,10 @@ public class DoubleTerms extends InternalTerms {
     @Override
     protected InternalTerms newAggregation(String name, List<InternalTerms.Bucket> buckets, boolean showTermDocCountError, long docCountError, long otherDocCount) {
         return new DoubleTerms(name, order, formatter, requiredSize, shardSize, minDocCount, buckets, showTermDocCountError, docCountError, otherDocCount);
+    }
+
+    private void readFrom(Settings in) {
+
     }
 
     @Override

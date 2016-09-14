@@ -20,6 +20,8 @@ package org.elasticsearch.search.aggregations.bucket.range.ipv4;
 
 import org.elasticsearch.common.inject.internal.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
@@ -45,7 +47,18 @@ public class InternalIPv4Range extends InternalRange<InternalIPv4Range.Bucket> i
             range.readFrom(in);
             return range;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) {
+            InternalIPv4Range range = new InternalIPv4Range();
+            range.readFrom(in);
+            return range;
+        }
     };
+
+    public void readFrom(XContentObject in) {
+        throw new UnsupportedOperationException();
+    }
 
     public static void registerStream() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());

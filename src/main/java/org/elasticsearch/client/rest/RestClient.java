@@ -1,3 +1,22 @@
+/*
+ * Licensed to Elasticsearch under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 package org.elasticsearch.client.rest;
 
 import org.apache.http.HttpHost;
@@ -11,16 +30,16 @@ import org.elasticsearch.client.rest.support.InternalRestClient;
 import org.elasticsearch.client.rest.support.RestResponse;
 import org.elasticsearch.client.support.AbstractClient;
 import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.inject.ModulesBuilder;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.search.TransportSearchModule;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.IOException;
 
 /**
- * @author Brandon Kearby
- *         September 08, 2016
  */
 public class RestClient extends AbstractClient implements Client {
 
@@ -30,6 +49,9 @@ public class RestClient extends AbstractClient implements Client {
 
     public RestClient(String hostname) {
         internalRestClient = InternalRestClient.builder(new HttpHost(hostname, DEFAULT_PORT)).build();
+        ModulesBuilder modules = new ModulesBuilder();
+        modules.add(new TransportSearchModule());
+        modules.createInjector();
     }
 
     @Override
@@ -52,13 +74,8 @@ public class RestClient extends AbstractClient implements Client {
 
     @Override
     public <Request extends ActionRequest, Response extends ActionResponse, RequestBuilder extends ActionRequestBuilder<Request, Response, RequestBuilder, Client>> void execute(Action<Request, Response, RequestBuilder, Client> action, Request request, ActionListener<Response> listener) {
-        System.out.println("action = " + action);
-        System.out.println("request = " + request);
-        System.out.println("listener = " + listener);
-
         try {
             RestResponse restResponse = internalRestClient.performRequest(request.getRestMethod().name(), request.getRestEndPoint(), request.getRestParams(),  request.getRestEntity(), request.getRestHeaders());
-            System.out.println("response = " + restResponse);
             Response response = action.newResponse();
             //todo replace with streaming BytesReference
             String content = HttpUtils.readUtf8(restResponse.getEntity());

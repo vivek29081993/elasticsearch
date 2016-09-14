@@ -26,7 +26,9 @@ import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.Lucene;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
@@ -50,7 +52,18 @@ public class InternalTopHits extends InternalMetricsAggregation implements TopHi
             buckets.readFrom(in);
             return buckets;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) {
+            InternalTopHits buckets = new InternalTopHits();
+            buckets.readFrom(in);
+            return buckets;
+        }
     };
+
+    public void readFrom(XContentObject in) {
+        throw new UnsupportedOperationException();
+    }
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());

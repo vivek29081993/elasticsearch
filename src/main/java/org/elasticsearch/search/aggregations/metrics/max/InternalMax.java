@@ -20,7 +20,9 @@ package org.elasticsearch.search.aggregations.metrics.max;
 
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
@@ -42,7 +44,18 @@ public class InternalMax extends InternalNumericMetricsAggregation.SingleValue i
             result.readFrom(in);
             return result;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) {
+            InternalMax result = new InternalMax();
+            result.readFrom(in);
+            return result;
+        }
     };
+
+    public void readFrom(XContentObject in) {
+        throw new UnsupportedOperationException();
+    }
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());

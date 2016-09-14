@@ -20,7 +20,9 @@ package org.elasticsearch.search.aggregations.bucket.significant;
 
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.bucket.significant.heuristics.JLHScore;
@@ -48,7 +50,18 @@ public class UnmappedSignificantTerms extends InternalSignificantTerms {
             buckets.readFrom(in);
             return buckets;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) throws IOException {
+            UnmappedSignificantTerms buckets = new UnmappedSignificantTerms();
+            buckets.readFrom(in);
+            return buckets;
+        }
     };
+
+    private void readFrom(Settings in) {
+        throw new UnsupportedOperationException();
+    }
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());

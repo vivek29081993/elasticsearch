@@ -22,6 +22,7 @@ package org.elasticsearch.common.xcontent.support;
 import com.google.common.collect.Lists;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.common.Booleans;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
@@ -207,6 +208,11 @@ public abstract class AbstractXContentParser implements XContentParser {
     @Override
     public Map<String, Object> map() throws IOException {
         return readMap(this);
+    }
+
+    @Override
+    public XContentObject xContentObject() throws IOException {
+        return new XContentObjectImpl(mapOrdered());
     }
 
     @Override

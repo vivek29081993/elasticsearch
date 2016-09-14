@@ -21,8 +21,10 @@ package org.elasticsearch.search.aggregations.bucket;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
+import org.elasticsearch.search.aggregations.JsonField;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -86,6 +88,13 @@ public abstract class InternalSingleBucketAggregation extends InternalAggregatio
         docCount = in.readVLong();
         aggregations = InternalAggregations.readAggregations(in);
     }
+
+    public void readFrom(XContentObject in) throws IOException {
+        name = in.get(JsonField._name.name());
+        docCount =  in.getAsLong(JsonField.doc_count.name(), 0L);
+        aggregations = InternalAggregations.readAggregations(in);
+    }
+
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {

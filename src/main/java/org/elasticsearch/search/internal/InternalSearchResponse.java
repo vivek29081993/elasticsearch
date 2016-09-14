@@ -19,13 +19,13 @@
 
 package org.elasticsearch.search.internal;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.InternalAggregations;
@@ -34,6 +34,7 @@ import org.elasticsearch.search.facet.InternalFacets;
 import org.elasticsearch.search.suggest.Suggest;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static org.elasticsearch.search.internal.InternalSearchHits.readSearchHits;
 
@@ -115,11 +116,14 @@ public class InternalSearchResponse implements Streamable, ToXContent {
         return response;
     }
 
-
-    public void readFrom(XContentParser parser) throws IOException {
-        hits = readSearchHits(parser);
-
+    public void readHits(XContentParser parser) throws IOException {
+        this.hits = InternalSearchHits.readSearchHits(parser);
     }
+
+    public void readAggregations(XContentParser parser) throws IOException {
+        this.aggregations = InternalAggregations.readAggregations(parser);
+    }
+
 
 
     @Override

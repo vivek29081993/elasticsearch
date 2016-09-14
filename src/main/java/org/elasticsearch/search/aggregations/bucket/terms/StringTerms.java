@@ -18,6 +18,7 @@
  */
 package org.elasticsearch.search.aggregations.bucket.terms;
 
+import com.google.common.collect.Lists;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.bytes.BytesArray;
@@ -26,9 +27,11 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.text.BytesText;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
+import org.elasticsearch.search.aggregations.JsonField;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,6 +47,13 @@ public class StringTerms extends InternalTerms {
     public static final AggregationStreams.Stream STREAM = new AggregationStreams.Stream() {
         @Override
         public StringTerms readResult(StreamInput in) throws IOException {
+            StringTerms buckets = new StringTerms();
+            buckets.readFrom(in);
+            return buckets;
+        }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             StringTerms buckets = new StringTerms();
             buckets.readFrom(in);
             return buckets;
@@ -110,6 +120,20 @@ public class StringTerms extends InternalTerms {
     @Override
     protected InternalTerms newAggregation(String name, List<InternalTerms.Bucket> buckets, boolean showTermDocCountError, long docCountError, long otherDocCount) {
         return new StringTerms(name, order, requiredSize, shardSize, minDocCount, buckets, showTermDocCountError, docCountError, otherDocCount);
+    }
+
+    @Override
+    public void readFrom(XContentObject in) throws IOException {
+        this.name = in.get(JsonField._name);
+        List<XContentObject> bucketsXContent = in.getAsXContentObjects(JsonField.buckets);
+        List<InternalTerms.Bucket> buckets = Lists.newArrayListWithCapacity(bucketsXContent.size());
+        for (XContentObject xBucket : bucketsXContent) {
+            InternalAggregations aggregations = InternalAggregations.readAggregations(xBucket);
+            long bucketDocCountError = xBucket.getAsLong(InternalTerms.DOC_COUNT_ERROR_UPPER_BOUND_FIELD_NAME, 0L);
+            buckets.add(new Bucket(xBucket.getAsBytesRef(JsonField.key).toBytesRef(), xBucket.getAsLong(JsonField.doc_count), aggregations, showTermDocCountError, bucketDocCountError));
+        }
+        this.buckets = buckets;
+        this.bucketMap = null;
     }
 
     @Override

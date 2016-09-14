@@ -20,6 +20,8 @@ package org.elasticsearch.search.aggregations.bucket.range.date;
 
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
@@ -45,7 +47,18 @@ public class InternalDateRange extends InternalRange<InternalDateRange.Bucket> i
             ranges.readFrom(in);
             return ranges;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) {
+            InternalDateRange ranges = new InternalDateRange();
+            ranges.readFrom(in);
+            return ranges;
+        }
     };
+
+    private void readFrom(Settings in) {
+
+    }
 
     public static void registerStream() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());

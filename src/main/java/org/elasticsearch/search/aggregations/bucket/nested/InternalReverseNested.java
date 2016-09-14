@@ -19,7 +19,9 @@
 package org.elasticsearch.search.aggregations.bucket.nested;
 
 import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
+import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
 import org.elasticsearch.search.aggregations.bucket.InternalSingleBucketAggregation;
 
@@ -35,6 +37,13 @@ public class InternalReverseNested extends InternalSingleBucketAggregation imple
     public final static AggregationStreams.Stream STREAM = new AggregationStreams.Stream() {
         @Override
         public InternalReverseNested readResult(StreamInput in) throws IOException {
+            InternalReverseNested result = new InternalReverseNested();
+            result.readFrom(in);
+            return result;
+        }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalReverseNested result = new InternalReverseNested();
             result.readFrom(in);
             return result;

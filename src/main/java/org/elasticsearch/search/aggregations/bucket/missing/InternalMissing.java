@@ -19,7 +19,9 @@
 package org.elasticsearch.search.aggregations.bucket.missing;
 
 import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
+import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
 import org.elasticsearch.search.aggregations.bucket.InternalSingleBucketAggregation;
 
@@ -35,6 +37,13 @@ public class InternalMissing extends InternalSingleBucketAggregation implements 
     public final static AggregationStreams.Stream STREAM = new AggregationStreams.Stream() {
         @Override
         public InternalMissing readResult(StreamInput in) throws IOException {
+            InternalMissing missing = new InternalMissing();
+            missing.readFrom(in);
+            return missing;
+        }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalMissing missing = new InternalMissing();
             missing.readFrom(in);
             return missing;

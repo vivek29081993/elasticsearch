@@ -10,6 +10,9 @@
                 <include>com.spatial4j:spatial4j</include>
                 <include>com.vividsolutions:jts</include>
                 <include>org.codehaus.groovy:groovy-all</include>
+                <include>org.apache.httpcomponents:httpcore</include>
+                <include>org.apache.httpcomponents:httpcore-nio</include>
+                <include>org.apache.httpcomponents:httpclient</include>
             </includes>
         </dependencySet>
         <dependencySet>

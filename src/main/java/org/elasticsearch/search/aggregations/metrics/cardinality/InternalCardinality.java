@@ -23,8 +23,10 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
+import org.elasticsearch.search.aggregations.JsonField;
 import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatterStreams;
 
@@ -35,6 +37,8 @@ public final class InternalCardinality extends InternalNumericMetricsAggregation
 
     public final static Type TYPE = new Type("cardinality");
 
+    private Long value;
+
     public final static AggregationStreams.Stream STREAM = new AggregationStreams.Stream() {
         @Override
         public InternalCardinality readResult(StreamInput in) throws IOException {
@@ -42,7 +46,19 @@ public final class InternalCardinality extends InternalNumericMetricsAggregation
             result.readFrom(in);
             return result;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) throws IOException {
+            InternalCardinality result = new InternalCardinality();
+            result.readFrom(in);
+            return result;
+        }
     };
+
+    public void readFrom(XContentObject in) throws IOException {
+        name = in.get(JsonField._name);
+        value = in.getAsLong(JsonField.value, null);
+    }
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
@@ -65,6 +81,9 @@ public final class InternalCardinality extends InternalNumericMetricsAggregation
 
     @Override
     public long getValue() {
+        if (value != null) {
+            return value;
+        }
         return counts == null ? 0 : counts.cardinality(0);
     }
 

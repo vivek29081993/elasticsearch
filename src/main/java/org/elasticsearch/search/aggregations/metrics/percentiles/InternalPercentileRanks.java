@@ -20,7 +20,10 @@ package org.elasticsearch.search.aggregations.metrics.percentiles;
 
 import com.google.common.collect.UnmodifiableIterator;
 import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
+import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.metrics.percentiles.tdigest.TDigestState;
 
 import java.io.IOException;
@@ -36,6 +39,13 @@ public class InternalPercentileRanks extends AbstractInternalPercentiles impleme
     public final static AggregationStreams.Stream STREAM = new AggregationStreams.Stream() {
         @Override
         public InternalPercentileRanks readResult(StreamInput in) throws IOException {
+            InternalPercentileRanks result = new InternalPercentileRanks();
+            result.readFrom(in);
+            return result;
+        }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalPercentileRanks result = new InternalPercentileRanks();
             result.readFrom(in);
             return result;
