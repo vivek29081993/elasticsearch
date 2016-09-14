@@ -16,16 +16,39 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.elasticsearch.common.xcontent;
 
-import java.io.IOException;
+package org.elasticsearch.search.aggregations;
+
+import com.google.common.collect.Sets;
+
+import java.util.Set;
 
 /**
- * @author Brandon Kearby
- *         September 09, 2016
+ *
  */
-public interface XContentParsable<T> {
+public enum JsonField {
+    _name,
+    _type,
+    value,
+    values,
+    buckets,
+    doc_count,
+    key,
+    key_as_string,
+    from,
+    from_as_string,
+    to,
+    to_as_string;
 
-    void apply(XContentParser parser, T object) throws IOException;
+    static Set<String> names = Sets.newHashSetWithExpectedSize(values().length);
 
+    static {
+        for (JsonField jsonField : values()) {
+            names.add(jsonField.name());
+        }
+    }
+
+    public static boolean contains(String key) {
+        return names.contains(key);
+    }
 }

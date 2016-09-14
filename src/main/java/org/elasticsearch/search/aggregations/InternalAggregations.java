@@ -20,13 +20,12 @@ package org.elasticsearch.search.aggregations;
 
 import com.google.common.base.Function;
 import com.google.common.collect.*;
+import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.search.aggregations.InternalAggregation.ReduceContext;
 
 import java.io.IOException;
@@ -176,6 +175,69 @@ public class InternalAggregations implements Aggregations, ToXContent, Streamabl
     public static InternalAggregations readOptionalAggregations(StreamInput in) throws IOException {
         return in.readOptionalStreamable(new InternalAggregations());
     }
+
+
+    public static InternalAggregations readAggregations(XContentParser parser) throws IOException {
+        InternalAggregations internalAggregations = new InternalAggregations();
+        internalAggregations.readFrom(parser);
+        return internalAggregations;
+    }
+
+    public static InternalAggregations readAggregations(XContentObject in) throws IOException {
+        InternalAggregations internalAggregations = new InternalAggregations();
+        internalAggregations.readFrom(in);
+        return internalAggregations;
+    }
+
+
+    public void readFrom(XContentObject in) throws IOException {
+        List<XContentObject> aggs = null;
+        for (String key : in.keySet()) {
+            if (JsonField.contains(key)) {
+                continue;
+            }
+            if (in.isXContentObject(key)) {
+                if (aggs == null) {
+                    aggs = Lists.newArrayList();
+                }
+                XContentObject asXContentObject = in.getAsXContentObject(key);
+                asXContentObject.put(JsonField._name, key);
+                aggs.add(asXContentObject);
+            }
+        }
+        if (aggs == null) {
+            aggregations = Collections.emptyList();
+        } else {
+            aggregations = Lists.newArrayListWithCapacity(aggs.size());
+            for (XContentObject agg : aggs) {
+                String type = agg.get(JsonField._type);
+                AggregationStreams.Stream stream = AggregationStreams.stream(new BytesArray(type));
+                InternalAggregation internalAggregation = stream.readResult(agg);
+                aggregations.add(internalAggregation);
+            }
+        }
+    }
+
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentObject aggs = parser.xContentObject();
+        aggregations = Lists.newArrayListWithCapacity(aggs.size());
+        Set<String> keys = aggs.keySet();
+        for (String name : keys) {
+            XContentObject aggMap =  aggs.getAsXContentObject(name);
+            if (aggMap.containsKey(JsonField._name)) {
+                throw new IllegalArgumentException(String.format("Aggregation can''t contain name: '%s' it''s reserved.", JsonField._name));
+            }
+            String type = aggMap.get(JsonField._type);
+            if (type == null) {
+                throw new IllegalStateException(String.format("Missing '%s' field for '%s' aggregation", JsonField._type, name));
+            }
+            aggMap.put(JsonField._name.name(), name);
+            AggregationStreams.Stream stream = AggregationStreams.stream(new BytesArray(type));
+            InternalAggregation internalAggregation = stream.readResult(aggMap);
+            aggregations.add(internalAggregation);
+        }
+    }
+
 
     @Override
     public void readFrom(StreamInput in) throws IOException {

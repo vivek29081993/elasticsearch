@@ -23,6 +23,7 @@ import com.google.common.base.Charsets;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.concurrent.ThreadLocalRandom;

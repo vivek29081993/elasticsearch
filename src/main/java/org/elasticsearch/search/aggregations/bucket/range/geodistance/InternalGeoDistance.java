@@ -20,6 +20,8 @@ package org.elasticsearch.search.aggregations.bucket.range.geodistance;
 
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
@@ -43,7 +45,18 @@ public class InternalGeoDistance extends InternalRange<InternalGeoDistance.Bucke
             geoDistance.readFrom(in);
             return geoDistance;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) {
+            InternalGeoDistance geoDistance = new InternalGeoDistance();
+            geoDistance.readFrom(in);
+            return geoDistance;
+        }
     };
+
+    private void readFrom(Settings in) {
+        throw new UnsupportedOperationException();
+    }
 
     public static void registerStream() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());

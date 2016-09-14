@@ -22,7 +22,9 @@ package org.elasticsearch.search.aggregations.metrics.geobounds;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.metrics.InternalMetricsAggregation;
@@ -39,8 +41,19 @@ public class InternalGeoBounds extends InternalMetricsAggregation implements Geo
             result.readFrom(in);
             return result;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) {
+            InternalGeoBounds result = new InternalGeoBounds();
+            result.readFrom(in);
+            return result;
+        }
     };
-    
+
+    public void readFrom(XContentObject in) {
+        throw new UnsupportedOperationException();
+    }
+
     private double top;
     private double bottom;
     private double posLeft;

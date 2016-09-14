@@ -1076,4 +1076,8 @@ public class Strings {
         }
         return builder.toString();
     }
+
+    public static boolean isNotEmpty(String value) {
+        return !isEmpty(value);
+    }
 }

@@ -20,9 +20,12 @@ package org.elasticsearch.search.aggregations.metrics.valuecount;
 
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
+import org.elasticsearch.search.aggregations.JsonField;
 import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
 
 import java.io.IOException;
@@ -41,7 +44,21 @@ public class InternalValueCount extends InternalNumericMetricsAggregation.Single
             count.readFrom(in);
             return count;
         }
+
+//        @Override
+        public InternalValueCount readResult(XContentObject in) throws IOException {
+            InternalValueCount count = new InternalValueCount();
+            count.readFrom(in);
+            return count;
+
+        }
     };
+
+    @Override
+    public void readFrom(XContentObject in) throws IOException {
+        name = in.get(JsonField._name);
+        value = in.getAsLong(JsonField.value);
+    }
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
@@ -78,6 +95,11 @@ public class InternalValueCount extends InternalNumericMetricsAggregation.Single
             valueCount += ((InternalValueCount) aggregation).value;
         }
         return new InternalValueCount(name, valueCount);
+    }
+
+    public void readFrom(Settings in) {
+        name = in.get(JsonField._name.name());
+        value = in.getAsLong(JsonField.value.name(), 0L);
     }
 
     @Override

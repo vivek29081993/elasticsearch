@@ -21,7 +21,9 @@ package org.elasticsearch.search.aggregations.metrics.scripted;
 
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.search.aggregations.AggregationStreams;
@@ -45,7 +47,18 @@ public class InternalScriptedMetric extends InternalMetricsAggregation implement
             result.readFrom(in);
             return result;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) throws IOException {
+            InternalScriptedMetric result = new InternalScriptedMetric();
+            result.readFrom(in);
+            return result;
+        }
     };
+
+    private void readFrom(Settings in) {
+        throw new UnsupportedOperationException();
+    }
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());

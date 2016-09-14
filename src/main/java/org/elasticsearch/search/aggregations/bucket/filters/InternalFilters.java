@@ -25,10 +25,8 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.text.StringText;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.search.aggregations.AggregationStreams;
-import org.elasticsearch.search.aggregations.Aggregations;
-import org.elasticsearch.search.aggregations.InternalAggregation;
-import org.elasticsearch.search.aggregations.InternalAggregations;
+import org.elasticsearch.common.xcontent.XContentObject;
+import org.elasticsearch.search.aggregations.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -43,6 +41,13 @@ public class InternalFilters extends InternalAggregation implements Filters {
     private final static AggregationStreams.Stream STREAM = new AggregationStreams.Stream() {
         @Override
         public InternalFilters readResult(StreamInput in) throws IOException {
+            InternalFilters filters = new InternalFilters();
+            filters.readFrom(in);
+            return filters;
+        }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalFilters filters = new InternalFilters();
             filters.readFrom(in);
             return filters;
@@ -170,6 +175,20 @@ public class InternalFilters extends InternalAggregation implements Filters {
             reduced.buckets.add((sameRangeList.get(0)).reduce(sameRangeList, reduceContext));
         }
         return reduced;
+    }
+
+    public void readFrom(XContentObject in) throws IOException {
+        this.name = in.get(JsonField._name);
+        Map<String, XContentObject> bucketsXContent = in.getAsXContentObjectsMap(JsonField.buckets);
+        List<Bucket> buckets = Lists.newArrayListWithCapacity(bucketsXContent.size());
+        for (Map.Entry<String, XContentObject> entry : bucketsXContent.entrySet()) {
+            XContentObject xBucket = entry.getValue();
+            InternalAggregations aggregations = InternalAggregations.readAggregations(xBucket);
+            buckets.add(new Bucket(entry.getKey(), xBucket.getAsLong(JsonField.doc_count), aggregations));
+        }
+        this.buckets = buckets;
+        this.bucketMap = null;
+
     }
 
     @Override

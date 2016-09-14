@@ -505,6 +505,9 @@ public class XContentHelper {
                 }
                 else {
                     log.warn("Skipping unknown field: " + currentFieldName);
+                    if (token == XContentParser.Token.START_OBJECT) {
+                        parser.skipChildren();
+                    }
                 }
             }
         }

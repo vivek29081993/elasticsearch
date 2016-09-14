@@ -22,10 +22,13 @@ import org.elasticsearch.Version;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.StringText;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
+import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
 import org.elasticsearch.search.aggregations.bucket.significant.heuristics.SignificanceHeuristic;
 import org.elasticsearch.search.aggregations.bucket.significant.heuristics.SignificanceHeuristicStreams;
@@ -51,7 +54,18 @@ public class SignificantLongTerms extends InternalSignificantTerms {
             buckets.readFrom(in);
             return buckets;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) {
+            SignificantLongTerms buckets = new SignificantLongTerms();
+            buckets.readFrom(in);
+            return buckets;
+        }
     };
+
+    public void readFrom(XContentObject in) {
+        throw new UnsupportedOperationException();
+    }
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());

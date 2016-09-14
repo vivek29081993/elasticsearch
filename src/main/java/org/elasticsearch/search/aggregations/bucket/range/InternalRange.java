@@ -22,9 +22,11 @@ import com.google.common.collect.Lists;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.StringText;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.InternalAggregation;
@@ -51,7 +53,18 @@ public class InternalRange<B extends InternalRange.Bucket> extends InternalAggre
             ranges.readFrom(in);
             return ranges;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) {
+            InternalRange ranges = new InternalRange();
+            ranges.readFrom(in);
+            return ranges;
+        }
     };
+
+    public void readFrom(XContentObject in) {
+        throw new UnsupportedOperationException();
+    }
 
     public static void registerStream() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());

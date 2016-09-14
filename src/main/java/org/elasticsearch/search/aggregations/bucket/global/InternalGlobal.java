@@ -19,7 +19,9 @@
 package org.elasticsearch.search.aggregations.bucket.global;
 
 import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
+import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
 import org.elasticsearch.search.aggregations.bucket.InternalSingleBucketAggregation;
 
@@ -36,6 +38,13 @@ public class InternalGlobal extends InternalSingleBucketAggregation implements G
     public final static AggregationStreams.Stream STREAM = new AggregationStreams.Stream() {
         @Override
         public InternalGlobal readResult(StreamInput in) throws IOException {
+            InternalGlobal result = new InternalGlobal();
+            result.readFrom(in);
+            return result;
+        }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalGlobal result = new InternalGlobal();
             result.readFrom(in);
             return result;

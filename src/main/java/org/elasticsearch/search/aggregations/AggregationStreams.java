@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.xcontent.XContentObject;
 
 import java.io.IOException;
 
@@ -36,8 +37,10 @@ public class AggregationStreams {
     /**
      * A stream that knows how to read an aggregation from the input.
      */
-    public static interface Stream {
-         InternalAggregation readResult(StreamInput in) throws IOException;
+    public interface Stream {
+        InternalAggregation readResult(StreamInput in) throws IOException;
+
+        InternalAggregation readResult(XContentObject in) throws IOException;
     }
 
     /**

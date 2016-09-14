@@ -16,16 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.elasticsearch.common.xcontent;
 
-import java.io.IOException;
+package org.elasticsearch.common.xcontent.support;
+
+import org.elasticsearch.ElasticsearchException;
 
 /**
- * @author Brandon Kearby
- *         September 09, 2016
  */
-public interface XContentParsable<T> {
+public class XContentObjectValueException extends ElasticsearchException {
 
-    void apply(XContentParser parser, T object) throws IOException;
-
+    public XContentObjectValueException(Class type, String key, Object value, Throwable cause) {
+        super(String.format("Failed to parse type: '%s' for key: '%s', value: '%s'", type.getSimpleName(), key, value), cause);
+    }
 }

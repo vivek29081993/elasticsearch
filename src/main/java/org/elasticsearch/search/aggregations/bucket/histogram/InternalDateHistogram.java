@@ -21,7 +21,10 @@ package org.elasticsearch.search.aggregations.bucket.histogram;
 import com.carrotsearch.hppc.ObjectObjectOpenHashMap;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
+import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatter;
 import org.joda.time.DateTime;
@@ -45,7 +48,18 @@ public class InternalDateHistogram extends InternalHistogram<InternalDateHistogr
             histogram.readFrom(in);
             return histogram;
         }
+
+        @Override
+        public InternalAggregation readResult(XContentObject in) {
+            InternalDateHistogram histogram = new InternalDateHistogram();
+            histogram.readFrom(in);
+            return histogram;
+        }
     };
+
+    public void readFrom(XContentObject in) {
+        throw new UnsupportedOperationException();
+    }
 
     public static void registerStream() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());

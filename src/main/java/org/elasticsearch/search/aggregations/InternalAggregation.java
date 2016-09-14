@@ -27,6 +27,7 @@ import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilderString;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.script.ScriptService;
 
 import java.io.IOException;
@@ -36,6 +37,11 @@ import java.util.List;
  * An internal implementation of {@link Aggregation}. Serves as a base class for all aggregation implementations.
  */
 public abstract class InternalAggregation implements Aggregation, ToXContent, Streamable {
+
+
+    public void readFrom(XContentObject in) throws IOException {
+        throw new UnsupportedOperationException("Implement me in " + this.getClass().getName());
+    }
 
     /**
      * The aggregation type that holds all the string types that are associated with an aggregation:
@@ -163,6 +169,7 @@ public abstract class InternalAggregation implements Aggregation, ToXContent, St
     public final XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject(name);
         doXContentBody(builder, params);
+        builder.field(JsonField._type.name(), this.type().stream.toUtf8());
         builder.endObject();
         return builder;
     }
