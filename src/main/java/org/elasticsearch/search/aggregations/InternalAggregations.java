@@ -219,23 +219,7 @@ public class InternalAggregations implements Aggregations, ToXContent, Streamabl
     }
 
     public void readFrom(XContentParser parser) throws IOException {
-        XContentObject aggs = parser.xContentObject();
-        aggregations = Lists.newArrayListWithCapacity(aggs.size());
-        Set<String> keys = aggs.keySet();
-        for (String name : keys) {
-            XContentObject aggMap =  aggs.getAsXContentObject(name);
-            if (aggMap.containsKey(JsonField._name)) {
-                throw new IllegalArgumentException(String.format("Aggregation can''t contain name: '%s' it''s reserved.", JsonField._name));
-            }
-            String type = aggMap.get(JsonField._type);
-            if (type == null) {
-                throw new IllegalStateException(String.format("Missing '%s' field for '%s' aggregation", JsonField._type, name));
-            }
-            aggMap.put(JsonField._name, name);
-            AggregationStreams.Stream stream = AggregationStreams.stream(new BytesArray(type));
-            InternalAggregation internalAggregation = stream.readResult(aggMap);
-            aggregations.add(internalAggregation);
-        }
+        readFrom(parser.xContentObject());
     }
 
 
