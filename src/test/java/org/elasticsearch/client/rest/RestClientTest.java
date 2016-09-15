@@ -544,11 +544,9 @@ public class RestClientTest {
         assertEquals(0, hits1.length);
         Aggregations aggregations = response.getAggregations();
         assertNotNull(aggregations);
-        Aggregation aggregation = aggregations.get(name);
+        Max aggregation = aggregations.get(name);
         assertNotNull(aggregation);
-        assertTrue(aggregation instanceof Sum);
-        Max valueCount = (Max) aggregation;
-        assertTrue(valueCount.getValue() > 0);
+        assertTrue(aggregation.getValue() > 0);
     }
 
     @Test
