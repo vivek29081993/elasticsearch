@@ -1,0 +1,39 @@
+{
+  "settings": {
+    "number_of_shards": 1
+  },
+  "mappings": {
+    "post": {
+      "properties": {
+        "title": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dateCreated": {
+          "type": "date"
+        }
+      }
+    },
+    "comment": {
+      "_parent" : {
+        "type" : "post"
+      },
+      "properties": {
+        "title": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dateCreated": {
+          "type": "date"
+        }
+      }
+    }
+  }
+}
+

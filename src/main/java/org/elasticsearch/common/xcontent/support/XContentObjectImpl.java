@@ -260,17 +260,17 @@ public class XContentObjectImpl implements XContentObject {
     }
 
     @Override
-    public Map<String, XContentObject> getAsXContentObjectsMap(String key) {
+    public <T> Map<T, XContentObject> getAsXContentObjectsMap(String key) {
         Object value = internalMap.get(key);
-        Map<String, XContentObject> results = Collections.emptyMap();
+        Map<T, XContentObject> results = Collections.emptyMap();
         try {
             //noinspection unchecked
-            Map<String, Map> map = (Map<String, Map>) value;
+            Map<T, Map> map = (Map<T, Map>) value;
             if (map == null || map.isEmpty()) {
                 return results;
             }
             results = Maps.newLinkedHashMap();
-            for (Map.Entry<String, Map> entry : map.entrySet()) {
+            for (Map.Entry<T, Map> entry : map.entrySet()) {
                 //noinspection unchecked
                 results.put(entry.getKey(), new XContentObjectImpl(entry.getValue()));
             }
@@ -282,8 +282,24 @@ public class XContentObjectImpl implements XContentObject {
     }
 
     @Override
-    public Map<String, XContentObject> getAsXContentObjectsMap(Enum key) {
+    public <T> Map<T, XContentObject> getAsXContentObjectsMap(Enum key) {
         return getAsXContentObjectsMap(key.name());
+    }
+
+    @Override
+    public <V> Map<String, V> getAsMap(String key) {
+        Object value = internalMap.get(key);
+        if (value == null) {
+            return Collections.emptyMap();
+        }
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, V> map = (Map<String, V>) value;
+            return map;
+        }
+        catch (ClassCastException e) {
+            throw new XContentObjectValueException(List.class, key,  value, e);
+        }
     }
 
 

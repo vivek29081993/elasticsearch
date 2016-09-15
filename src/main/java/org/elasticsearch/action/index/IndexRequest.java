@@ -738,7 +738,17 @@ public class IndexRequest extends ShardReplicationOperationRequest<IndexRequest>
 
     @Override
     public Map<String, String> getRestParams() {
-        return super.getRestParams();
+        Map<String, String> params = Maps.newLinkedHashMap();
+
+        if (Strings.isNotEmpty(routing)) {
+            params.put("routing", routing);
+        }
+        if (ttl != -1) {
+            params.put("ttl", String.valueOf(ttl));
+        }
+        // todo finish the rest...
+
+        return params;
     }
 
     @Override

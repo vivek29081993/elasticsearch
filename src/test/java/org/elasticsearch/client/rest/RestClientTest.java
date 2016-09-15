@@ -21,7 +21,6 @@ package org.elasticsearch.client.rest;
 import com.carrotsearch.ant.tasks.junit4.dependencies.com.google.common.collect.Lists;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
-import org.apache.lucene.util.IOUtils;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -34,39 +33,47 @@ import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.QuerySourceBuilder;
 import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.common.Names;
-import org.elasticsearch.index.query.*;
+import org.elasticsearch.common.Strings;
+import org.elasticsearch.index.query.FilterBuilders;
+import org.elasticsearch.index.query.IdsQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.*;
+import org.elasticsearch.search.aggregations.bucket.children.Children;
+import org.elasticsearch.search.aggregations.bucket.children.ChildrenBuilder;
 import org.elasticsearch.search.aggregations.bucket.filter.Filter;
 import org.elasticsearch.search.aggregations.bucket.filters.Filters;
-import org.elasticsearch.search.aggregations.bucket.filters.FiltersAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.global.Global;
-import org.elasticsearch.search.aggregations.bucket.global.InternalGlobal;
 import org.elasticsearch.search.aggregations.bucket.missing.Missing;
 import org.elasticsearch.search.aggregations.bucket.nested.Nested;
 import org.elasticsearch.search.aggregations.bucket.nested.NestedBuilder;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.avg.Avg;
 import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality;
+import org.elasticsearch.search.aggregations.metrics.max.Max;
+import org.elasticsearch.search.aggregations.metrics.min.Min;
+import org.elasticsearch.search.aggregations.metrics.percentiles.Percentile;
+import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
+import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
 import org.elasticsearch.search.aggregations.metrics.sum.Sum;
 import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
 import org.elasticsearch.search.sort.SortOrder;
+import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.*;
-import java.net.URL;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.*;
 
 /**
@@ -74,8 +81,11 @@ import static org.junit.Assert.*;
  *         September 08, 2016
  */
 public class RestClientTest {
-    public static final String INDEX = "test";
-    public static final String TYPE = "stats";
+    public static final String TEST_INDEX = "test";
+    public static final String POSTS_INDEX = "posts";
+    public static final String POST_TYPE = "post";
+    public static final String COMMENT_TYPE = "comment";
+    public static final String STATS_TYPE = "stats";
     private RestClient client;
 
     enum Color {
@@ -115,7 +125,7 @@ public class RestClientTest {
     }
 
     private GetResponse getDocument(String id) throws InterruptedException, ExecutionException {
-        GetRequest getRequest = new GetRequest(INDEX, TYPE, id);
+        GetRequest getRequest = new GetRequest(TEST_INDEX, STATS_TYPE, id);
         ActionFuture<GetResponse> getResponseActionFuture = this.client.get(getRequest);
         return getResponseActionFuture.get();
     }
@@ -123,14 +133,14 @@ public class RestClientTest {
     @Test
     public void testIndex() throws ExecutionException, InterruptedException {
         String id = UUID.randomUUID().toString();
-        IndexRequest request = new IndexRequest(INDEX, TYPE, id);
+        IndexRequest request = new IndexRequest(TEST_INDEX, STATS_TYPE, id);
         Map<String, Object> source = Maps.newHashMap();
         source.put("datePretty", "2016-02-28T05:30:00+05:30");
         request.source(source);
         IndexResponse indexResponse = this.client.index(request).get();
         assertEquals(id, indexResponse.getId());
-        assertEquals(INDEX, indexResponse.getIndex());
-        assertEquals(TYPE, indexResponse.getType());
+        assertEquals(TEST_INDEX, indexResponse.getIndex());
+        assertEquals(STATS_TYPE, indexResponse.getType());
 
         GetResponse getResponse = getDocument(id);
         assertEquals(id, getResponse.getId());
@@ -147,8 +157,8 @@ public class RestClientTest {
         DeleteResponse deleteResponse = client.delete(deleteRequest).get();
 
         assertEquals(indexResponse.getId(), deleteResponse.getId());
-        assertEquals(INDEX, deleteResponse.getIndex());
-        assertEquals(TYPE, deleteResponse.getType());
+        assertEquals(TEST_INDEX, deleteResponse.getIndex());
+        assertEquals(STATS_TYPE, deleteResponse.getType());
         assertTrue("Document should be found", deleteResponse.isFound());
 
         GetResponse getResponse = getDocument(indexResponse.getId());
@@ -204,8 +214,8 @@ public class RestClientTest {
     public void testCount() throws ExecutionException, InterruptedException {
         IndexResponse indexResponse = indexDocument();
         CountRequest request;
-        request = new CountRequest(INDEX);
-        request.types(TYPE);
+        request = new CountRequest(TEST_INDEX);
+        request.types(STATS_TYPE);
         CountResponse countResponse = client.count(request).get();
         assertTrue(countResponse.getCount() > 0);
 
@@ -226,7 +236,7 @@ public class RestClientTest {
     public void testSearch() throws ExecutionException, InterruptedException {
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(INDEX).addSort("datePretty", SortOrder.DESC);
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX).addSort("datePretty", SortOrder.DESC);
         SearchResponse response = client.search(search.request()).get();
         SearchHits hits = response.getHits();
         assertNotNull(hits);
@@ -239,7 +249,7 @@ public class RestClientTest {
     public void testSearchWithAggregationValueCount() throws ExecutionException, InterruptedException {
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(INDEX);
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
         String colorsAgg = "colors";
         search.addAggregation(AggregationBuilders.count(colorsAgg).field("color"));
         search.setSize(0); // no hits please
@@ -265,7 +275,7 @@ public class RestClientTest {
     public void testSearchWithAggregationSum() throws ExecutionException, InterruptedException {
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(INDEX);
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
         String name = "amount_sum";
         search.addAggregation(AggregationBuilders.sum(name).field("amount"));
         search.setSize(0); // no hits please
@@ -292,7 +302,7 @@ public class RestClientTest {
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(INDEX);
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
         String name = "amount_value";
         search.addAggregation(AggregationBuilders.avg(name).field("amount"));
         search.setSize(0); // no hits please
@@ -319,7 +329,7 @@ public class RestClientTest {
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(INDEX);
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
         String name = "amount_value";
         search.addAggregation(AggregationBuilders.cardinality(name).field("amount"));
         search.setSize(0); // no hits please
@@ -346,7 +356,7 @@ public class RestClientTest {
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(INDEX);
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
         String name = "agg";
         search.addAggregation(AggregationBuilders.global(name).subAggregation(AggregationBuilders.terms("colors").field("color")));
         search.setSize(0); // no hits please
@@ -359,12 +369,8 @@ public class RestClientTest {
         assertEquals(0, hits1.length);
         Aggregations aggregations = response.getAggregations();
         assertNotNull(aggregations);
-        Global aggregation = aggregations.get(name);
-        assertTrue(aggregation instanceof InternalGlobal);
-        InternalGlobal internalGlobal = (InternalGlobal) aggregation;
-        assertTrue(internalGlobal.getDocCount() > 0);
-        InternalAggregations children = internalGlobal.getAggregations();
-        assertNotNull(children);
+        Global global = aggregations.get(name);
+        assertTrue(global.getDocCount() > 0);
     }
 
     @Test
@@ -373,7 +379,7 @@ public class RestClientTest {
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(INDEX);
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
         String name = "agg";
         search.addAggregation(AggregationBuilders.filter(name).filter(FilterBuilders.termFilter("color", "red")));
         search.setSize(0); // no hits please
@@ -397,7 +403,7 @@ public class RestClientTest {
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(INDEX);
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
         String name = "agg";
         AggregationBuilder aggregation =
                 AggregationBuilders
@@ -433,7 +439,7 @@ public class RestClientTest {
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(INDEX);
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
         String name = "agg";
 
 
@@ -452,14 +458,14 @@ public class RestClientTest {
         Missing agg = aggregations.get(name);
         assertTrue(agg.getDocCount() > 0);
     }
-    @Test
 
+    @Test
     public void testSearchWithNestedAggregation() throws ExecutionException, InterruptedException {
         indexDocument();
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(INDEX);
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
         String name = "agg";
 
 
@@ -488,7 +494,157 @@ public class RestClientTest {
         assertNotNull(aggregations);
     }
 
+    @Test
+    @Ignore
+    public void testSearchWithChildrenAggregation() throws ExecutionException, InterruptedException {
+        IndexRequest post = newPost();
+        index(post);
+        index(newComment(post.id()));
+        index(newComment(post.id()));
+        index(newComment(post.id()));
+        index(newComment(post.id()));
 
+        SearchRequestBuilder search = client.prepareSearch(POSTS_INDEX).setTypes(POST_TYPE);
+        String name = "agg";
+
+
+        ChildrenBuilder builder = AggregationBuilders.children(name).childType(COMMENT_TYPE);
+        search.addAggregation(builder);
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        SearchHits hits = response.getHits();
+        assertNotNull(hits);
+        SearchHit[] hits1 = hits.hits();
+        assertNotNull(hits1);
+        assertEquals(0, hits1.length);
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+
+        Children children = aggregations.get(name);
+        assertNotNull(children);
+
+        assertTrue(children.getDocCount() > 0);
+    }
+
+    @Test
+    public void testSearchWithMaxAggregation() throws ExecutionException, InterruptedException {
+        indexDocument();
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.addAggregation(AggregationBuilders.max(name).field("amount"));
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        SearchHits hits = response.getHits();
+        assertNotNull(hits);
+        SearchHit[] hits1 = hits.hits();
+        assertNotNull(hits1);
+        assertEquals(0, hits1.length);
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        Aggregation aggregation = aggregations.get(name);
+        assertNotNull(aggregation);
+        assertTrue(aggregation instanceof Sum);
+        Max valueCount = (Max) aggregation;
+        assertTrue(valueCount.getValue() > 0);
+    }
+
+    @Test
+    public void testSearchWithMinAggregation() throws ExecutionException, InterruptedException {
+        indexDocument();
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.addAggregation(AggregationBuilders.min(name).field("amount"));
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        SearchHits hits = response.getHits();
+        assertNotNull(hits);
+        SearchHit[] hits1 = hits.hits();
+        assertNotNull(hits1);
+        assertEquals(0, hits1.length);
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        Aggregation aggregation = aggregations.get(name);
+        assertNotNull(aggregation);
+        assertTrue(aggregation instanceof Min);
+        Min valueCount = (Min) aggregation;
+        assertTrue(valueCount.getValue() != 0);
+    }
+
+
+    @Test
+    public void testSearchWithPercentilesAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.addAggregation(AggregationBuilders.percentiles(name).field("amount").percentiles(.9D,.8D,.7D));
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        SearchHits hits = response.getHits();
+        assertNotNull(hits);
+        SearchHit[] hits1 = hits.hits();
+        assertNotNull(hits1);
+        assertEquals(0, hits1.length);
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        Percentiles percentiles = aggregations.get(name);
+        double percentile = percentiles.percentile(.9D);
+        assertTrue(percentile != 0D);
+        Map<Double, Percentile> percentileMap = Maps.newHashMap();
+        Iterator<Percentile> percentileIterator = percentiles.iterator();
+        while (percentileIterator.hasNext()) {
+            Percentile next = percentileIterator.next();
+            percentileMap.put(next.getPercent(), next);
+        }
+        assertEquals(3, percentileMap.size());
+        for (Map.Entry<Double, Percentile> entry : percentileMap.entrySet()) {
+            assertEquals(percentiles.percentile(entry.getKey()), entry.getValue().getValue(), 1);
+        }
+    }
+
+    @Test
+    public void testSearchWithPercentileRanksAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.addAggregation(AggregationBuilders.percentileRanks(name).field("amount").percentiles(.9D,.8D,.7D));
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        SearchHits hits = response.getHits();
+        assertNotNull(hits);
+        SearchHit[] hits1 = hits.hits();
+        assertNotNull(hits1);
+        assertEquals(0, hits1.length);
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        PercentileRanks percentileRanks = aggregations.get(name);
+        double percentile = percentileRanks.percent(.9D);
+        assertTrue(percentile != 0D);
+        Map<Double, Percentile> percentileMap = Maps.newHashMap();
+        Iterator<Percentile> percentileIterator = percentileRanks.iterator();
+        while (percentileIterator.hasNext()) {
+            Percentile next = percentileIterator.next();
+            percentileMap.put(next.getPercent(), next);
+        }
+        assertEquals(3, percentileMap.size());
+    }
+
+
+    private List<IndexResponse> indexDocument(int numberOfDocs) throws InterruptedException, ExecutionException {
+        List<IndexResponse> responses = Lists.newArrayList();
+        for (int i =0; i < numberOfDocs; i++) {
+            responses.add(indexDocument());
+        }
+        return responses;
+    }
 
     private IndexResponse indexDocument() throws InterruptedException, ExecutionException {
         IndexRequest request = newIndexRequest();
@@ -499,9 +655,39 @@ public class RestClientTest {
     }
 
 
+    private IndexResponse index(IndexRequest request) throws ExecutionException, InterruptedException {
+        IndexResponse indexResponse = this.client.index(request).get();
+        assertTrue(indexResponse.isCreated());
+        return indexResponse;
+    }
+
+    private IndexRequest newPost() {
+        IndexRequest request = newCommentOrPost(POST_TYPE);
+        return request;
+    }
+
+    private IndexRequest newComment(String postId) {
+        assert Strings.isNotEmpty(postId);
+        IndexRequest indexRequest = newCommentOrPost(COMMENT_TYPE);
+        indexRequest.parent(postId);
+        return indexRequest;
+    }
+
+
+    private IndexRequest newCommentOrPost(String type) {
+        String id = UUID.randomUUID().toString();
+        IndexRequest request = new IndexRequest(POSTS_INDEX, type, id);
+        Map<String, Object> source = Maps.newHashMap();
+        source.put("title", randomName() + " " + randomName());
+        source.put("description", randomName() + " " + randomName() + " " + randomName() + " " + randomName());
+        source.put("dateCreated", new DateTime());
+        request.source(source);
+        return request;
+    }
+
     private IndexRequest newIndexRequest() {
         String id = UUID.randomUUID().toString();
-        IndexRequest request = new IndexRequest(INDEX, TYPE, id);
+        IndexRequest request = new IndexRequest(TEST_INDEX, STATS_TYPE, id);
         Map<String, Object> source = Maps.newHashMap();
         source.put("datePretty", "2016-02-28T05:30:00+05:30");
         source.put("color", randomColor().name());

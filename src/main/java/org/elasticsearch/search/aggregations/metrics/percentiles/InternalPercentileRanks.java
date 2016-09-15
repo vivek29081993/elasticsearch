@@ -24,6 +24,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
+import org.elasticsearch.search.aggregations.JsonField;
 import org.elasticsearch.search.aggregations.metrics.percentiles.tdigest.TDigestState;
 
 import java.io.IOException;
@@ -64,11 +65,17 @@ public class InternalPercentileRanks extends AbstractInternalPercentiles impleme
 
     @Override
     public Iterator<Percentile> iterator() {
+        if (values != null) {
+            return new PercentileIterator(values.entrySet().iterator());
+        }
         return new Iter(keys, state);
     }
 
     @Override
     public double percent(double value) {
+        if (values != null) {
+            return values.get(String.valueOf(value));
+        }
         return percentileRank(state, value);
     }
 

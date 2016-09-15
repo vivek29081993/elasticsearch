@@ -24,10 +24,12 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
+import org.elasticsearch.search.aggregations.JsonField;
 import org.elasticsearch.search.aggregations.metrics.percentiles.tdigest.TDigestState;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
 *
@@ -52,7 +54,6 @@ public class InternalPercentiles extends AbstractInternalPercentiles implements 
         }
     };
 
-
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
     }
@@ -65,11 +66,17 @@ public class InternalPercentiles extends AbstractInternalPercentiles implements 
 
     @Override
     public Iterator<Percentile> iterator() {
+        if (values != null) {
+            return new PercentileIterator(values.entrySet().iterator());
+        }
         return new Iter(keys, state);
     }
 
     @Override
     public double percentile(double percent) {
+        if (values != null) {
+            return values.get(String.valueOf(percent));
+        }
         return state.quantile(percent / 100);
     }
 
@@ -111,4 +118,5 @@ public class InternalPercentiles extends AbstractInternalPercentiles implements 
             return next;
         }
     }
+
 }
