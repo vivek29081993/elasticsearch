@@ -19,24 +19,30 @@
 
 package org.elasticsearch.search.aggregations.metrics.percentiles;
 
+import com.google.common.collect.UnmodifiableIterator;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.InternalAggregation;
+import org.elasticsearch.search.aggregations.JsonField;
 import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.metrics.percentiles.tdigest.TDigestState;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatterStreams;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 abstract class AbstractInternalPercentiles extends InternalNumericMetricsAggregation.MultiValue {
 
     protected double[] keys;
     protected TDigestState state;
     private boolean keyed;
+    protected Map<String, Double> values;
 
     AbstractInternalPercentiles() {} // for serialization
 
@@ -45,6 +51,17 @@ abstract class AbstractInternalPercentiles extends InternalNumericMetricsAggrega
         this.keys = keys;
         this.state = state;
         this.keyed = keyed;
+    }
+
+    @Override
+    public void readFrom(XContentObject in) throws IOException {
+        this.name = in.get(JsonField._name);
+        values = in.getAsMap("values");
+        keys = new double[values.size()];
+        int i=0;
+        for (Map.Entry<String, Double> entry : values.entrySet()) {
+            keys[i++] = Double.parseDouble(entry.getKey());
+        }
     }
 
     @Override
@@ -69,6 +86,7 @@ abstract class AbstractInternalPercentiles extends InternalNumericMetricsAggrega
     }
 
     protected abstract AbstractInternalPercentiles createReduced(String name, double[] keys, TDigestState merged, boolean keyed);
+
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
@@ -131,5 +149,25 @@ abstract class AbstractInternalPercentiles extends InternalNumericMetricsAggrega
             builder.endArray();
         }
         return builder;
+    }
+
+    public static class PercentileIterator extends UnmodifiableIterator<Percentile> {
+        private Iterator<Map.Entry<String, Double>> iterator;
+
+        public PercentileIterator(Iterator<Map.Entry<String, Double>> iterator) {
+            this.iterator = iterator;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+
+        @Override
+        public Percentile next() {
+            Map.Entry<String, Double> entry;
+            entry = iterator.next();
+            return new InternalPercentile(Double.parseDouble(entry.getKey()), entry.getValue());
+        }
     }
 }

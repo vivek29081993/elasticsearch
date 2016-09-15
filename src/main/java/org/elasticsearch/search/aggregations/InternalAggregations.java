@@ -231,7 +231,7 @@ public class InternalAggregations implements Aggregations, ToXContent, Streamabl
             if (type == null) {
                 throw new IllegalStateException(String.format("Missing '%s' field for '%s' aggregation", JsonField._type, name));
             }
-            aggMap.put(JsonField._name.name(), name);
+            aggMap.put(JsonField._name, name);
             AggregationStreams.Stream stream = AggregationStreams.stream(new BytesArray(type));
             InternalAggregation internalAggregation = stream.readResult(aggMap);
             aggregations.add(internalAggregation);

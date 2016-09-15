@@ -259,8 +259,10 @@ public interface XContentObject {
     BytesReference getAsBytesRef(String key);
     BytesReference getAsBytesRef(Enum key);
 
-    Map<String,XContentObject> getAsXContentObjectsMap(String key);
-    Map<String,XContentObject> getAsXContentObjectsMap(Enum key);
+    <T> Map<T, XContentObject>  getAsXContentObjectsMap(String key);
+    <T> Map<T,XContentObject> getAsXContentObjectsMap(Enum key);
+
+    <V> Map<String, V> getAsMap(String key);
 
     boolean containsKey(Enum key);
 }

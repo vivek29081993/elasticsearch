@@ -25,6 +25,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
+import org.elasticsearch.search.aggregations.JsonField;
 import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatterStreams;
 
@@ -54,7 +55,8 @@ public class InternalMin extends InternalNumericMetricsAggregation.SingleValue i
     };
 
     public void readFrom(XContentObject in) {
-        throw new UnsupportedOperationException();
+        this.name = in.get(JsonField._name);
+        this.min = in.getAsDouble("value");
     }
 
     public static void registerStreams() {
