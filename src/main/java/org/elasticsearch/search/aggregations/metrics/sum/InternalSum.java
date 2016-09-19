@@ -24,7 +24,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
-import org.elasticsearch.search.aggregations.JsonField;
+import org.elasticsearch.search.aggregations.CommonJsonField;
 import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatterStreams;
 
@@ -54,8 +54,8 @@ public class InternalSum extends InternalNumericMetricsAggregation.SingleValue i
     };
 
     public void readFrom(XContentObject in) {
-        name = in.get(JsonField._name.name());
-        sum = in.getAsDouble(JsonField.value.name(), 0D);
+        name = in.get(CommonJsonField._name.name());
+        sum = in.getAsDouble(CommonJsonField.value.name(), 0D);
     }
 
     public static void registerStreams() {

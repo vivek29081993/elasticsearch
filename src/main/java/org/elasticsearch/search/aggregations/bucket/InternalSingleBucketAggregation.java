@@ -24,7 +24,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
-import org.elasticsearch.search.aggregations.JsonField;
+import org.elasticsearch.search.aggregations.CommonJsonField;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -90,8 +90,8 @@ public abstract class InternalSingleBucketAggregation extends InternalAggregatio
     }
 
     public void readFrom(XContentObject in) throws IOException {
-        name = in.get(JsonField._name.name());
-        docCount =  in.getAsLong(JsonField.doc_count.name(), 0L);
+        name = in.get(CommonJsonField._name.name());
+        docCount =  in.getAsLong(CommonJsonField.doc_count.name(), 0L);
         aggregations = InternalAggregations.readAggregations(in);
     }
 

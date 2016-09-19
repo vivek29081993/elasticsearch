@@ -178,13 +178,13 @@ public class InternalFilters extends InternalAggregation implements Filters {
     }
 
     public void readFrom(XContentObject in) throws IOException {
-        this.name = in.get(JsonField._name);
-        Map<String, XContentObject> bucketsXContent = in.getAsXContentObjectsMap(JsonField.buckets);
+        this.name = in.get(CommonJsonField._name);
+        Map<String, XContentObject> bucketsXContent = in.getAsXContentObjectsMap(CommonJsonField.buckets);
         List<Bucket> buckets = Lists.newArrayListWithCapacity(bucketsXContent.size());
         for (Map.Entry<String, XContentObject> entry : bucketsXContent.entrySet()) {
             XContentObject xBucket = entry.getValue();
             InternalAggregations aggregations = InternalAggregations.readAggregations(xBucket);
-            buckets.add(new Bucket(entry.getKey(), xBucket.getAsLong(JsonField.doc_count), aggregations));
+            buckets.add(new Bucket(entry.getKey(), xBucket.getAsLong(CommonJsonField.doc_count), aggregations));
         }
         this.buckets = buckets;
         this.bucketMap = null;

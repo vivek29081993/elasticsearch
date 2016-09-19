@@ -49,16 +49,13 @@ public class InternalIPv4Range extends InternalRange<InternalIPv4Range.Bucket> i
         }
 
         @Override
-        public InternalAggregation readResult(XContentObject in) {
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalIPv4Range range = new InternalIPv4Range();
             range.readFrom(in);
             return range;
         }
     };
 
-    public void readFrom(XContentObject in) {
-        throw new UnsupportedOperationException();
-    }
 
     public static void registerStream() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());

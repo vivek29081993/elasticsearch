@@ -22,10 +22,9 @@ import org.elasticsearch.Version;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
-import org.elasticsearch.common.xcontent.XContentObject;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.search.aggregations.AggregationStreams;
+import org.elasticsearch.search.aggregations.CommonJsonField;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.metrics.stats.InternalStats;
 
@@ -47,24 +46,75 @@ public class InternalExtendedStats extends InternalStats implements ExtendedStat
         }
 
         @Override
-        public InternalAggregation readResult(XContentObject in) {
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalExtendedStats result = new InternalExtendedStats();
             result.readFrom(in);
             return result;
         }
     };
 
-    public void readFrom(XContentObject in) {
-        throw new UnsupportedOperationException();
+    public void readFrom(XContentObject in) throws IOException {
+        this.name = in.get(CommonJsonField._name);
+        XContentHelper.populate(in, Metrics.values(), this);
     }
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
     }
 
-    enum Metrics {
+    enum Metrics implements XContentObjectParseable<InternalExtendedStats> {
 
-        count, sum, min, max, avg, sum_of_squares, variance, std_deviation, std_upper, std_lower;
+        count {
+            @Override
+            public void apply(XContentObject source, InternalExtendedStats object) throws IOException {
+                object.count = source.getAsInt(this, 0);
+            }
+        }, sum {
+            @Override
+            public void apply(XContentObject source, InternalExtendedStats object) throws IOException {
+                object.sum = source.getAsDouble(this, 0D);
+            }
+        }, min {
+            @Override
+            public void apply(XContentObject source, InternalExtendedStats object) throws IOException {
+                object.min = source.getAsDouble(this, 0D);
+            }
+        }, max {
+            @Override
+            public void apply(XContentObject source, InternalExtendedStats object) throws IOException {
+                object.max = source.getAsDouble(this, 0D);
+            }
+        }, avg {
+            @Override
+            public void apply(XContentObject source, InternalExtendedStats object) throws IOException {
+                // derived
+            }
+        }, sum_of_squares {
+            @Override
+            public void apply(XContentObject source, InternalExtendedStats object) throws IOException {
+                object.sumOfSqrs = source.getAsDouble(this, 0D);
+            }
+        }, variance {
+            @Override
+            public void apply(XContentObject source, InternalExtendedStats object) throws IOException {
+                // derived
+            }
+        }, std_deviation {
+            @Override
+            public void apply(XContentObject source, InternalExtendedStats object) throws IOException {
+                // derived
+            }
+        }, std_upper {
+            @Override
+            public void apply(XContentObject source, InternalExtendedStats object) throws IOException {
+                // derived
+            }
+        }, std_lower {
+            @Override
+            public void apply(XContentObject source, InternalExtendedStats object) throws IOException {
+                // derived
+            }
+        };
 
         public static Metrics resolve(String name) {
             return Metrics.valueOf(name);

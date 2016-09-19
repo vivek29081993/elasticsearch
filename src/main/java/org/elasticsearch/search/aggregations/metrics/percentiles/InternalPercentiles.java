@@ -20,16 +20,13 @@ package org.elasticsearch.search.aggregations.metrics.percentiles;
 
 import com.google.common.collect.UnmodifiableIterator;
 import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
-import org.elasticsearch.search.aggregations.JsonField;
 import org.elasticsearch.search.aggregations.metrics.percentiles.tdigest.TDigestState;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Map;
 
 /**
 *

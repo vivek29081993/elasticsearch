@@ -16,6 +16,16 @@
         "datePretty": {
           "type": "date"
         },
+        "currentLocation": {
+          "type" : "geo_point",
+          "lat_lon" : "true"
+        },
+        "reach": {
+          "type" : "geo_shape"
+        },
+        "ipAddress": {
+          "type" : "ip"
+        },
         "author": {
           "type": "nested",
           "properties": {
