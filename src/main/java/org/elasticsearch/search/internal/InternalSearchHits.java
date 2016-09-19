@@ -46,6 +46,7 @@ import static org.elasticsearch.search.internal.InternalSearchHit.readSearchHit;
  */
 public class InternalSearchHits implements SearchHits {
 
+
     public static class StreamContext {
 
         public static enum ShardTargetType {
@@ -208,7 +209,13 @@ public class InternalSearchHits implements SearchHits {
         hits.readFrom(parser);
         return hits;
     }
-    
+    public static InternalSearchHits readSearchHits(XContentObject in) throws IOException {
+        InternalSearchHits hits = new InternalSearchHits();
+        hits.readFrom(in);
+        return hits;
+    }
+
+
     @Override
     public void readFrom(StreamInput in) throws IOException {
         readFrom(in, streamContext().streamShardTarget(StreamContext.ShardTargetType.LOOKUP));
@@ -220,6 +227,10 @@ public class InternalSearchHits implements SearchHits {
             @Override
             public void apply(XContentParser parser, InternalSearchHits hits) throws IOException {
                 hits.totalHits = parser.longValue();
+            }
+            @Override
+            public void apply(XContentObject object, InternalSearchHits hits) {
+                hits.totalHits = object.getAsInt(this);
             }
         },
         hits {
@@ -238,6 +249,18 @@ public class InternalSearchHits implements SearchHits {
                     hits.hits = items.toArray(new InternalSearchHit[items.size()]);
                 }
             }
+            @Override
+            public void apply(XContentObject object, InternalSearchHits hits) throws IOException {
+                List<XContentObject> hitsList = object.getAsXContentObjects(this);
+                List<InternalSearchHit> items = Lists.newArrayListWithCapacity(hitsList.size());
+                for (XContentObject xContentObject : hitsList) {
+                    InternalSearchHit item = new InternalSearchHit();
+                    item.readFrom(xContentObject);
+                    items.add(item);
+                }
+                hits.hits = items.toArray(new InternalSearchHit[items.size()]);
+
+            }
         },
         max_score {
             @Override
@@ -246,7 +269,12 @@ public class InternalSearchHits implements SearchHits {
                     hits.maxScore = parser.floatValue();
                 }
             }
+            @Override
+            public void apply(XContentObject object, InternalSearchHits hits) {
+                hits.maxScore = object.getAsFloat(this, 0F);
+            }
         };
+        public abstract void apply(XContentObject object, InternalSearchHits hits) throws IOException;
 
         static Map<String, XContentParsable<InternalSearchHits>> fields = Maps.newLinkedHashMap();
         static {
@@ -255,6 +283,15 @@ public class InternalSearchHits implements SearchHits {
             }
         }
     }
+
+    public void readFrom(XContentObject in) throws IOException {
+        XContentObject hits = in.getAsXContentObject("hits");
+        for (JsonFields field : JsonFields.values()) {
+            field.apply(hits, this);
+        }
+
+    }
+
 
     @Override
     public void readFrom(XContentParser parser) throws IOException {

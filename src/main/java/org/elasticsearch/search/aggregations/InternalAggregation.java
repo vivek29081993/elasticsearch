@@ -169,7 +169,7 @@ public abstract class InternalAggregation implements Aggregation, ToXContent, St
     public final XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject(name);
         doXContentBody(builder, params);
-        builder.field(JsonField._type.name(), this.type().stream.toUtf8());
+        builder.field(CommonJsonField._type.name(), this.type().stream.toUtf8());
         builder.endObject();
         return builder;
     }

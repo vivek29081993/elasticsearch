@@ -27,7 +27,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.InternalAggregation;
-import org.elasticsearch.search.aggregations.JsonField;
+import org.elasticsearch.search.aggregations.CommonJsonField;
 import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.metrics.percentiles.tdigest.TDigestState;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatterStreams;
@@ -55,7 +55,7 @@ abstract class AbstractInternalPercentiles extends InternalNumericMetricsAggrega
 
     @Override
     public void readFrom(XContentObject in) throws IOException {
-        this.name = in.get(JsonField._name);
+        this.name = in.get(CommonJsonField._name);
         values = in.getAsMap("values");
         keys = new double[values.size()];
         int i=0;

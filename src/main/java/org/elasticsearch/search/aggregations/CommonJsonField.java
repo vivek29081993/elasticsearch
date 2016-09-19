@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  *
  */
-public enum JsonField {
+public enum CommonJsonField {
     _name,
     _type,
     value,
@@ -43,7 +43,7 @@ public enum JsonField {
     static Set<String> names = Sets.newHashSetWithExpectedSize(values().length);
 
     static {
-        for (JsonField jsonField : values()) {
+        for (CommonJsonField jsonField : values()) {
             names.add(jsonField.name());
         }
     }

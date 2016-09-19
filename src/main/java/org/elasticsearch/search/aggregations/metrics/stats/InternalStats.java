@@ -20,20 +20,19 @@ package org.elasticsearch.search.aggregations.metrics.stats;
 
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
-import org.elasticsearch.common.xcontent.XContentObject;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
+import org.elasticsearch.search.aggregations.CommonJsonField;
 import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
+import org.elasticsearch.search.aggregations.metrics.stats.extended.InternalExtendedStats;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatterStreams;
 
 import java.io.IOException;
 
 /**
-*
-*/
+ *
+ */
 public class InternalStats extends InternalNumericMetricsAggregation.MultiValue implements Stats {
 
     public final static Type TYPE = new Type("stats");
@@ -47,24 +46,52 @@ public class InternalStats extends InternalNumericMetricsAggregation.MultiValue 
         }
 
         @Override
-        public InternalAggregation readResult(XContentObject in) {
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalStats result = new InternalStats();
             result.readFrom(in);
             return result;
         }
     };
 
-    public void readFrom(XContentObject in) {
-        throw new UnsupportedOperationException();
+
+    public void readFrom(XContentObject in) throws IOException {
+        this.name = in.get(CommonJsonField._name);
+        XContentHelper.populate(in, InternalStats.Metrics.values(), this);
     }
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
     }
 
-    enum Metrics {
+    enum Metrics implements XContentObjectParseable<InternalStats> {
 
-        count, sum, min, max, avg;
+        count {
+            @Override
+            public void apply(XContentObject source, InternalStats object) throws IOException {
+                object.count = source.getAsInt(this, 0);
+            }
+        }, sum {
+            @Override
+            public void apply(XContentObject source, InternalStats object) throws IOException {
+                object.sum = source.getAsDouble(this, 0D);
+            }
+        }, min {
+            @Override
+            public void apply(XContentObject source, InternalStats object) throws IOException {
+                object.min = source.getAsDouble(this, 0D);
+            }
+        }, max {
+            @Override
+            public void apply(XContentObject source, InternalStats object) throws IOException {
+                object.max = source.getAsDouble(this, 0D);
+            }
+        }, avg {
+            @Override
+            public void apply(XContentObject source, InternalStats object) throws IOException {
+                // derived
+            }
+        };
+
 
         public static Metrics resolve(String name) {
             return Metrics.valueOf(name);
@@ -76,7 +103,8 @@ public class InternalStats extends InternalNumericMetricsAggregation.MultiValue 
     protected double max;
     protected double sum;
 
-    protected InternalStats() {} // for serialization
+    protected InternalStats() {
+    } // for serialization
 
     public InternalStats(String name, long count, double sum, double min, double max) {
         super(name);
@@ -120,11 +148,16 @@ public class InternalStats extends InternalNumericMetricsAggregation.MultiValue 
     public double value(String name) {
         Metrics metrics = Metrics.valueOf(name);
         switch (metrics) {
-            case min: return this.min;
-            case max: return this.max;
-            case avg: return this.getAvg();
-            case count: return this.count;
-            case sum: return this.sum;
+            case min:
+                return this.min;
+            case max:
+                return this.max;
+            case avg:
+                return this.getAvg();
+            case count:
+                return this.count;
+            case sum:
+                return this.sum;
             default:
                 throw new IllegalArgumentException("Unknown value [" + name + "] in common stats aggregation");
         }

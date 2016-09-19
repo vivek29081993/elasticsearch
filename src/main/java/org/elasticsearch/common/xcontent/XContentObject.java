@@ -63,10 +63,25 @@ public interface XContentObject {
     /**
      * Returns the Double value associated with the key.
      *
+     * @return The value, <tt>null</tt> if it does not exists.
+     */
+    Double getAsDouble(Enum key);
+
+    /**
+     * Returns the Double value associated with the key.
+     *
      * @return The value for the given key. If it does not exists,
      * returns the default value provided.
      */
     Double getAsDouble(String key, Double defaultValue);
+
+    /**
+     * Returns the Double value associated with the key.
+     *
+     * @return The value for the given key. If it does not exists,
+     * returns the default value provided.
+     */
+    Double getAsDouble(Enum key, Double defaultValue);
 
     /**
      * Returns the Boolean value associated with the key.
@@ -97,6 +112,14 @@ public interface XContentObject {
      * returns the default value provided.
      */
     Float getAsFloat(String key, Float defaultValue);
+
+    /**
+     * Returns the Float value associated with the key.
+     *
+     * @return The value for the given key. If it does not exists,
+     * returns the default value provided.
+     */
+    Float getAsFloat(Enum key, Float defaultValue);
 
     /**
      * Returns the Long value associated with the key.
@@ -165,6 +188,13 @@ public interface XContentObject {
      * @return The value, <tt>null</tt> if it does not exists.
      */
     XContentObject getAsXContentObject(String key);
+
+    /**
+     * Returns the XContentObject value associated with the key.
+     *
+     * @return The value, <tt>null</tt> if it does not exists.
+     */
+    XContentObject getAsXContentObject(Enum key);
 
     /**
      * Returns the number of key-value mappings in this map.  If the
@@ -263,6 +293,11 @@ public interface XContentObject {
     <T> Map<T,XContentObject> getAsXContentObjectsMap(Enum key);
 
     <V> Map<String, V> getAsMap(String key);
+    <V> Map<String, V> getAsMap(Enum key);
 
     boolean containsKey(Enum key);
+
+    Float getAsFloat(Enum key);
+
+
 }

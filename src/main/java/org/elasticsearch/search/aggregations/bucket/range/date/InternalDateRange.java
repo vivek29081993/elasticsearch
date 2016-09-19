@@ -49,7 +49,7 @@ public class InternalDateRange extends InternalRange<InternalDateRange.Bucket> i
         }
 
         @Override
-        public InternalAggregation readResult(XContentObject in) {
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalDateRange ranges = new InternalDateRange();
             ranges.readFrom(in);
             return ranges;

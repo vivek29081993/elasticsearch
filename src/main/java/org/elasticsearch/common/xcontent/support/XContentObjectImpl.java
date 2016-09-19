@@ -88,6 +88,11 @@ public class XContentObjectImpl implements XContentObject {
     }
 
     @Override
+    public Double getAsDouble(Enum key) {
+        return getAsDouble(key.name());
+    }
+
+    @Override
     public Double getAsDouble(String key, Double defaultValue) {
         Double value = getAsDouble(key);
         if (value == null) {
@@ -95,7 +100,12 @@ public class XContentObjectImpl implements XContentObject {
         }
         return value;
     }
-    
+
+    @Override
+    public Double getAsDouble(Enum key, Double defaultValue) {
+        return getAsDouble(key.name(), defaultValue);
+    }
+
     @Override
     public Float getAsFloat(String key) {
         Object value = this.internalMap.get(key);
@@ -119,6 +129,11 @@ public class XContentObjectImpl implements XContentObject {
             return defaultValue;
         }
         return value;
+    }
+
+    @Override
+    public Float getAsFloat(Enum key, Float defaultValue) {
+        return getAsFloat(key.name(), defaultValue);
     }
 
     @Override
@@ -203,6 +218,11 @@ public class XContentObjectImpl implements XContentObject {
         }
     }
 
+    @Override
+    public XContentObject getAsXContentObject(Enum key) {
+        return getAsXContentObject(key.name());
+    }
+
 
     @Override
     public int size() {
@@ -222,6 +242,11 @@ public class XContentObjectImpl implements XContentObject {
     @Override
     public boolean containsKey(Enum key) {
         return containsKey(key.name());
+    }
+
+    @Override
+    public Float getAsFloat(Enum key) {
+        return getAsFloat(key.name());
     }
 
     @Override
@@ -300,6 +325,11 @@ public class XContentObjectImpl implements XContentObject {
         catch (ClassCastException e) {
             throw new XContentObjectValueException(List.class, key,  value, e);
         }
+    }
+
+    @Override
+    public <V> Map<String, V> getAsMap(Enum key) {
+        return getAsMap(key.name());
     }
 
 

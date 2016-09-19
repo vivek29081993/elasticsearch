@@ -26,7 +26,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
-import org.elasticsearch.search.aggregations.JsonField;
+import org.elasticsearch.search.aggregations.CommonJsonField;
 import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatterStreams;
 
@@ -56,8 +56,8 @@ public final class InternalCardinality extends InternalNumericMetricsAggregation
     };
 
     public void readFrom(XContentObject in) throws IOException {
-        name = in.get(JsonField._name);
-        value = in.getAsLong(JsonField.value, null);
+        name = in.get(CommonJsonField._name);
+        value = in.getAsLong(CommonJsonField.value, null);
     }
 
     public static void registerStreams() {

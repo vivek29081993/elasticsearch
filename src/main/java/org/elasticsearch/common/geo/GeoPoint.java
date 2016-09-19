@@ -20,6 +20,8 @@
 package org.elasticsearch.common.geo;
 
 
+import org.elasticsearch.common.xcontent.XContentObject;
+
 /**
  *
  */
@@ -133,6 +135,11 @@ public final class GeoPoint {
     public static GeoPoint parseFromLatLon(String latLon) {
         GeoPoint point = new GeoPoint();
         point.resetFromString(latLon);
+        return point;
+    }
+
+    public static GeoPoint valueOf(XContentObject in) {
+        GeoPoint point = new GeoPoint(in.getAsDouble("lat"), in.getAsDouble("lon"));
         return point;
     }
 }

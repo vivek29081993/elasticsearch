@@ -193,7 +193,7 @@ public class InternalAggregations implements Aggregations, ToXContent, Streamabl
     public void readFrom(XContentObject in) throws IOException {
         List<XContentObject> aggs = null;
         for (String key : in.keySet()) {
-            if (JsonField.contains(key)) {
+            if (CommonJsonField.contains(key)) {
                 continue;
             }
             if (in.isXContentObject(key)) {
@@ -201,7 +201,7 @@ public class InternalAggregations implements Aggregations, ToXContent, Streamabl
                     aggs = Lists.newArrayList();
                 }
                 XContentObject asXContentObject = in.getAsXContentObject(key);
-                asXContentObject.put(JsonField._name, key);
+                asXContentObject.put(CommonJsonField._name, key);
                 aggs.add(asXContentObject);
             }
         }
@@ -210,7 +210,7 @@ public class InternalAggregations implements Aggregations, ToXContent, Streamabl
         } else {
             aggregations = Lists.newArrayListWithCapacity(aggs.size());
             for (XContentObject agg : aggs) {
-                String type = agg.get(JsonField._type);
+                String type = agg.get(CommonJsonField._type);
                 AggregationStreams.Stream stream = AggregationStreams.stream(new BytesArray(type));
                 InternalAggregation internalAggregation = stream.readResult(agg);
                 aggregations.add(internalAggregation);

@@ -18,8 +18,9 @@
  */
 package org.elasticsearch.client.rest;
 
-import com.carrotsearch.ant.tasks.junit4.dependencies.com.google.common.collect.Lists;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -38,11 +39,15 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.QuerySourceBuilder;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.IdsQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.aggregations.*;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.bucket.children.Children;
 import org.elasticsearch.search.aggregations.bucket.children.ChildrenBuilder;
 import org.elasticsearch.search.aggregations.bucket.filter.Filter;
@@ -51,15 +56,21 @@ import org.elasticsearch.search.aggregations.bucket.global.Global;
 import org.elasticsearch.search.aggregations.bucket.missing.Missing;
 import org.elasticsearch.search.aggregations.bucket.nested.Nested;
 import org.elasticsearch.search.aggregations.bucket.nested.NestedBuilder;
+import org.elasticsearch.search.aggregations.bucket.range.Range;
+import org.elasticsearch.search.aggregations.bucket.range.ipv4.IPv4Range;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.avg.Avg;
 import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality;
+import org.elasticsearch.search.aggregations.metrics.geobounds.GeoBounds;
 import org.elasticsearch.search.aggregations.metrics.max.Max;
 import org.elasticsearch.search.aggregations.metrics.min.Min;
 import org.elasticsearch.search.aggregations.metrics.percentiles.Percentile;
 import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
 import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
+import org.elasticsearch.search.aggregations.metrics.stats.Stats;
+import org.elasticsearch.search.aggregations.metrics.stats.extended.ExtendedStats;
 import org.elasticsearch.search.aggregations.metrics.sum.Sum;
+import org.elasticsearch.search.aggregations.metrics.tophits.TopHits;
 import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
 import org.elasticsearch.search.sort.SortOrder;
 import org.joda.time.DateTime;
@@ -635,6 +646,183 @@ public class RestClientTest {
         assertEquals(3, percentileMap.size());
     }
 
+    @Test
+    public void testSearchWithRangeAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        String maxKey = "1toMax";
+        search.addAggregation(AggregationBuilders.range(name).field("amount")
+                .addRange(0, 1)
+                .addRange(maxKey, 1, Integer.MAX_VALUE));
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        Range range = aggregations.get(name);
+        Range.Bucket oneToMaxBucket = range.getBucketByKey(maxKey);
+        assertNotNull(oneToMaxBucket);
+
+        Collection<? extends Range.Bucket> buckets = range.getBuckets();
+        assertNotNull(buckets);
+
+    }
+
+    @Test
+    public void testSearchWithDateRangeAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        String minKey = "first";
+        search.addAggregation(AggregationBuilders.dateRange(name).field("datePretty")
+                .addRange(minKey, new DateTime().minusDays(500), new DateTime().minusDays(400))
+                .addRange(new DateTime().minusDays(400), new DateTime().minusDays(300))
+                .addRange(new DateTime().minusDays(300), new DateTime().minusDays(200))
+                .addRange(new DateTime().minusDays(200), new DateTime().minusDays(100))
+                .addRange(new DateTime().minusDays(100), new DateTime().minusDays(0)));
+
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        Range range = aggregations.get(name);
+        Range.Bucket oneToMaxBucket = range.getBucketByKey(minKey);
+        assertNotNull(oneToMaxBucket);
+
+        Collection<? extends Range.Bucket> buckets = range.getBuckets();
+        assertNotNull(buckets);
+
+    }
+
+    @Test
+    public void testSearchWithTopHitsAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.addAggregation(AggregationBuilders.topHits(name).addFieldDataField("datePretty"));
+
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        TopHits topHits = aggregations.get(name);
+        assertNotNull(topHits);
+
+        SearchHits hits = topHits.getHits();
+        assertTrue(hits.getTotalHits() > 0);
+        assertTrue(hits.getMaxScore() > 0);
+
+        assertNotNull(hits);
+        assertTrue(hits.hits().length > 0);
+        for (SearchHit hit : hits.hits()) {
+            assertTrue(hit.getScore() > 0);
+            assertNotNull(hit.getId());
+            assertNotNull(hit.getFields());
+            assertNotNull(hit.sourceAsMap());
+        }
+
+    }
+
+    @Test
+    public void testSearchWithStatsAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.addAggregation(AggregationBuilders.stats(name).field("amount"));
+
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        Stats stats = aggregations.get(name);
+        assertNotNull(stats);
+        assertTrue(stats.getAvg() > 0);
+        assertTrue(stats.getMax() != 0);
+        assertTrue(stats.getMin() < stats.getMax());
+        assertTrue(stats.getCount() > 0);
+        assertTrue(stats.getSum() > 0);
+    }
+
+    @Test
+    public void testSearchWithExtendedStatsAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.addAggregation(AggregationBuilders.extendedStats(name).field("amount"));
+
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        ExtendedStats stats = aggregations.get(name);
+        assertNotNull(stats);
+        assertTrue(stats.getAvg() > 0);
+        assertTrue(stats.getMax() != 0);
+        assertTrue(stats.getMin() < stats.getMax());
+        assertTrue(stats.getCount() > 0);
+        assertTrue(stats.getSum() > 0);
+        assertTrue(stats.getStdDeviation() != 0);
+        assertTrue(stats.getSumOfSquares() != 0);
+        assertTrue(stats.getVariance() != 0);
+        assertTrue(stats.getStdDeviationBound(ExtendedStats.Bounds.UPPER) != 0);
+
+    }
+
+    @Test
+    public void testSearchWithIpRangeAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        String mask = "255.255.0.0/32";
+        search.addAggregation(AggregationBuilders.ipRange(name).field("ipAddress").addMaskRange(mask));
+
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        IPv4Range iPv4Range = aggregations.get(name);
+        assertNotNull(iPv4Range);
+        IPv4Range.Bucket bucketByKey = iPv4Range.getBucketByKey(mask);
+        assertNotNull(bucketByKey);
+    }
+
+    @Test
+    public void testSearchWithGeoBoundsAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.addAggregation(AggregationBuilders.geoBounds(name).field("currentLocation"));
+
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        GeoBounds geoBounds = aggregations.get(name);
+        assertNotNull(geoBounds);
+        validate(geoBounds.topLeft());
+        validate(geoBounds.bottomRight());
+    }
+
+    private void validate(GeoPoint topLeft) {
+        assertNotNull(topLeft);
+        assertTrue(topLeft.getLat() != 0);
+        assertTrue(topLeft.getLon() != 0);
+    }
+
 
     private List<IndexResponse> indexDocument(int numberOfDocs) throws InterruptedException, ExecutionException {
         List<IndexResponse> responses = Lists.newArrayList();
@@ -687,9 +875,20 @@ public class RestClientTest {
         String id = UUID.randomUUID().toString();
         IndexRequest request = new IndexRequest(TEST_INDEX, STATS_TYPE, id);
         Map<String, Object> source = Maps.newHashMap();
-        source.put("datePretty", "2016-02-28T05:30:00+05:30");
+        source.put("datePretty", new DateTime().minusDays(Math.abs(new Random().nextInt() % 500)));
         source.put("color", randomColor().name());
         source.put("amount", Math.abs(new Random().nextDouble()));
+        Map<String, Object> reach = Maps.newHashMap();
+        reach.put("type", "point");
+        reach.put("coordinates", Arrays.asList(-1 * Math.abs(new Random().nextDouble() % 300), Math.abs(new Random().nextDouble() % 300)));
+        source.put("reach", reach);
+
+        Map<String, Object> latLon = Maps.newLinkedHashMap();
+        latLon.put("lat", -1 * Math.abs(new Random().nextInt() % 360));
+        latLon.put("lon", Math.abs(new Random().nextInt() % 360));
+        source.put("currentLocation", latLon);
+        source.put("ipAddress", Joiner.on('.').join(Math.abs(new Random().nextInt() % 255), Math.abs(new Random().nextInt() % 255), Math.abs(new Random().nextInt() % 255), Math.abs(new Random().nextInt() % 255)));
+
         Map<String, Object> author = Maps.newHashMap();
         author.put("name", randomName());
         List<Map<String, Object>> books = Lists.newArrayList();

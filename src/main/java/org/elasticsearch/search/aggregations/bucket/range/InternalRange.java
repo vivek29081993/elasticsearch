@@ -22,15 +22,11 @@ import com.google.common.collect.Lists;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.StringText;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentObject;
-import org.elasticsearch.search.aggregations.AggregationStreams;
-import org.elasticsearch.search.aggregations.Aggregations;
-import org.elasticsearch.search.aggregations.InternalAggregation;
-import org.elasticsearch.search.aggregations.InternalAggregations;
+import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatter;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatterStreams;
 
@@ -55,16 +51,13 @@ public class InternalRange<B extends InternalRange.Bucket> extends InternalAggre
         }
 
         @Override
-        public InternalAggregation readResult(XContentObject in) {
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalRange ranges = new InternalRange();
             ranges.readFrom(in);
             return ranges;
         }
     };
 
-    public void readFrom(XContentObject in) {
-        throw new UnsupportedOperationException();
-    }
 
     public static void registerStream() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
@@ -242,6 +235,24 @@ public class InternalRange<B extends InternalRange.Bucket> extends InternalAggre
             ranges.add((B) rangeList[i].get(0).reduce(rangeList[i], reduceContext));
         }
         return getFactory().create(name, ranges, formatter, keyed);
+    }
+
+    public void readFrom(XContentObject in) throws IOException {
+        this.name = in.get(CommonJsonField._name);
+        List<XContentObject> bucketsXContent = in.getAsXContentObjects(CommonJsonField.buckets);
+        List<B> buckets = Lists.newArrayListWithCapacity(bucketsXContent.size());
+        for (XContentObject xBucket : bucketsXContent) {
+            InternalAggregations aggregations = InternalAggregations.readAggregations(xBucket);
+            ValueFormatter formatter = null;
+            buckets.add(getFactory().createBucket(xBucket.get(CommonJsonField.key),
+                    xBucket.getAsLong(CommonJsonField.from),
+                    xBucket.getAsLong(CommonJsonField.to),
+                    xBucket.getAsLong(CommonJsonField.doc_count),
+                    aggregations, formatter));
+        }
+        this.ranges = buckets;
+        this.rangeMap = null;
+
     }
 
     @Override

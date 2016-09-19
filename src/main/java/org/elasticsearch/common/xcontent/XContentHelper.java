@@ -488,7 +488,7 @@ public class XContentHelper {
     }
 
     public static <T> void populate(XContentParser parser, Map<String, XContentParsable<T>> fields, T o) throws IOException {
-        XContentParser.Token token = null;
+        XContentParser.Token token;
         if (parser.currentToken() == null) {
             token = parser.nextToken();
         }
@@ -509,5 +509,11 @@ public class XContentHelper {
             }
         }
 
+    }
+
+    public static <T> void populate(XContentObject source, XContentObjectParseable<T>[] fields, T o) throws IOException {
+        for (XContentObjectParseable<T> field : fields) {
+            field.apply(source, o);
+        }
     }
 }

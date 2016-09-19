@@ -26,6 +26,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
+import org.elasticsearch.search.aggregations.CommonJsonField;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.metrics.InternalMetricsAggregation;
 
@@ -49,10 +50,6 @@ public class InternalGeoBounds extends InternalMetricsAggregation implements Geo
             return result;
         }
     };
-
-    public void readFrom(XContentObject in) {
-        throw new UnsupportedOperationException();
-    }
 
     private double top;
     private double bottom;
@@ -135,6 +132,16 @@ public class InternalGeoBounds extends InternalMetricsAggregation implements Geo
         return builder;
     }
 
+
+    enum JsonField {
+        top_left, bottom_right, bounds
+    }
+
+    public void readFrom(XContentObject in) {
+        this.name = in.get(CommonJsonField._name);
+        this.boundingBox = BoundingBox.readFrom(in.getAsXContentObject(JsonField.bounds));
+    }
+
     @Override
     public void readFrom(StreamInput in) throws IOException {
         name = in.readString();
@@ -179,9 +186,20 @@ public class InternalGeoBounds extends InternalMetricsAggregation implements Geo
         public GeoPoint bottomRight() {
             return bottomRight;
         }
+
+        public static BoundingBox readFrom(XContentObject in) {
+            GeoPoint topLeft = GeoPoint.valueOf(in.getAsXContentObject(JsonField.top_left));
+            GeoPoint bottomRight = GeoPoint.valueOf(in.getAsXContentObject(JsonField.bottom_right));
+            return new BoundingBox(topLeft, bottomRight);
+        }
     }
-    
+
+    private BoundingBox boundingBox;
     private BoundingBox resolveBoundingBox() {
+        if (boundingBox != null) {
+            return boundingBox;
+        }
+
         if (Double.isInfinite(top)) {
             return null;
         } else if (Double.isInfinite(posLeft)) {

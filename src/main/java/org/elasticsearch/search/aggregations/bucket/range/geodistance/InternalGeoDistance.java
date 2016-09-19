@@ -47,7 +47,7 @@ public class InternalGeoDistance extends InternalRange<InternalGeoDistance.Bucke
         }
 
         @Override
-        public InternalAggregation readResult(XContentObject in) {
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalGeoDistance geoDistance = new InternalGeoDistance();
             geoDistance.readFrom(in);
             return geoDistance;

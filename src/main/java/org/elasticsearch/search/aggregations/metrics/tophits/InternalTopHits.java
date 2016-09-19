@@ -26,12 +26,12 @@ import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.Lucene;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
+import org.elasticsearch.search.aggregations.CommonJsonField;
 import org.elasticsearch.search.aggregations.metrics.InternalMetricsAggregation;
 import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
@@ -54,16 +54,13 @@ public class InternalTopHits extends InternalMetricsAggregation implements TopHi
         }
 
         @Override
-        public InternalAggregation readResult(XContentObject in) {
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalTopHits buckets = new InternalTopHits();
             buckets.readFrom(in);
             return buckets;
         }
     };
 
-    public void readFrom(XContentObject in) {
-        throw new UnsupportedOperationException();
-    }
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
@@ -139,6 +136,12 @@ public class InternalTopHits extends InternalMetricsAggregation implements TopHi
         } catch (IOException e) {
             throw ExceptionsHelper.convertToElastic(e);
         }
+    }
+
+    public void readFrom(XContentObject in) throws IOException {
+        this.name = in.get(CommonJsonField._name);
+        searchHits = InternalSearchHits.readSearchHits(in);
+
     }
 
     @Override
