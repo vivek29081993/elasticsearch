@@ -23,6 +23,8 @@ import com.google.common.collect.Lists;
 import org.apache.lucene.util.CollectionUtil;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.geo.GeoHashUtils;
+import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.rounding.Rounding;
@@ -32,10 +34,8 @@ import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.util.LongObjectPagedHashMap;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentObject;
-import org.elasticsearch.search.aggregations.AggregationStreams;
-import org.elasticsearch.search.aggregations.Aggregations;
-import org.elasticsearch.search.aggregations.InternalAggregation;
-import org.elasticsearch.search.aggregations.InternalAggregations;
+import org.elasticsearch.search.aggregations.*;
+import org.elasticsearch.search.aggregations.bucket.geogrid.InternalGeoHashGrid;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatter;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatterStreams;
 
@@ -61,16 +61,13 @@ public class InternalHistogram<B extends InternalHistogram.Bucket> extends Inter
         }
 
         @Override
-        public InternalAggregation readResult(XContentObject in) {
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalHistogram histogram = new InternalHistogram();
             histogram.readFrom(in);
             return histogram;
         }
     };
 
-    public void readFrom(XContentObject in) {
-        throw new UnsupportedOperationException();
-    }
 
     public static void registerStream() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
@@ -363,6 +360,20 @@ public class InternalHistogram<B extends InternalHistogram.Bucket> extends Inter
 
     protected B createBucket(long key, long docCount, InternalAggregations aggregations, @Nullable ValueFormatter formatter) {
         return (B) new InternalHistogram.Bucket(key, docCount, formatter, aggregations);
+    }
+
+    public void readFrom(XContentObject in) throws IOException {
+        name = in.get(CommonJsonField._name);
+        List<XContentObject> bucketsXContent = in.getAsXContentObjects(CommonJsonField.buckets);
+        List<B> buckets = Lists.newArrayListWithCapacity(bucketsXContent.size());
+        ValueFormatter formatter = null;
+        for (XContentObject xBucket: bucketsXContent) {
+            InternalAggregations aggregations = InternalAggregations.readAggregations(xBucket);
+            String key = xBucket.get(CommonJsonField.key);
+            buckets.add(createBucket(Long.parseLong(key), xBucket.getAsLong(CommonJsonField.doc_count), aggregations, formatter));
+        }
+        this.buckets = buckets;
+        this.bucketsMap = null;
     }
 
     @Override

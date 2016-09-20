@@ -36,28 +36,38 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchScrollRequestBuilder;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.support.QuerySourceBuilder;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.geo.GeoPoint;
+import org.elasticsearch.common.unit.DistanceUnit;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.IdsQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.children.Children;
 import org.elasticsearch.search.aggregations.bucket.children.ChildrenBuilder;
 import org.elasticsearch.search.aggregations.bucket.filter.Filter;
 import org.elasticsearch.search.aggregations.bucket.filters.Filters;
+import org.elasticsearch.search.aggregations.bucket.geogrid.GeoHashGrid;
 import org.elasticsearch.search.aggregations.bucket.global.Global;
+import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.bucket.missing.Missing;
 import org.elasticsearch.search.aggregations.bucket.nested.Nested;
 import org.elasticsearch.search.aggregations.bucket.nested.NestedBuilder;
 import org.elasticsearch.search.aggregations.bucket.range.Range;
+import org.elasticsearch.search.aggregations.bucket.range.geodistance.GeoDistance;
 import org.elasticsearch.search.aggregations.bucket.range.ipv4.IPv4Range;
+import org.elasticsearch.search.aggregations.bucket.significant.SignificantTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.avg.Avg;
 import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality;
@@ -67,6 +77,7 @@ import org.elasticsearch.search.aggregations.metrics.min.Min;
 import org.elasticsearch.search.aggregations.metrics.percentiles.Percentile;
 import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
 import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
+import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric;
 import org.elasticsearch.search.aggregations.metrics.stats.Stats;
 import org.elasticsearch.search.aggregations.metrics.stats.extended.ExtendedStats;
 import org.elasticsearch.search.aggregations.metrics.sum.Sum;
@@ -813,11 +824,243 @@ public class RestClientTest {
         assertNotNull(aggregations);
         GeoBounds geoBounds = aggregations.get(name);
         assertNotNull(geoBounds);
-        validate(geoBounds.topLeft());
-        validate(geoBounds.bottomRight());
+        validateRangeBucket(geoBounds.topLeft());
+        validateRangeBucket(geoBounds.bottomRight());
     }
 
-    private void validate(GeoPoint topLeft) {
+    @Test
+    public void testSearchWithGeoDistanceAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.addAggregation(AggregationBuilders.geoDistance(name)
+                .field("currentLocation")
+                .unit(DistanceUnit.MILES)
+                .addRange(0, 2000)
+                .lat(40)
+                .lon(-71.34)
+                .distanceType(org.elasticsearch.common.geo.GeoDistance.PLANE));
+
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        GeoDistance geoDistance = aggregations.get(name);
+        assertNotNull(geoDistance);
+        Collection<? extends GeoDistance.Bucket> buckets = geoDistance.getBuckets();
+        assertNotNull(buckets);
+        validate(buckets);
+    }
+
+    @Test
+    public void testSearchWithGeoHashGridAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.addAggregation(AggregationBuilders.geohashGrid(name)
+                .field("currentLocation")
+                .precision(5)
+                .size(5));
+
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        GeoHashGrid geoHashGrid = aggregations.get(name);
+        assertNotNull(geoHashGrid);
+        Collection<GeoHashGrid.Bucket> buckets = geoHashGrid.getBuckets();
+        assertNotNull(buckets);
+        validate(buckets);
+    }
+
+    @Test
+    public void testSearchWithHistogramAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.addAggregation(AggregationBuilders.histogram(name)
+                .field("amount")
+                .interval(1000));
+
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        Histogram histogram = aggregations.get(name);
+        assertNotNull(histogram);
+        List<? extends Histogram.Bucket> buckets = histogram.getBuckets();
+        validate(buckets);
+
+
+    }
+    @Test
+    public void testSearchWithDateHistogramAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.addAggregation(AggregationBuilders.dateHistogram(name)
+                .field("datePretty")
+                .interval(1000));
+
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        Histogram histogram = aggregations.get(name);
+        assertNotNull(histogram);
+        List<? extends Histogram.Bucket> buckets = histogram.getBuckets();
+        validate(buckets);
+    }
+
+    @Test
+    public void testSearchWithSignificantStringTermsAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(1000);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.setQuery(QueryBuilders.termQuery("genre", "action"));
+        search.addAggregation(AggregationBuilders.significantTerms(name)
+                .field("color")
+                .size(10));
+
+        search.setSize(10); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        SignificantTerms significantTerms = aggregations.get(name);
+        assertNotNull(significantTerms);
+        for (MultiBucketsAggregation.Bucket bucket : significantTerms.getBuckets()) {
+            assertNotNull(bucket.getKeyAsText());
+            assertNotNull(bucket.getKey());
+        }
+    }
+
+    @Test
+    public void testSearchWithSignificantLongTermsAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(1000);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.setQuery(QueryBuilders.termQuery("genre", "action"));
+        search.addAggregation(AggregationBuilders.significantTerms(name)
+                .minDocCount(1)
+                .field("sentiment")
+                .size(8));
+
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        SignificantTerms significantTerms = aggregations.get(name);
+        assertNotNull(significantTerms);
+        for (MultiBucketsAggregation.Bucket bucket : significantTerms.getBuckets()) {
+            assertNotNull(bucket.getKeyAsText());
+            assertNotNull(bucket.getKey());
+        }
+    }
+
+    @Test
+    public void testSearchWithFiltersAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.setQuery(QueryBuilders.termQuery("genre", "action"));
+        search.addAggregation(AggregationBuilders.filters(name)
+                .filter("sentiment_filter", FilterBuilders.termFilter("sentiment", 5))
+                .filter("red_filter", FilterBuilders.termFilter("color", Color.red.name())));
+
+
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        Filters filters = aggregations.get(name);
+        assertNotNull(filters);
+        validate(filters.getBuckets());
+
+    }
+    @Test
+    public void testSearchWithScriptedMetricAggregation() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        String name = "agg";
+        search.addAggregation(AggregationBuilders.scriptedMetric(name)
+                .initScript("_agg['positive_sentiment'] = []")
+                .mapScript(" if (doc['sentiment'].value > 4) { _agg.positive_sentiment.add(doc['sentiment']) } "));
+
+
+        search.setSize(0); // no hits please
+
+        SearchResponse response = client.search(search.request()).get();
+        Aggregations aggregations = response.getAggregations();
+        assertNotNull(aggregations);
+        ScriptedMetric scriptedMetric = aggregations.get(name);
+        assertNotNull(scriptedMetric);
+
+        Object aggregation = scriptedMetric.aggregation();
+        assertNotNull(aggregation);
+    }
+
+    @Test
+    public void testScanAndScroll() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        TimeValue scrollKeepAlive = TimeValue.timeValueHours(1);
+        SearchResponse response = client.prepareSearch(TEST_INDEX)
+                .setSearchType(SearchType.SCAN)
+                .setScroll(scrollKeepAlive)
+                .setQuery(QueryBuilders.termQuery("color", Color.red))
+                .setSize(2).execute().actionGet();
+
+        assertNotNull(response.getScrollId());
+
+        SearchResponse response2 = client.prepareSearchScroll(response.getScrollId()).setScroll(scrollKeepAlive).execute().actionGet();
+        validateScrollResponse(response2);
+
+        client.prepareClearScroll().addScrollId(response.getScrollId()).get();
+        SearchResponse response3 = client.prepareSearchScroll(response.getScrollId()).setScroll(scrollKeepAlive).execute().actionGet();
+        assertEquals(0, response3.getHits().hits().length);
+
+    }
+
+
+    private void validateScrollResponse(SearchResponse response) {
+        assertNotNull(response);
+        assertNotNull(response.getHits());
+        assertNotNull(response.getHits().hits());
+        assertEquals(2, response.getHits().hits().length);
+    }
+
+
+    private void validate(Collection<? extends MultiBucketsAggregation.Bucket> buckets) {
+        for (MultiBucketsAggregation.Bucket bucket : buckets) {
+            assertTrue(bucket.getDocCount() > 0);
+            assertNotNull(bucket.getKeyAsText());
+            assertNotNull(bucket.getKey());
+            assertTrue(bucket.getDocCount() > 0);
+
+            if (bucket instanceof Range.Bucket) {
+                Range.Bucket rangeBucket = (Range.Bucket) bucket;
+                assertNotNull(rangeBucket.getFrom());
+                assertNotNull(rangeBucket.getTo());
+            }
+        }
+    }
+
+    private void validateRangeBucket(GeoPoint topLeft) {
         assertNotNull(topLeft);
         assertTrue(topLeft.getLat() != 0);
         assertTrue(topLeft.getLon() != 0);
@@ -876,7 +1119,9 @@ public class RestClientTest {
         IndexRequest request = new IndexRequest(TEST_INDEX, STATS_TYPE, id);
         Map<String, Object> source = Maps.newHashMap();
         source.put("datePretty", new DateTime().minusDays(Math.abs(new Random().nextInt() % 500)));
+        source.put("sentiment", Math.abs(new Random().nextInt() % 10));
         source.put("color", randomColor().name());
+        source.put("genre", randomGenre().name());
         source.put("amount", Math.abs(new Random().nextDouble()));
         Map<String, Object> reach = Maps.newHashMap();
         reach.put("type", "point");

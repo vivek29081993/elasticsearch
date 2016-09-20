@@ -250,6 +250,16 @@ public class XContentObjectImpl implements XContentObject {
     }
 
     @Override
+    public Object getAsObject(String key) {
+        return internalMap.get(key);
+    }
+
+    @Override
+    public Object getAsObject(Enum key) {
+        return getAsObject(key.name());
+    }
+
+    @Override
     public Set<String> keySet() {
         return internalMap.keySet();
     }

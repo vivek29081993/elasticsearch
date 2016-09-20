@@ -18,8 +18,11 @@
  */
 package org.elasticsearch.search.aggregations.bucket.significant;
 
+import com.google.common.collect.Lists;
+import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
@@ -28,6 +31,7 @@ import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
+import org.elasticsearch.search.aggregations.CommonJsonField;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
 import org.elasticsearch.search.aggregations.bucket.significant.heuristics.SignificanceHeuristic;
@@ -56,15 +60,28 @@ public class SignificantLongTerms extends InternalSignificantTerms {
         }
 
         @Override
-        public InternalAggregation readResult(XContentObject in) {
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             SignificantLongTerms buckets = new SignificantLongTerms();
             buckets.readFrom(in);
             return buckets;
         }
     };
 
-    public void readFrom(XContentObject in) {
-        throw new UnsupportedOperationException();
+    public void readFrom(XContentObject in) throws IOException {
+        name = in.get(CommonJsonField._name);
+        List<XContentObject> bucketsXContent = in.getAsXContentObjects(CommonJsonField.buckets);
+        List<InternalSignificantTerms.Bucket> buckets = Lists.newArrayListWithCapacity(bucketsXContent.size());
+        for (XContentObject xBucket: bucketsXContent) {
+            InternalAggregations aggregations = InternalAggregations.readAggregations(xBucket);
+            Long key = xBucket.getAsLong(CommonJsonField.key);
+            long docCount = xBucket.getAsLong(CommonJsonField.doc_count);
+            long bgCount = xBucket.getAsLong("bg_count");
+            double score = xBucket.getAsDouble(CommonJsonField.score);
+            Bucket bucket = new Bucket(key, docCount, bgCount, aggregations, score);
+            buckets.add(bucket);
+        }
+        this.buckets = buckets;
+        this.bucketMap = null;
     }
 
     public static void registerStreams() {
@@ -79,6 +96,12 @@ public class SignificantLongTerms extends InternalSignificantTerms {
             super(subsetDf, subsetSize, supersetDf, supersetSize, aggregations);
             this.term = term;
         }
+
+        public Bucket(long term, long docCount, long bgCount, InternalAggregations aggregations, Double score) {
+            this(term, docCount, docCount, bgCount, bgCount, aggregations);
+            this.score = score;
+        }
+
 
         @Override
         public Text getKeyAsText() {

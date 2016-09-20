@@ -50,16 +50,12 @@ public class InternalDateHistogram extends InternalHistogram<InternalDateHistogr
         }
 
         @Override
-        public InternalAggregation readResult(XContentObject in) {
+        public InternalAggregation readResult(XContentObject in) throws IOException {
             InternalDateHistogram histogram = new InternalDateHistogram();
             histogram.readFrom(in);
             return histogram;
         }
     };
-
-    public void readFrom(XContentObject in) {
-        throw new UnsupportedOperationException();
-    }
 
     public static void registerStream() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
