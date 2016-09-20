@@ -20,6 +20,7 @@
 package org.elasticsearch.action.search;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.Maps;
 import org.apache.http.HttpEntity;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
@@ -35,6 +36,7 @@ import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.TimeValue;
@@ -660,5 +662,20 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
         else {
             return HttpUtils.EMPTY_ENTITY;
         }
+    }
+
+    @Override
+    public Map<String, String> getRestParams() {
+        MapBuilder<String, String> builder = MapBuilder.<String, String>newMapBuilder()
+                .putIfNotNull("routing", this.routing);
+
+        if (scroll != null) {
+            builder.put("scroll", scroll.keepAlive().toString());
+        }
+        if (searchType != null && searchType != SearchType.DEFAULT) {
+            builder.put("search_type", searchType.name().toLowerCase());
+        }
+
+        return builder.map();
     }
 }

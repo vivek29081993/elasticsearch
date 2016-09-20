@@ -27,6 +27,7 @@ import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.search.aggregations.AggregationStreams;
+import org.elasticsearch.search.aggregations.CommonJsonField;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.metrics.InternalMetricsAggregation;
 
@@ -56,9 +57,6 @@ public class InternalScriptedMetric extends InternalMetricsAggregation implement
         }
     };
 
-    private void readFrom(Settings in) {
-        throw new UnsupportedOperationException();
-    }
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
@@ -123,6 +121,12 @@ public class InternalScriptedMetric extends InternalMetricsAggregation implement
     @Override
     public Type type() {
         return TYPE;
+    }
+
+    @Override
+    public void readFrom(XContentObject in) throws IOException {
+        this.name = in.get(CommonJsonField._name);
+        aggregation = in.getAsObject(CommonJsonField.value);
     }
 
     @Override

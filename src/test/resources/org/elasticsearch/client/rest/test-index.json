@@ -9,6 +9,14 @@
           "type": "string",
           "index": "not_analyzed"
         },
+        "sentiment": {
+          "type": "long",
+          "index": "not_analyzed"
+        },
+        "genre": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
         "amount": {
           "type": "double",
           "index": "not_analyzed"

@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 import static com.google.common.collect.Maps.newHashMap;
+import static com.google.common.collect.Maps.newLinkedHashMap;
 
 /**
  *
@@ -38,14 +39,14 @@ public class MapBuilder<K, V> {
         return new MapBuilder<>(map);
     }
 
-    private Map<K, V> map = newHashMap();
+    private Map<K, V> map;
 
     public MapBuilder() {
-        this.map = newHashMap();
+        this.map = newLinkedHashMap();
     }
 
     public MapBuilder(Map<K, V> map) {
-        this.map = newHashMap(map);
+        this.map = newLinkedHashMap(map);
     }
 
     public MapBuilder<K, V> putAll(Map<K, V> map) {
@@ -55,6 +56,12 @@ public class MapBuilder<K, V> {
 
     public MapBuilder<K, V> put(K key, V value) {
         this.map.put(key, value);
+        return this;
+    }
+    public MapBuilder<K, V> putIfNotNull(K key, V value) {
+        if (value != null) {
+            this.map.put(key, value);
+        }
         return this;
     }
 
@@ -87,4 +94,6 @@ public class MapBuilder<K, V> {
     public ImmutableMap<K, V> immutableMap() {
         return ImmutableMap.copyOf(map);
     }
+
+
 }

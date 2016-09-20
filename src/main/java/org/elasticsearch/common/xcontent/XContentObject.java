@@ -20,6 +20,7 @@
 package org.elasticsearch.common.xcontent;
 
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.search.aggregations.CommonJsonField;
 
 import java.util.List;
 import java.util.Map;
@@ -300,4 +301,7 @@ public interface XContentObject {
     Float getAsFloat(Enum key);
 
 
+    Object getAsObject(String key);
+
+    Object getAsObject(Enum key);
 }

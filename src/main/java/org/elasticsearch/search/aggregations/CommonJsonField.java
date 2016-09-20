@@ -38,7 +38,8 @@ public enum CommonJsonField {
     from,
     from_as_string,
     to,
-    to_as_string;
+    to_as_string,
+    score;
 
     static Set<String> names = Sets.newHashSetWithExpectedSize(values().length);
 

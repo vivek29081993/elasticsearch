@@ -18,21 +18,18 @@
  */
 package org.elasticsearch.search.aggregations.bucket.geogrid;
 
+import com.google.common.collect.Lists;
 import org.apache.lucene.util.PriorityQueue;
 import org.elasticsearch.common.geo.GeoHashUtils;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.StringText;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.util.LongObjectPagedHashMap;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentObject;
-import org.elasticsearch.search.aggregations.AggregationStreams;
-import org.elasticsearch.search.aggregations.Aggregations;
-import org.elasticsearch.search.aggregations.InternalAggregation;
-import org.elasticsearch.search.aggregations.InternalAggregations;
+import org.elasticsearch.search.aggregations.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -61,10 +58,6 @@ public class InternalGeoHashGrid extends InternalAggregation implements GeoHashG
             return buckets;
         }
     };
-
-    private void readFrom(Settings in) {
-        throw new UnsupportedOperationException();
-    }
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
@@ -212,6 +205,22 @@ public class InternalGeoHashGrid extends InternalAggregation implements GeoHashG
             list[i] = ordered.pop();
         }
         return new InternalGeoHashGrid(getName(), requiredSize, Arrays.asList(list));
+    }
+
+    @Override
+    public void readFrom(XContentObject in) throws IOException {
+        this.name = in.get(CommonJsonField._name);
+        List<XContentObject> bucketsXContent = in.getAsXContentObjects(CommonJsonField.buckets);
+        List<Bucket> buckets = Lists.newArrayListWithCapacity(bucketsXContent.size());
+        for (XContentObject xBucket: bucketsXContent) {
+            InternalAggregations aggregations = InternalAggregations.readAggregations(xBucket);
+            String geoHash = xBucket.get(CommonJsonField.key);
+            GeoPoint geoPoint = GeoHashUtils.decode(geoHash);
+            long geoHashAsLong = GeoHashUtils.encodeAsLong(geoPoint.getLat(), geoPoint.getLon(), GeoHashUtils.PRECISION);
+            buckets.add(new Bucket(geoHashAsLong, xBucket.getAsLong(CommonJsonField.doc_count), aggregations));
+        }
+        this.buckets = buckets;
+        this.bucketMap = null;
     }
 
     @Override

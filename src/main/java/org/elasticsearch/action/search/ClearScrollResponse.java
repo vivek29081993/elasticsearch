@@ -19,18 +19,20 @@
 
 package org.elasticsearch.action.search;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.StatusToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static org.elasticsearch.rest.RestStatus.NOT_FOUND;
 import static org.elasticsearch.rest.RestStatus.OK;
+import static org.elasticsearch.search.internal.InternalSearchResponse.newInternalSearchResponse;
 
 /**
  */
@@ -93,4 +95,26 @@ public class ClearScrollResponse extends ActionResponse implements StatusToXCont
             out.writeVInt(numFreed);
         }
     }
+
+    enum JsonFields implements XContentParsable<ClearScrollResponse> {
+        succeeded {
+            @Override
+            public void apply(XContentParser parser, ClearScrollResponse response) throws IOException {
+                response.succeeded = parser.booleanValue();
+            }
+        };
+
+        static Map<String, XContentParsable<ClearScrollResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (ClearScrollResponse.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, ClearScrollResponse.JsonFields.fields, this);
+    }
+
 }
