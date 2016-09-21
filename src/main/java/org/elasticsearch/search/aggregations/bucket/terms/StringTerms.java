@@ -125,12 +125,12 @@ public class StringTerms extends InternalTerms {
     @Override
     public void readFrom(XContentObject in) throws IOException {
         this.name = in.get(CommonJsonField._name);
-        List<XContentObject> bucketsXContent = in.getAsXContentObjects(CommonJsonField.buckets);
+        List<XContentObject> bucketsXContent = in.getAsXContentObjectsOrEmpty(CommonJsonField.buckets);
         List<InternalTerms.Bucket> buckets = Lists.newArrayListWithCapacity(bucketsXContent.size());
         for (XContentObject xBucket : bucketsXContent) {
             InternalAggregations aggregations = InternalAggregations.readAggregations(xBucket);
             long bucketDocCountError = xBucket.getAsLong(InternalTerms.DOC_COUNT_ERROR_UPPER_BOUND_FIELD_NAME, 0L);
-            buckets.add(new Bucket(xBucket.getAsBytesRef(CommonJsonField.key).toBytesRef(), xBucket.getAsLong(CommonJsonField.doc_count), aggregations, showTermDocCountError, bucketDocCountError));
+            buckets.add(new Bucket(xBucket.getAsBytesReference(CommonJsonField.key).toBytesRef(), xBucket.getAsLong(CommonJsonField.doc_count), aggregations, showTermDocCountError, bucketDocCountError));
         }
         this.buckets = buckets;
         this.bucketMap = null;

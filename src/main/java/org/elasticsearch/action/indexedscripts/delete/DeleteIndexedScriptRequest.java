@@ -19,17 +19,25 @@
 
 package org.elasticsearch.action.indexedscripts.delete;
 
+import com.google.common.base.Joiner;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.support.IndicesOptions;
+import org.elasticsearch.common.collect.MapBuilder;
+import org.elasticsearch.common.inject.internal.Join;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.uid.Versions;
 import org.elasticsearch.index.VersionType;
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.script.ScriptService;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
@@ -163,4 +171,27 @@ public class DeleteIndexedScriptRequest extends ActionRequest<DeleteIndexedScrip
     public String toString() {
         return "delete {[" + ScriptService.SCRIPT_INDEX + "][" + scriptLang + "][" + id + "]}";
     }
+
+    @Override
+    public String getRestEndPoint() {
+        return Joiner.on('/').join("_scripts", scriptLang, id());
+    }
+
+    @Override
+    public Map<String, String> getRestParams() {
+        if (version != Versions.MATCH_ANY) {
+            MapBuilder<String, String> builder = MapBuilder.newMapBuilder();
+            builder.put("version", String.valueOf(this.version));
+            return builder.map();
+        }
+        else {
+            return super.getRestParams();
+        }
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.DELETE;
+    }
+
 }

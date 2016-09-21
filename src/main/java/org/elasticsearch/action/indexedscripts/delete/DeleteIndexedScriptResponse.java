@@ -19,11 +19,17 @@
 
 package org.elasticsearch.action.indexedscripts.delete;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.indexedscripts.put.PutIndexedScriptResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentParsable;
+import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * The response of the delete indexed script action.
@@ -105,4 +111,51 @@ public class DeleteIndexedScriptResponse extends ActionResponse {
         out.writeLong(version);
         out.writeBoolean(found);
     }
+
+    enum JsonFields implements XContentParsable<DeleteIndexedScriptResponse> {
+        _id {
+            @Override
+            public void apply(XContentParser parser, DeleteIndexedScriptResponse response) throws IOException {
+                response.id = parser.text();
+            }
+        },
+        _index {
+            @Override
+            public void apply(XContentParser parser, DeleteIndexedScriptResponse response) throws IOException {
+                response.index = parser.text();
+            }
+        },
+        _type {
+            @Override
+            public void apply(XContentParser parser, DeleteIndexedScriptResponse response) throws IOException {
+                response.type = parser.text();
+            }
+        },
+        found {
+            @Override
+            public void apply(XContentParser parser, DeleteIndexedScriptResponse response) throws IOException {
+                response.found = parser.booleanValue();
+            }
+        },
+        _version {
+            @Override
+            public void apply(XContentParser parser, DeleteIndexedScriptResponse response) throws IOException {
+                response.version = parser.longValue();
+            }
+        };
+
+
+        static Map<String, XContentParsable<DeleteIndexedScriptResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (DeleteIndexedScriptResponse.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, DeleteIndexedScriptResponse.JsonFields.fields, this);
+    }
+
 }

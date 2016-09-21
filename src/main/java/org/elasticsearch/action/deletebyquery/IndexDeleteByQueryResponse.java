@@ -19,14 +19,19 @@
 
 package org.elasticsearch.action.deletebyquery;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.ShardOperationFailedException;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.*;
+import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Delete by query response executed on a specific index.
@@ -108,5 +113,33 @@ public class IndexDeleteByQueryResponse extends ActionResponse {
         for (ShardOperationFailedException failure : failures) {
             failure.writeTo(out);
         }
+    }
+
+    enum JsonFields implements XContentObjectParseable<IndexDeleteByQueryResponse> {
+        _index {
+            @Override
+            public void apply(XContentObject source, IndexDeleteByQueryResponse response) throws IOException {
+                response.index = source.get(this);
+            }
+        },
+        _shards {
+            @Override
+            public void apply(XContentObject in, IndexDeleteByQueryResponse response) throws IOException {
+                XContentObject source = in.getAsXContentObject("_shards");
+                response.successfulShards = source.getAsInt("successful");
+                response.failedShards = source.getAsInt("failed");
+            }
+        };
+
+        static Map<String, XContentObjectParseable<IndexDeleteByQueryResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (IndexDeleteByQueryResponse.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    public void readFrom(XContentObject xContentObject) throws IOException {
+        XContentHelper.populate(xContentObject, JsonFields.values(), this);
     }
 }

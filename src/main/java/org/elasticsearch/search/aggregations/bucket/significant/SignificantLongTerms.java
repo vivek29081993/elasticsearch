@@ -19,13 +19,10 @@
 package org.elasticsearch.search.aggregations.bucket.significant;
 
 import com.google.common.collect.Lists;
-import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.Nullable;
-import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.StringText;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -69,7 +66,7 @@ public class SignificantLongTerms extends InternalSignificantTerms {
 
     public void readFrom(XContentObject in) throws IOException {
         name = in.get(CommonJsonField._name);
-        List<XContentObject> bucketsXContent = in.getAsXContentObjects(CommonJsonField.buckets);
+        List<XContentObject> bucketsXContent = in.getAsXContentObjectsOrEmpty(CommonJsonField.buckets);
         List<InternalSignificantTerms.Bucket> buckets = Lists.newArrayListWithCapacity(bucketsXContent.size());
         for (XContentObject xBucket: bucketsXContent) {
             InternalAggregations aggregations = InternalAggregations.readAggregations(xBucket);

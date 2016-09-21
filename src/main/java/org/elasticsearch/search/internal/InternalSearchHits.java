@@ -23,8 +23,6 @@ import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.elasticsearch.action.bulk.BulkItemResponse;
-import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.*;
@@ -251,7 +249,7 @@ public class InternalSearchHits implements SearchHits {
             }
             @Override
             public void apply(XContentObject object, InternalSearchHits hits) throws IOException {
-                List<XContentObject> hitsList = object.getAsXContentObjects(this);
+                List<XContentObject> hitsList = object.getAsXContentObjectsOrEmpty(this);
                 List<InternalSearchHit> items = Lists.newArrayListWithCapacity(hitsList.size());
                 for (XContentObject xContentObject : hitsList) {
                     InternalSearchHit item = new InternalSearchHit();

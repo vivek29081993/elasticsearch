@@ -19,14 +19,21 @@
 
 package org.elasticsearch.action.explain;
 
+import com.google.common.collect.Maps;
 import org.apache.lucene.search.Explanation;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentObject;
+import org.elasticsearch.common.xcontent.XContentParsable;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.get.GetResult;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 import static org.elasticsearch.common.lucene.Lucene.readExplanation;
 import static org.elasticsearch.common.lucene.Lucene.writeExplanation;
@@ -95,6 +102,65 @@ public class ExplainResponse extends ActionResponse {
         return getResult;
     }
 
+    enum JsonFields implements XContentParsable<ExplainResponse> {
+        _index {
+            @Override
+            public void apply(XContentParser parser, ExplainResponse response) throws IOException {
+                response.index = parser.text();
+            }
+        },
+        _type {
+            @Override
+            public void apply(XContentParser parser, ExplainResponse response) throws IOException {
+                response.type = parser.text();
+            }
+        },
+        _id {
+            @Override
+            public void apply(XContentParser parser, ExplainResponse response) throws IOException {
+                response.id = parser.text();
+            }
+        },
+        matched {
+            @Override
+            public void apply(XContentParser parser, ExplainResponse response) throws IOException {
+                response.exists = parser.booleanValue();
+            }
+        },
+        explanation {
+            @Override
+            public void apply(XContentParser parser, ExplainResponse response) throws IOException {
+                XContentObject source = parser.xContentObject();
+                response.explanation = getExplanation(source);
+            }
+
+            private Explanation getExplanation(XContentObject source) {
+                Explanation explanation = new Explanation();
+                explanation.setValue(source.getAsFloat("value"));
+                explanation.setDescription(source.get("description"));
+                List<XContentObject> xDetails = source.getAsXContentObjectsOrEmpty("details");
+                for (XContentObject xDetail : xDetails) {
+                    explanation.addDetail(getExplanation(xDetail));
+                }
+                return explanation;
+            }
+        };
+
+
+        static Map<String, XContentParsable<ExplainResponse>> fields = Maps.newLinkedHashMap();
+
+        static {
+            for (JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, JsonFields.fields, this);
+    }
+
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
         if (in.getVersion().onOrAfter(Version.V_1_4_0_Beta1)) {
@@ -132,4 +198,5 @@ public class ExplainResponse extends ActionResponse {
             getResult.writeTo(out);
         }
     }
+
 }

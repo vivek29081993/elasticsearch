@@ -23,19 +23,15 @@ import com.google.common.collect.Lists;
 import org.apache.lucene.util.CollectionUtil;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.Nullable;
-import org.elasticsearch.common.geo.GeoHashUtils;
-import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.rounding.Rounding;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.StringText;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.util.LongObjectPagedHashMap;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.*;
-import org.elasticsearch.search.aggregations.bucket.geogrid.InternalGeoHashGrid;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatter;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatterStreams;
 
@@ -364,7 +360,7 @@ public class InternalHistogram<B extends InternalHistogram.Bucket> extends Inter
 
     public void readFrom(XContentObject in) throws IOException {
         name = in.get(CommonJsonField._name);
-        List<XContentObject> bucketsXContent = in.getAsXContentObjects(CommonJsonField.buckets);
+        List<XContentObject> bucketsXContent = in.getAsXContentObjectsOrEmpty(CommonJsonField.buckets);
         List<B> buckets = Lists.newArrayListWithCapacity(bucketsXContent.size());
         ValueFormatter formatter = null;
         for (XContentObject xBucket: bucketsXContent) {

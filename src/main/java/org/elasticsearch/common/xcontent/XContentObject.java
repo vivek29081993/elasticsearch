@@ -109,6 +109,14 @@ public interface XContentObject {
     /**
      * Returns the Float value associated with the key.
      *
+     * @return The value, <tt>null</tt> if it does not exists.
+     */
+    Float getAsFloat(Enum key);
+
+
+    /**
+     * Returns the Float value associated with the key.
+     *
      * @return The value for the given key. If it does not exists,
      * returns the default value provided.
      */
@@ -233,6 +241,26 @@ public interface XContentObject {
     boolean containsKey(String key);
 
     /**
+     * Returns <tt>true</tt> if this map contains a mapping for the specified
+     * key.  More formally, returns <tt>true</tt> if and only if
+     * this map contains a mapping for a key <tt>k</tt> such that
+     * <tt>(key==null ? k==null : key.equals(k))</tt>.  (There can be
+     * at most one such mapping.)
+     *
+     * @param key key whose presence in this map is to be tested
+     * @return <tt>true</tt> if this map contains a mapping for the specified
+     *         key
+     * @throws ClassCastException if the key is of an inappropriate type for
+     *         this map
+     * (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
+     * @throws NullPointerException if the specified key is null and this map
+     *         does not permit null keys
+     * (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
+     */
+    boolean containsKey(Enum key);
+
+
+    /**
      * Returns a {@link Set} view of the keys contained in this map.
      * The set is backed by the map, so changes to the map are
      * reflected in the set, and vice-versa.  If the map is modified
@@ -275,6 +303,30 @@ public interface XContentObject {
      */
     void put(String key, Object value);
 
+    /**
+     * Associates the specified value with the specified key in this map
+     * (optional operation).  If the map previously contained a mapping for
+     * the key, the old value is replaced by the specified value.  (A map
+     * <tt>m</tt> is said to contain a mapping for a key <tt>k</tt> if and only
+     * if {@link #containsKey(String) m.containsKey(k)} would return
+     * <tt>true</tt>.)
+     *
+     * @param key key with which the specified value is to be associated
+     * @param value value to be associated with the specified key
+     * @return the previous value associated with <tt>key</tt>, or
+     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
+     *         (A <tt>null</tt> return can also indicate that the map
+     *         previously associated <tt>null</tt> with <tt>key</tt>,
+     *         if the implementation supports <tt>null</tt> values.)
+     * @throws UnsupportedOperationException if the <tt>put</tt> operation
+     *         is not supported by this map
+     * @throws ClassCastException if the class of the specified key or value
+     *         prevents it from being stored in this map
+     * @throws NullPointerException if the specified key or value is null
+     *         and this map does not permit null keys or values
+     * @throws IllegalArgumentException if some property of the specified key
+     *         or value prevents it from being stored in this map
+     */
     void put(Enum key, Object value);
 
     /**
@@ -284,21 +336,37 @@ public interface XContentObject {
      */
     boolean isXContentObject(String key);
 
+    /**
+     * Returns the given key as a list of XContentObject(s) or null if missing
+     * @return The list of values, <tt>null</tt> if it does not exists.
+     */
     List<XContentObject> getAsXContentObjects(String key);
+
+    /**
+     * Returns the given key as a list of <tt>XContentObject</tt>s or null if missing
+     * @return The list of values, <tt>null</tt> if it does not exists.
+     */
     List<XContentObject> getAsXContentObjects(Enum key);
 
-    BytesReference getAsBytesRef(String key);
-    BytesReference getAsBytesRef(Enum key);
+    /**
+     * Returns the given key as a list of <tt>XContentObject</tt>s or as an empty list if null
+     */
+    List<XContentObject> getAsXContentObjectsOrEmpty(String key);
+
+    /**
+     * Returns the given key as a list of <tt>XContentObject</tt>s or as an empty list if null
+     */
+    List<XContentObject> getAsXContentObjectsOrEmpty(Enum key);
+
+    BytesReference getAsBytesReference(String key);
+
+    BytesReference getAsBytesReference(Enum key);
 
     <T> Map<T, XContentObject>  getAsXContentObjectsMap(String key);
     <T> Map<T,XContentObject> getAsXContentObjectsMap(Enum key);
 
     <V> Map<String, V> getAsMap(String key);
     <V> Map<String, V> getAsMap(Enum key);
-
-    boolean containsKey(Enum key);
-
-    Float getAsFloat(Enum key);
 
 
     Object getAsObject(String key);

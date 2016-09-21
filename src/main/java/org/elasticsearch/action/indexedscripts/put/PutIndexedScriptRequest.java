@@ -20,6 +20,10 @@
 package org.elasticsearch.action.indexedscripts.put;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -37,9 +41,11 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.VersionType;
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.script.ScriptService;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
@@ -371,5 +377,25 @@ public class PutIndexedScriptRequest extends ActionRequest<PutIndexedScriptReque
             // ignore
         }
         return "index {[" + ScriptService.SCRIPT_INDEX + "][" + scriptLang + "][" + id + "], source[" + sSource + "]}";
+    }
+
+    @Override
+    public String getRestEndPoint() {
+        return Joiner.on("/").join("_scripts", scriptLang, id);
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.PUT;
+    }
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        return new NStringEntity(XContentHelper.convertToJson(source, false), StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public Header[] getRestHeaders() {
+        return super.getRestHeaders();
     }
 }
