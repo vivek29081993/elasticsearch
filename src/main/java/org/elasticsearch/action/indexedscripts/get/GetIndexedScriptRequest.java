@@ -19,6 +19,9 @@
 
 package org.elasticsearch.action.indexedscripts.get;
 
+import com.google.common.base.Joiner;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -30,10 +33,12 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.uid.Versions;
 import org.elasticsearch.index.VersionType;
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.fetch.source.FetchSourceContext;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * A request to get an indexed script (its source) based on its language (optional) and id.
@@ -252,5 +257,20 @@ public class GetIndexedScriptRequest extends ActionRequest<GetIndexedScriptReque
     @Override
     public String toString() {
         return "[" + ScriptService.SCRIPT_INDEX + "][" + scriptLang + "][" + id + "]: routing [" + routing + "]";
+    }
+
+    @Override
+    public String getRestEndPoint() {
+        return Joiner.on('/').join("_scripts", scriptLang, id());
+    }
+
+    @Override
+    public Map<String, String> getRestParams() {
+        return super.getRestParams();
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.GET;
     }
 }

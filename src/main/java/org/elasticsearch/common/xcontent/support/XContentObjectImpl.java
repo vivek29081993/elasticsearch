@@ -280,18 +280,18 @@ public class XContentObjectImpl implements XContentObject {
     }
 
     @Override
-    public List<XContentObject> getAsXContentObjects(Enum key) {
-        return getAsXContentObjects(key.name());
+    public List<XContentObject> getAsXContentObjectsOrEmpty(Enum key) {
+        return getAsXContentObjectsOrEmpty(key.name());
     }
 
     @Override
-    public BytesReference getAsBytesRef(String key) {
+    public BytesReference getAsBytesReference(String key) {
         return new BytesArray(get(key));
     }
 
     @Override
-    public BytesReference getAsBytesRef(Enum key) {
-        return getAsBytesRef(key.name());
+    public BytesReference getAsBytesReference(Enum key) {
+        return getAsBytesReference(key.name());
     }
 
     @Override
@@ -344,8 +344,20 @@ public class XContentObjectImpl implements XContentObject {
 
 
     @Override
+    public List<XContentObject> getAsXContentObjectsOrEmpty(String key) {
+        List<XContentObject> asXContentObjects = getAsXContentObjects(key);
+        if (asXContentObjects == null) {
+            return Collections.emptyList();
+        }
+        return asXContentObjects;
+    }
+
+    @Override
     public List<XContentObject> getAsXContentObjects(String key) {
         Object value = internalMap.get(key);
+        if (value == null) {
+            return null;
+        }
         try {
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> list = (List<Map<String, Object>>) value;
@@ -354,6 +366,11 @@ public class XContentObjectImpl implements XContentObject {
         catch (ClassCastException e) {
             throw new XContentObjectValueException(List.class, key,  value, e);
         }
+    }
+
+    @Override
+    public List<XContentObject> getAsXContentObjects(Enum key) {
+        return getAsXContentObjects(key.name());
     }
 
     @Override

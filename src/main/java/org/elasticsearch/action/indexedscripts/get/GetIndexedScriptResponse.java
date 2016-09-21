@@ -19,12 +19,13 @@
 
 package org.elasticsearch.action.indexedscripts.get;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.indexedscripts.put.PutIndexedScriptResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.index.get.GetField;
 import org.elasticsearch.script.ScriptService;
 
@@ -103,5 +104,10 @@ public class GetIndexedScriptResponse extends ActionResponse implements Iterable
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
         getResponse.writeTo(out);
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        getResponse = GetResponse.readGetResponse(parser);
     }
 }

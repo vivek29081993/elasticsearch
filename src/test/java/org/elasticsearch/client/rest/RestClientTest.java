@@ -30,10 +30,20 @@ import org.elasticsearch.action.count.CountRequest;
 import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.deletebyquery.DeleteByQueryResponse;
+import org.elasticsearch.action.deletebyquery.IndexDeleteByQueryResponse;
+import org.elasticsearch.action.exists.ExistsResponse;
+import org.elasticsearch.action.explain.ExplainRequestBuilder;
+import org.elasticsearch.action.explain.ExplainResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.indexedscripts.delete.DeleteIndexedScriptRequest;
+import org.elasticsearch.action.indexedscripts.delete.DeleteIndexedScriptResponse;
+import org.elasticsearch.action.indexedscripts.get.GetIndexedScriptRequest;
+import org.elasticsearch.action.indexedscripts.get.GetIndexedScriptResponse;
+import org.elasticsearch.action.indexedscripts.put.PutIndexedScriptResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequestBuilder;
@@ -1033,6 +1043,66 @@ public class RestClientTest {
         client.prepareClearScroll().addScrollId(response.getScrollId()).get();
         SearchResponse response3 = client.prepareSearchScroll(response.getScrollId()).setScroll(scrollKeepAlive).execute().actionGet();
         assertEquals(0, response3.getHits().hits().length);
+
+    }
+
+    @Test
+    public void testDeleteByQuery() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+        DeleteByQueryResponse response;
+        response = client.prepareDeleteByQuery(TEST_INDEX)
+                    .setQuery(QueryBuilders.termQuery("color", Color.red)).get();
+        for (IndexDeleteByQueryResponse queryResponse : response) {
+            assertEquals(TEST_INDEX, queryResponse.getIndex());
+        }
+    }
+
+    @Test
+    public void testIndexedScript() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        PutIndexedScriptResponse response;
+        Map<String, Object> script = Maps.newHashMap();
+        script.put("script", "log(_score * 2) + my_modifier");
+        String id = "indexedCalculateScore";
+        response = client.preparePutIndexedScript()
+                .setScriptLang("groovy")
+                .setId(id)
+                .setSource(script)
+                .get();
+        assertNotNull(response);
+        assertNotNull(response.getId());
+        assertTrue(response.isCreated());
+
+        GetIndexedScriptResponse getIndexedScriptResponse;
+        getIndexedScriptResponse = client.getIndexedScript(new GetIndexedScriptRequest("groovy", id)).actionGet();
+        assertNotNull(getIndexedScriptResponse);
+        assertTrue(getIndexedScriptResponse.isExists());
+
+        DeleteIndexedScriptResponse deleteIndexedScriptResponse;
+        deleteIndexedScriptResponse = client.deleteIndexedScript(new DeleteIndexedScriptRequest("groovy", id)).actionGet();
+        assertNotNull(deleteIndexedScriptResponse);
+        assertEquals(id, deleteIndexedScriptResponse.getId());
+    }
+
+    @Test
+    public void testExistsRequest() throws ExecutionException, InterruptedException {
+        indexDocument(100);
+
+        ExistsResponse existsResponse = client.prepareExists(TEST_INDEX)
+                .setTypes(STATS_TYPE)
+                .setQuery(QueryBuilders.termQuery("color", "red")).get();
+        assertNotNull(existsResponse);
+        assertTrue(existsResponse.exists());
+    }
+
+    @Test
+    public void testExplainRequest() throws ExecutionException, InterruptedException {
+        IndexRequest request = newIndexRequest();
+        index(request);
+        ExplainResponse response = client.prepareExplain(TEST_INDEX, STATS_TYPE, request.id())
+                .setQuery(QueryBuilders.termQuery("color", request.sourceAsMap().get("color"))).get();
+        assertNotNull(response);
 
     }
 

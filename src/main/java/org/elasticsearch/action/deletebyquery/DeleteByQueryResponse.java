@@ -19,16 +19,24 @@
 
 package org.elasticsearch.action.deletebyquery;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentObject;
+import org.elasticsearch.common.xcontent.XContentParsable;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import static com.google.common.collect.Maps.newHashMap;
+import static com.google.common.collect.Maps.newLinkedHashMap;
 
 /**
  * The response of delete by query action. Holds the {@link IndexDeleteByQueryResponse}s from all the
@@ -36,7 +44,7 @@ import static com.google.common.collect.Maps.newHashMap;
  */
 public class DeleteByQueryResponse extends ActionResponse implements Iterable<IndexDeleteByQueryResponse> {
 
-    private Map<String, IndexDeleteByQueryResponse> indices = newHashMap();
+    private Map<String, IndexDeleteByQueryResponse> indices = newLinkedHashMap();
 
     DeleteByQueryResponse() {
 
@@ -99,5 +107,32 @@ public class DeleteByQueryResponse extends ActionResponse implements Iterable<In
         for (IndexDeleteByQueryResponse indexResponse : indices.values()) {
             indexResponse.writeTo(out);
         }
+    }
+
+    enum JsonFields implements XContentParsable<DeleteByQueryResponse> {
+        _indices {
+            @Override
+            public void apply(XContentParser parser, DeleteByQueryResponse response) throws IOException {
+                XContentObject xIndices = parser.xContentObject();
+                Set<String> indexNames = xIndices.keySet();
+                for (String indexName : indexNames) {
+                    IndexDeleteByQueryResponse deleteByQueryResponse = new IndexDeleteByQueryResponse();
+                    XContentObject xContentObject = xIndices.getAsXContentObject(indexName);
+                    xContentObject.put("_index", indexName);
+                    deleteByQueryResponse.readFrom(xContentObject);
+                    response.indices.put(indexName, deleteByQueryResponse);
+                }
+            }
+        };
+
+        static Map<String, XContentParsable<DeleteByQueryResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (DeleteByQueryResponse.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, DeleteByQueryResponse.JsonFields.fields, this);
     }
 }

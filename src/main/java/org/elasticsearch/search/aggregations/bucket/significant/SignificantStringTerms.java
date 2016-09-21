@@ -25,7 +25,6 @@ import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.BytesText;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -36,7 +35,6 @@ import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
 import org.elasticsearch.search.aggregations.bucket.significant.heuristics.SignificanceHeuristic;
 import org.elasticsearch.search.aggregations.bucket.significant.heuristics.SignificanceHeuristicStreams;
-import org.elasticsearch.search.aggregations.support.format.ValueFormatter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -133,11 +131,11 @@ public class SignificantStringTerms extends InternalSignificantTerms {
 
     public void readFrom(XContentObject in) throws IOException {
         name = in.get(CommonJsonField._name);
-        List<XContentObject> bucketsXContent = in.getAsXContentObjects(CommonJsonField.buckets);
+        List<XContentObject> bucketsXContent = in.getAsXContentObjectsOrEmpty(CommonJsonField.buckets);
         List<InternalSignificantTerms.Bucket> buckets = Lists.newArrayListWithCapacity(bucketsXContent.size());
         for (XContentObject xBucket: bucketsXContent) {
             InternalAggregations aggregations = InternalAggregations.readAggregations(xBucket);
-            BytesReference key = xBucket.getAsBytesRef(CommonJsonField.key);
+            BytesReference key = xBucket.getAsBytesReference(CommonJsonField.key);
             long docCount = xBucket.getAsLong(CommonJsonField.doc_count);
             long bgCount = xBucket.getAsLong("bg_count");
             double score = xBucket.getAsDouble(CommonJsonField.score);

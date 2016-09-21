@@ -19,22 +19,29 @@
 
 package org.elasticsearch.action.exists;
 
+import com.google.common.base.Joiner;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.support.QuerySourceBuilder;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationRequest;
 import org.elasticsearch.client.Requests;
+import org.elasticsearch.client.rest.support.HttpUtils;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -246,4 +253,43 @@ public class ExistsRequest extends BroadcastOperationRequest<ExistsRequest> {
         }
         return "[" + Arrays.toString(indices) + "]" + Arrays.toString(types) + ", source[" + sSource + "]";
     }
+
+
+    @Override
+    public String getRestEndPoint() {
+        String indicesCsv = Joiner.on(',').join(this.indices);
+        String typesCsv = Joiner.on(',').join(this.types);
+        return Joiner.on('/').join(indicesCsv, typesCsv, "_search/exists");
+    }
+
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.GET;
+    }
+
+    @Override
+    public Map<String, String> getRestParams() {
+        MapBuilder<String, String> builder = MapBuilder.<String, String>newMapBuilder()
+                .putIfNotNull("routing", this.routing)
+                .putIfNotNull("preference", this.preference);
+        if (minScore != DEFAULT_MIN_SCORE) {
+            builder.put("min_score", String.valueOf(minScore));
+        }
+
+        return builder.map();
+
+    }
+
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        if (source != null) {
+            return new NStringEntity(XContentHelper.convertToJson(source, false), StandardCharsets.UTF_8);
+        }
+        else {
+            return HttpUtils.EMPTY_ENTITY;
+        }
+    }
+
 }

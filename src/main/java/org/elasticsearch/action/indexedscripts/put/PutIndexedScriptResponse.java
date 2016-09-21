@@ -19,12 +19,18 @@
 
 package org.elasticsearch.action.indexedscripts.put;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.search.ClearScrollResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentParsable;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.script.ScriptService;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * A response of an index operation,
@@ -103,5 +109,39 @@ public class PutIndexedScriptResponse extends ActionResponse {
         out.writeString(id);
         out.writeLong(version);
         out.writeBoolean(created);
+    }
+
+    enum JsonFields implements XContentParsable<PutIndexedScriptResponse> {
+        _id {
+            @Override
+            public void apply(XContentParser parser, PutIndexedScriptResponse response) throws IOException {
+                response.id = parser.text();
+            }
+        },
+        created {
+            @Override
+            public void apply(XContentParser parser, PutIndexedScriptResponse response) throws IOException {
+                response.created = parser.booleanValue();
+            }
+        },
+        _version {
+            @Override
+            public void apply(XContentParser parser, PutIndexedScriptResponse response) throws IOException {
+                response.version = parser.longValue();
+            }
+        };
+
+
+        static Map<String, XContentParsable<PutIndexedScriptResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (PutIndexedScriptResponse.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, PutIndexedScriptResponse.JsonFields.fields, this);
     }
 }

@@ -239,7 +239,7 @@ public class InternalRange<B extends InternalRange.Bucket> extends InternalAggre
 
     public void readFrom(XContentObject in) throws IOException {
         this.name = in.get(CommonJsonField._name);
-        List<XContentObject> bucketsXContent = in.getAsXContentObjects(CommonJsonField.buckets);
+        List<XContentObject> bucketsXContent = in.getAsXContentObjectsOrEmpty(CommonJsonField.buckets);
         List<B> buckets = Lists.newArrayListWithCapacity(bucketsXContent.size());
         for (XContentObject xBucket : bucketsXContent) {
             InternalAggregations aggregations = InternalAggregations.readAggregations(xBucket);

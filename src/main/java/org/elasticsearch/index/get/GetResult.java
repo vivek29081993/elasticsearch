@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.compress.CompressorFactory;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -315,6 +316,15 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
                 jsonBuilder.copyCurrentStructure(parser);
                 response.source = jsonBuilder.bytes();
             }
+        },
+        script {
+            @Override
+            public void apply(XContentParser parser, GetResult response) throws IOException {
+                _source.apply(parser, response);
+                if (Strings.isNotEmpty(response.sourceAsString())) {
+                    response.exists = true;
+                }
+            }
         };
         static Map<String, XContentParsable<GetResult>> fields = Maps.newLinkedHashMap();
         static {
@@ -327,7 +337,6 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
     public void readFrom(XContentParser parser) throws IOException {
         XContentHelper.populate(parser, JsonFields.fields, this);
     }
-
 
 
     @Override
