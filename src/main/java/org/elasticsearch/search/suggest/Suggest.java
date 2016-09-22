@@ -18,6 +18,9 @@
  */
 package org.elasticsearch.search.suggest;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.lucene.util.CollectionUtil;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchIllegalStateException;
@@ -26,10 +29,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
 import org.elasticsearch.common.text.Text;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
-import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.search.suggest.Suggest.Suggestion.Entry;
 import org.elasticsearch.search.suggest.Suggest.Suggestion.Entry.Option;
 import org.elasticsearch.search.suggest.completion.CompletionSuggestion;
@@ -43,6 +43,9 @@ import java.util.*;
  * Top level suggest result, containing the result for each suggestion.
  */
 public class Suggest implements Iterable<Suggest.Suggestion<? extends Entry<? extends Option>>>, Streamable, ToXContent {
+
+
+    private static final Set<String> RESERVED_KEYWORDS = Sets.newHashSet("_shards", "suggest");
 
     public static class Fields {
         public static final XContentBuilderString SUGGEST = new XContentBuilderString("suggest");
@@ -107,6 +110,46 @@ public class Suggest implements Iterable<Suggest.Suggestion<? extends Entry<? ex
         }
         return (T) suggestMap.get(name);
     }
+
+    enum JsonFields implements XContentParsable<Suggest>, XContentObjectParseable<Suggest> {
+        suggest {
+            @Override
+            public void apply(XContentObject source, Suggest object) throws IOException {
+                System.out.println("source = " + source);
+            }
+
+            @Override
+            public void apply(XContentParser parser, Suggest response) throws IOException {
+                System.out.println("source = " + parser);
+            }
+        };
+        static Map<String, XContentParsable<Suggest>> fields = Maps.newLinkedHashMap();
+        static {
+            for (Suggest.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, JsonFields.fields, this);
+    }
+
+    public void readFrom(XContentObject in) throws IOException {
+        Set<String> suggestNames = Sets.difference(in.keySet(), RESERVED_KEYWORDS);
+        suggestions = Lists.newArrayListWithExpectedSize(suggestNames.size());
+        for (String suggestName : suggestNames) {
+            Suggestion<? extends Entry<? extends Option>> suggestion = new Suggestion<>();
+            suggestion.name = suggestName;
+            suggestion.readFrom(in.getAsXContentObjects(suggestName));
+            suggestions.add(suggestion);
+
+
+        }
+
+        XContentHelper.populate(in, JsonFields.values(), this);
+    }
+
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
@@ -281,6 +324,17 @@ public class Suggest implements Iterable<Suggest.Suggestion<? extends Entry<? ex
                 entry.trim(size);
             }
         }
+
+        public void readFrom(List<XContentObject> xEntries) {
+            entries.clear();
+            for (XContentObject in : xEntries) {
+                T newEntry = newEntry();
+                newEntry.readFrom(in);
+                entries.add(newEntry);
+            }
+
+        }
+
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
@@ -468,6 +522,20 @@ public class Suggest implements Iterable<Suggest.Suggestion<? extends Entry<? ex
                 return result;
             }
 
+            public void readFrom(XContentObject in) {
+                this.text = in.getAsText("text");
+                this.offset = in.getAsInt("offset");
+                this.length = in.getAsInt("length");
+                List<XContentObject> xOptions = in.getAsXContentObjects("options");
+                options = Lists.newArrayListWithExpectedSize(xOptions.size());
+                for (XContentObject xOption : xOptions) {
+                    O newOption = newOption();
+                    newOption.readFrom(xOption);
+                    options.add(newOption);
+
+                }
+            }
+
             @Override
             public void readFrom(StreamInput in) throws IOException {
                 text = in.readText();
@@ -593,6 +661,14 @@ public class Suggest implements Iterable<Suggest.Suggestion<? extends Entry<? ex
                         collateMatch = in.readOptionalBoolean();
                     }
                 }
+
+                public void readFrom(XContentObject xOption) {
+                    this.text = xOption.getAsText("text");
+                    this.score = xOption.getAsFloat("score");
+                    this.highlighted = xOption.getAsText("highlighted");
+                    this.collateMatch = xOption.getAsBoolean("collate_match");
+                }
+
 
                 @Override
                 public void writeTo(StreamOutput out) throws IOException {

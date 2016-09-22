@@ -23,11 +23,15 @@ import static org.elasticsearch.action.support.DefaultShardOperationFailedExcept
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.*;
+import org.elasticsearch.search.suggest.Suggest;
 
 /**
  * Base class for all broadcast operation based responses.
@@ -103,4 +107,21 @@ public abstract class BroadcastOperationResponse extends ActionResponse {
             exp.writeTo(out);
         }
     }
+
+    enum JsonFields implements XContentObjectParseable<BroadcastOperationResponse> {
+        _shards {
+            @Override
+            public void apply(XContentObject source, BroadcastOperationResponse object) throws IOException {
+                XContentObject shardInfo = source.getAsXContentObject(this);
+                object.totalShards = shardInfo.getAsInt("total");
+                object.successfulShards = shardInfo.getAsInt("successful");
+                object.failedShards = shardInfo.getAsInt("failed");
+            }
+        }
+    }
+
+    public void readFrom(XContentObject in) throws IOException {
+        XContentHelper.populate(in, JsonFields.values(), this);
+    }
+
 }

@@ -22,6 +22,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.lucene.search.spell.SuggestMode;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -44,6 +45,7 @@ import org.elasticsearch.action.indexedscripts.get.GetIndexedScriptRequest;
 import org.elasticsearch.action.indexedscripts.get.GetIndexedScriptResponse;
 import org.elasticsearch.action.indexedscripts.put.PutIndexedScriptResponse;
 import org.elasticsearch.action.search.*;
+import org.elasticsearch.action.suggest.SuggestResponse;
 import org.elasticsearch.action.support.QuerySourceBuilder;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.common.Strings;
@@ -90,6 +92,8 @@ import org.elasticsearch.search.aggregations.metrics.sum.Sum;
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHits;
 import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.suggest.Suggest;
+import org.elasticsearch.search.suggest.SuggestBuilders;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -1164,6 +1168,33 @@ public class RestClientTest {
         for (MultiSearchResponse.Item item : responses) {
             assertTrue(item.isFailure());
             assertTrue(Strings.isNotEmpty(item.getFailureMessage()));
+        }
+    }
+
+    @Test
+    public void testSuggestSearch() throws ExecutionException, InterruptedException {
+        List<IndexResponse> indexResponses = indexDocument(3);
+
+        SuggestResponse response = client.prepareSuggest(TEST_INDEX)
+                .addSuggestion(SuggestBuilders.termSuggestion("perhaps")
+                        .suggestMode("always")
+                        .text("read")
+                        .field("color")).get();
+        assertNotNull(response);
+        assertNotNull(response.getSuggest());
+        Suggest.Suggestion<? extends Suggest.Suggestion.Entry<? extends Suggest.Suggestion.Entry.Option>> perhaps = response.getSuggest().getSuggestion("perhaps");
+        assertNotNull(perhaps);
+        List<? extends Suggest.Suggestion.Entry<? extends Suggest.Suggestion.Entry.Option>> entries = perhaps.getEntries();
+        assertNotNull(entries);
+        assertTrue(entries.size() > 0);
+        for (Suggest.Suggestion.Entry<? extends Suggest.Suggestion.Entry.Option> entry : entries) {
+            assertNotNull(entry.getText());
+            assertNotNull(entry.getOptions());
+            assertTrue(entry.getOptions().size() > 0);
+            for (Suggest.Suggestion.Entry.Option option : entry.getOptions()) {
+                assertNotNull(option.getText());
+                assertTrue(option.getScore() > 0);
+            }
         }
     }
 

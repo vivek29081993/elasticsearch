@@ -20,8 +20,13 @@
 package org.elasticsearch.action.suggest;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Map;
 
+import com.google.common.base.Joiner;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationRequest;
 import org.elasticsearch.client.Requests;
@@ -29,9 +34,11 @@ import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.search.suggest.SuggestBuilder;
 
 /**
@@ -181,5 +188,27 @@ public final class SuggestRequest extends BroadcastOperationRequest<SuggestReque
     public SuggestRequest suggest(String source) {
         return suggest(new BytesArray(source));
     }
-    
+
+    @Override
+    public String getRestEndPoint() {
+        String indicesCsv = Joiner.on(',').join(this.indices);
+        return Joiner.on('/').join(indicesCsv, "_suggest");
+    }
+
+    @Override
+    public Map<String, String> getRestParams() {
+        return new MapBuilder<String, String>()
+                .putIfNotNull("routing", routing)
+                .putIfNotNull("preference", preference).map();
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.POST;
+    }
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        return new NStringEntity(XContentHelper.convertToJson(suggestSource, false), StandardCharsets.UTF_8);
+    }
 }
