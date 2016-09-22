@@ -95,4 +95,10 @@ public class MapBuilder<K, V> {
         return ImmutableMap.copyOf(map);
     }
 
+    public MapBuilder<K, V> putIf(K key, V value, boolean preCondition) {
+        if (preCondition) {
+            put(key, value);
+        }
+        return this;
+    }
 }

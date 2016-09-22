@@ -120,8 +120,16 @@ public class InternalSearchResponse implements Streamable, ToXContent {
         this.hits = InternalSearchHits.readSearchHits(parser);
     }
 
+    public void readHits(XContentObject source) throws IOException {
+        this.hits = InternalSearchHits.readSearchHits(source);
+    }
+
     public void readAggregations(XContentParser parser) throws IOException {
         this.aggregations = InternalAggregations.readAggregations(parser);
+    }
+
+    public void readAggregations(XContentObject source) throws IOException {
+        this.aggregations = InternalAggregations.readAggregations(source);
     }
 
 
@@ -179,4 +187,7 @@ public class InternalSearchResponse implements Streamable, ToXContent {
         internalSearchResponse.timedOut = timedOut;
         return internalSearchResponse;
     }
+
+
+
 }

@@ -20,7 +20,6 @@
 package org.elasticsearch.action.search;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.Maps;
 import org.apache.http.HttpEntity;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
@@ -651,7 +650,7 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
 
     @Override
     public RestRequest.Method getRestMethod() {
-        return RestRequest.Method.POST;
+        return RestRequest.Method.GET;
     }
 
     @Override
@@ -662,6 +661,19 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
         else {
             return HttpUtils.EMPTY_ENTITY;
         }
+    }
+
+    @Override
+    public HttpEntity getBulkRestEntity() throws IOException {
+        MapBuilder<String, Object> headerBuilder = new MapBuilder<String, Object>()
+                .put("index", this.indices)
+                .put("type", this.types)
+                .putIfNotNull("routing", this.routing)
+                .putIf("search_type", searchType.name().toLowerCase(), searchType != SearchType.DEFAULT);
+
+        String headerJson = XContentHelper.convertToJson(headerBuilder.map(), false);
+        String sourceJson = XContentHelper.convertToJson(source, false);
+        return new NStringEntity(String.format("%s\n%s\n", headerJson, sourceJson), StandardCharsets.UTF_8);
     }
 
     @Override

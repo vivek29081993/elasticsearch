@@ -20,7 +20,9 @@
 package org.elasticsearch.action.get;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.Maps;
 import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -28,14 +30,18 @@ import org.elasticsearch.action.ValidateActions;
 import org.elasticsearch.action.support.single.shard.SingleShardOperationRequest;
 import org.elasticsearch.client.rest.support.HttpUtils;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.uid.Versions;
+import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.index.VersionType;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.search.fetch.source.FetchSourceContext;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 /**
  * A request to get a document (its source) from an index based on its type (optional) and id. Best created using
@@ -371,4 +377,5 @@ public class GetRequest extends SingleShardOperationRequest<GetRequest> {
     public RestRequest.Method getRestMethod() {
         return RestRequest.Method.GET;
     }
+
 }

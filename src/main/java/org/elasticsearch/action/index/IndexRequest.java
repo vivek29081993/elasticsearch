@@ -38,6 +38,7 @@ import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.uid.Versions;
@@ -738,17 +739,14 @@ public class IndexRequest extends ShardReplicationOperationRequest<IndexRequest>
 
     @Override
     public Map<String, String> getRestParams() {
-        Map<String, String> params = Maps.newLinkedHashMap();
+        MapBuilder<String, String> builder = new MapBuilder<>();
+        builder.putIfNotNull("routing", routing);
+        builder.putIf("ttl", String.valueOf(ttl), ttl != -1);
+        builder.putIf("refresh", String.valueOf(refresh), refresh);
+        builder.putIfNotNull("parent", parent);
 
-        if (Strings.isNotEmpty(routing)) {
-            params.put("routing", routing);
-        }
-        if (ttl != -1) {
-            params.put("ttl", String.valueOf(ttl));
-        }
-        // todo finish the rest...
-
-        return params;
+        //todo bdk finish rest...
+        return builder.map();
     }
 
     @Override

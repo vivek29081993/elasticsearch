@@ -20,6 +20,10 @@
 package org.elasticsearch.action.get;
 
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.Version;
@@ -29,20 +33,21 @@ import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
 import org.elasticsearch.common.lucene.uid.Versions;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.VersionType;
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.search.fetch.source.FetchSourceContext;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 public class MultiGetRequest extends ActionRequest<MultiGetRequest> implements Iterable<MultiGetRequest.Item>, CompositeIndicesRequest {
 
@@ -243,6 +248,17 @@ public class MultiGetRequest extends ActionRequest<MultiGetRequest> implements I
             result = 31 * result + versionType.hashCode();
             result = 31 * result + (fetchSourceContext != null ? fetchSourceContext.hashCode() : 0);
             return result;
+        }
+
+        private Map<String, Object> toJsonPayload() {
+            MapBuilder<String, Object> builder = new MapBuilder<String, Object>()
+                    .putIfNotNull("_index", index)
+                    .putIfNotNull("_type", type)
+                    .putIfNotNull("_id", id);
+            if (this.fields != null && this.fields.length > 0) {
+                builder.put("_source", this.fields);
+            }
+            return builder.map();
         }
     }
 
@@ -500,6 +516,30 @@ public class MultiGetRequest extends ActionRequest<MultiGetRequest> implements I
     @Override
     public Iterator<Item> iterator() {
         return Iterators.unmodifiableIterator(items.iterator());
+    }
+
+    @Override
+    public String getRestEndPoint() {
+        return "/_mget";
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.GET;
+    }
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        //todo add support for streaming version of getRestEntity()
+        StringBuilder builder = new StringBuilder();
+        Map<String, Object> payload = Maps.newLinkedHashMap();
+        List<Map<String, Object>> docs = Lists.newArrayListWithExpectedSize(items.size());
+        payload.put("docs", docs);
+        for (Item item : items) {
+            Map<String, Object> itemJsonPayload = item.toJsonPayload();
+            docs.add(itemJsonPayload);
+        }
+        return new NStringEntity(XContentHelper.convertToJson(payload, false), StandardCharsets.UTF_8);
     }
 
     @Override
