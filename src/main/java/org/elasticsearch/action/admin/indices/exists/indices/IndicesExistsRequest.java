@@ -19,6 +19,8 @@
 
 package org.elasticsearch.action.admin.indices.exists.indices;
 
+import com.google.common.base.Joiner;
+import org.apache.http.HttpEntity;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
@@ -27,6 +29,7 @@ import org.elasticsearch.action.support.master.MasterNodeReadOperationRequest;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
 
@@ -85,5 +88,21 @@ public class IndicesExistsRequest extends MasterNodeReadOperationRequest<Indices
         out.writeStringArray(indices);
         indicesOptions.writeIndicesOptions(out);
         writeLocal(out, Version.V_1_0_0_RC2);
+    }
+
+    @Override
+    public String getRestEndPoint() {
+        return "/" + Joiner.on(',').join(indices);
+    }
+
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.HEAD;
+    }
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        return null;
     }
 }

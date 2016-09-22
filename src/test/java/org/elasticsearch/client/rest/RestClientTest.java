@@ -22,7 +22,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.lucene.search.spell.SuggestMode;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -34,7 +33,6 @@ import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.deletebyquery.DeleteByQueryResponse;
 import org.elasticsearch.action.deletebyquery.IndexDeleteByQueryResponse;
 import org.elasticsearch.action.exists.ExistsResponse;
-import org.elasticsearch.action.explain.ExplainRequestBuilder;
 import org.elasticsearch.action.explain.ExplainResponse;
 import org.elasticsearch.action.get.*;
 import org.elasticsearch.action.index.IndexRequest;
@@ -1198,6 +1196,17 @@ public class RestClientTest {
         }
     }
 
+    @Test
+    @Ignore
+    public void testMoreLikeThisSearch() throws ExecutionException, InterruptedException {
+        //todo bdk implement
+    }
+
+    @Test
+    @Ignore
+    public void testValidate() throws ExecutionException, InterruptedException {
+        //todo bdk implement
+    }
 
 
 
@@ -1336,7 +1345,6 @@ public class RestClientTest {
                 } catch (IOException e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-
             }
         }
         assert names.size() > 0;

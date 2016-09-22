@@ -50,4 +50,12 @@ public abstract class ActionResponse extends TransportResponse implements FromXC
     public RestStatus getBulkStatus() {
         throw new UnsupportedOperationException("Implement me in: " + this.getClass().getName());
     }
+
+    /**
+     * Override this to capture HEAD status == 200
+     * @param exists
+     */
+    public void exists(boolean exists) {
+
+    }
 }

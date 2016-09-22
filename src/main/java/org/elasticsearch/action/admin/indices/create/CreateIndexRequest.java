@@ -20,7 +20,12 @@
 package org.elasticsearch.action.admin.indices.create;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.ElasticsearchParseException;
@@ -40,9 +45,12 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.text.StringAndBytesText;
 import org.elasticsearch.common.xcontent.*;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 
@@ -492,5 +500,54 @@ public class CreateIndexRequest extends AcknowledgedRequest<CreateIndexRequest> 
                 alias.writeTo(out);
             }
         }
+    }
+
+
+    @Override
+    public String getRestEndPoint() {
+        return "/" + this.index;
+    }
+
+    @Override
+    public Map<String, String> getRestParams() {
+        return super.getRestParams();
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.PUT;
+    }
+
+    @Override
+    public HttpEntity getBulkRestEntity() throws IOException {
+        return super.getBulkRestEntity();
+    }
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        Map<String, Object> mappings = Maps.newLinkedHashMap();
+        for (String json : this.mappings.values()) {
+            XContentParser parser = XContentHelper.createParser(new StringAndBytesText(json).bytes());
+            Map<String, Object> mapping = parser.mapAndClose();
+            mappings.putAll(mapping);
+        }
+
+        Map<String, Object> aliases = Maps.newLinkedHashMap();
+        for (Alias alias : this.aliases) {
+            aliases.putAll(alias.asMap());
+        }
+
+
+        Map<String, Object> payload = new MapBuilder<String, Object>()
+                .putIf("settings", settings.getAsMap(), settings != EMPTY_SETTINGS)
+                .putIf("mappings", mappings, !mappings.isEmpty())
+                .putIfNotNull("aliases", aliases).map();
+        String json = XContentHelper.convertToJson(payload, false);
+        return new NStringEntity(json, StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public Header[] getRestHeaders() {
+        return super.getRestHeaders();
     }
 }

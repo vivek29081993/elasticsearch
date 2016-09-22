@@ -19,6 +19,7 @@
 
 package org.elasticsearch.common;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import org.apache.lucene.util.BytesRefBuilder;
@@ -27,6 +28,9 @@ import org.elasticsearch.common.io.FastStringReader;
 import org.elasticsearch.common.util.CollectionUtils;
 
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
 
 /**
@@ -1079,5 +1083,27 @@ public class Strings {
 
     public static boolean isNotEmpty(String value) {
         return !isEmpty(value);
+    }
+
+    public static String valueOf(InputStream in) {
+        StringBuilder builder = new StringBuilder();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in, Charsets.UTF_8));
+        String line;
+        try {
+            while( (line=reader.readLine()) != null) {
+                builder.append(line);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+        finally {
+            try {
+                reader.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+
+        }
+        return builder.toString();
     }
 }

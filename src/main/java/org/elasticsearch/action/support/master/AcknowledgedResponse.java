@@ -18,11 +18,18 @@
  */
 package org.elasticsearch.action.support.master;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentParsable;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Abstract class that allows to mark action responses that support acknowledgements.
@@ -61,4 +68,25 @@ public abstract class AcknowledgedResponse extends ActionResponse {
     protected void writeAcknowledged(StreamOutput out) throws IOException {
         out.writeBoolean(acknowledged);
     }
+
+
+    enum JsonFields implements XContentParsable<AcknowledgedResponse> {
+        acknowledged {
+            @Override
+            public void apply(XContentParser parser, AcknowledgedResponse response) throws IOException {
+                response.acknowledged = parser.booleanValue();
+            }
+        };
+
+        static Map<String, XContentParsable<AcknowledgedResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (AcknowledgedResponse.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, AcknowledgedResponse.JsonFields.fields, this);
+    }
+
 }

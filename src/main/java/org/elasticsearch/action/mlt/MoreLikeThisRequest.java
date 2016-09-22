@@ -19,7 +19,9 @@
 
 package org.elasticsearch.action.mlt;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import org.apache.http.HttpEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.Version;
@@ -31,10 +33,12 @@ import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
@@ -714,4 +718,29 @@ public class MoreLikeThisRequest extends ActionRequest<MoreLikeThisRequest> impl
         out.writeVInt(searchFrom);
         out.writeOptionalString(routing);
     }
+
+    @Override
+    public String getRestEndPoint() {
+        return Joiner.on('/').join(this.index(), this.type(), this.id(), "_mlt");
+    }
+
+    @Override
+    public Map<String, String> getRestParams() {
+        MapBuilder<String, String> builder = new MapBuilder<String, String>()
+                .putIfNotNull("routing", routing);
+        if (this.fields != null) {
+            builder.put("mlt_fields", Joiner.on(',').join(this.fields));
+        }
+        builder.putIf("min_doc_freq", String.valueOf(minDocFreq), minDocFreq != -1);
+
+        //todo bdk finish this out with all 1 million options...
+
+        return builder.map();
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.GET;
+    }
+
 }

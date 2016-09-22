@@ -27,6 +27,7 @@ import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.rest.support.HttpUtils;
 import org.elasticsearch.client.rest.support.InternalRestClient;
+import org.elasticsearch.client.rest.support.RestExecuteUtil;
 import org.elasticsearch.client.rest.support.RestResponse;
 import org.elasticsearch.client.support.AbstractClient;
 import org.elasticsearch.common.bytes.BytesArray;
@@ -46,9 +47,16 @@ public class RestClient extends AbstractClient implements Client {
     private static final int DEFAULT_PORT = 9200;
 
     private InternalRestClient internalRestClient;
+    private RestAdminClient restAdminClient;
 
     public RestClient(String hostname) {
-        internalRestClient = InternalRestClient.builder(new HttpHost(hostname, DEFAULT_PORT)).build();
+        this(new HttpHost(hostname, DEFAULT_PORT));
+    }
+
+    public RestClient(HttpHost... hosts) {
+        internalRestClient = InternalRestClient.builder(hosts).build();
+        restAdminClient = new RestAdminClient(internalRestClient);
+
         ModulesBuilder modules = new ModulesBuilder();
         modules.add(new TransportSearchModule());
         modules.createInjector();
@@ -74,20 +82,8 @@ public class RestClient extends AbstractClient implements Client {
 
     @Override
     public <Request extends ActionRequest, Response extends ActionResponse, RequestBuilder extends ActionRequestBuilder<Request, Response, RequestBuilder, Client>> void execute(Action<Request, Response, RequestBuilder, Client> action, Request request, ActionListener<Response> listener) {
-        try {
-            RestResponse restResponse = internalRestClient.performRequest(request.getRestMethod().name(), request.getRestEndPoint(), request.getRestParams(),  request.getRestEntity(), request.getRestHeaders());
-            Response response = action.newResponse();
-            //todo replace with streaming BytesReference
-            String content = HttpUtils.readUtf8(restResponse.getEntity());
-            XContentParser parser = XContentHelper.createParser(new BytesArray(content));
-            response.readFrom(parser);
-            listener.onResponse(response);
-
-        } catch (IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        RestExecuteUtil.execute(internalRestClient, action, request, listener);
     }
-
 
     @Override
     public ThreadPool threadPool() {
@@ -96,7 +92,7 @@ public class RestClient extends AbstractClient implements Client {
 
     @Override
     public AdminClient admin() {
-        return null;
+        return restAdminClient;
     }
 
     @Override

@@ -51,4 +51,9 @@ public class IndicesExistsResponse extends ActionResponse {
         super.writeTo(out);
         out.writeBoolean(exists);
     }
+
+    @Override
+    public void exists(boolean exists) {
+        this.exists = exists;
+    }
 }

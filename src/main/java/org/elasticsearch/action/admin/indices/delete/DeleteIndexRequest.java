@@ -19,6 +19,9 @@
 
 package org.elasticsearch.action.admin.indices.delete;
 
+import com.google.common.base.Joiner;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -28,8 +31,10 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.CollectionUtils;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 import static org.elasticsearch.common.unit.TimeValue.readTimeValue;
@@ -138,4 +143,22 @@ public class DeleteIndexRequest extends MasterNodeOperationRequest<DeleteIndexRe
         indicesOptions.writeIndicesOptions(out);
         timeout.writeTo(out);
     }
+
+    @Override
+    public String getRestEndPoint() {
+        String indicesCsv = Joiner.on(',').join(this.indices);
+        return "/" + indicesCsv;
+    }
+
+    @Override
+    public Map<String, String> getRestParams() {
+        //todo bdk handle timeout
+        return super.getRestParams();
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.DELETE;
+    }
+
 }
