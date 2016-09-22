@@ -25,6 +25,8 @@ import com.google.common.collect.Maps;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.text.StringAndBytesText;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentObject;
 
 import java.util.Collections;
@@ -262,6 +264,11 @@ public class XContentObjectImpl implements XContentObject {
     @Override
     public Object getAsObject(Enum key) {
         return getAsObject(key.name());
+    }
+
+    @Override
+    public Text getAsText(String key) {
+        return new StringAndBytesText(get(key));
     }
 
     @Override

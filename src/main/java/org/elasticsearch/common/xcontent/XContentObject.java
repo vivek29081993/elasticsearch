@@ -20,6 +20,7 @@
 package org.elasticsearch.common.xcontent;
 
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.index.get.GetResult;
 import org.elasticsearch.search.aggregations.CommonJsonField;
 
@@ -382,4 +383,5 @@ public interface XContentObject {
     Object getAsObject(Enum key);
 
 
+    Text getAsText(String key);
 }
