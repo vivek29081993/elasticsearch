@@ -20,6 +20,9 @@
 package org.elasticsearch.action.search;
 
 import com.google.common.collect.Lists;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.ActionRequest;
@@ -27,6 +30,7 @@ import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.CompositeIndicesRequest;
 import org.elasticsearch.action.IndicesRequest;
 import org.elasticsearch.action.support.IndicesOptions;
+import org.elasticsearch.client.rest.support.HttpUtils;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
@@ -36,10 +40,12 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContent;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
@@ -279,5 +285,36 @@ public class MultiSearchRequest extends ActionRequest<MultiSearchRequest> implem
         for (SearchRequest request : requests) {
             request.writeTo(out);
         }
+    }
+
+    @Override
+    public String getRestEndPoint() {
+        return "/_msearch";
+    }
+
+    @Override
+    public Map<String, String> getRestParams() {
+        return super.getRestParams();
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.GET;
+    }
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        //todo add support for streaming version of getRestEntity()
+        StringBuilder builder = new StringBuilder();
+        for (SearchRequest request : requests) {
+            String payload = HttpUtils.readUtf8(request.getBulkRestEntity());
+            builder.append(payload);
+        }
+        return new NStringEntity(builder.toString(), "UTF-8");
+
+    }
+    @Override
+    public Header[] getRestHeaders() {
+        return super.getRestHeaders();
     }
 }

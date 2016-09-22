@@ -35,8 +35,7 @@ import org.elasticsearch.action.deletebyquery.IndexDeleteByQueryResponse;
 import org.elasticsearch.action.exists.ExistsResponse;
 import org.elasticsearch.action.explain.ExplainRequestBuilder;
 import org.elasticsearch.action.explain.ExplainResponse;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.get.*;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.indexedscripts.delete.DeleteIndexedScriptRequest;
@@ -44,10 +43,7 @@ import org.elasticsearch.action.indexedscripts.delete.DeleteIndexedScriptRespons
 import org.elasticsearch.action.indexedscripts.get.GetIndexedScriptRequest;
 import org.elasticsearch.action.indexedscripts.get.GetIndexedScriptResponse;
 import org.elasticsearch.action.indexedscripts.put.PutIndexedScriptResponse;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchScrollRequestBuilder;
-import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.action.search.*;
 import org.elasticsearch.action.support.QuerySourceBuilder;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.common.Strings;
@@ -236,7 +232,6 @@ public class RestClientTest {
             request.add(deleteRequest);
         }
         BulkResponse bulkItemResponse = client.bulk(request).get();
-        assertEquals(count, bulkItemResponse.getItems().length);
         for (BulkItemResponse itemResponse : bulkItemResponse.getItems()) {
             assertFalse("Item failed to index", itemResponse.isFailed());
         }
@@ -1064,7 +1059,7 @@ public class RestClientTest {
         PutIndexedScriptResponse response;
         Map<String, Object> script = Maps.newHashMap();
         script.put("script", "log(_score * 2) + my_modifier");
-        String id = "indexedCalculateScore";
+        String id = "indexedCalculateScore-" + UUID.randomUUID().toString();
         response = client.preparePutIndexedScript()
                 .setScriptLang("groovy")
                 .setId(id)
@@ -1103,8 +1098,76 @@ public class RestClientTest {
         ExplainResponse response = client.prepareExplain(TEST_INDEX, STATS_TYPE, request.id())
                 .setQuery(QueryBuilders.termQuery("color", request.sourceAsMap().get("color"))).get();
         assertNotNull(response);
-
     }
+
+    @Test
+    public void testMultiGetRequest() throws ExecutionException, InterruptedException {
+        List<IndexResponse> indexResponses = indexDocument(3);
+        MultiGetRequestBuilder requestBuilder = client.prepareMultiGet();
+
+        for (IndexResponse indexResponse : indexResponses) {
+            requestBuilder.add(indexResponse.getIndex(), indexResponse.getType(), indexResponse.getId());
+        }
+        MultiGetResponse responses = requestBuilder.get();
+        assertNotNull(responses);
+        MultiGetItemResponse[] responses1 = responses.getResponses();
+        assertEquals(indexResponses.size(), responses1.length);
+        for (MultiGetItemResponse response : responses) {
+            assertNotNull(response.getIndex());
+            assertNotNull(response.getType());
+            assertNotNull(response.getId());
+            Map<String, Object> sourceAsMap = response.getResponse().getSourceAsMap();
+            assertNotNull(sourceAsMap);
+            assertTrue(sourceAsMap.size() > 0);
+        }
+    }
+
+    @Test
+    public void testMultiSearchRequest() throws ExecutionException, InterruptedException {
+        List<IndexResponse> indexResponses = indexDocument(3);
+        MultiSearchRequestBuilder requestBuilder = client.prepareMultiSearch();
+
+        for (IndexResponse indexResponse : indexResponses) {
+            IdsQueryBuilder query = QueryBuilders.idsQuery(indexResponse.getType()).ids(indexResponse.getId());
+            requestBuilder.add(client.prepareSearch(indexResponse.getIndex()).setQuery(query));
+        }
+        MultiSearchResponse multiSearchResponse = requestBuilder.get();
+        assertNotNull(multiSearchResponse);
+
+        MultiSearchResponse.Item[] responses = multiSearchResponse.getResponses();
+        assertNotNull(responses);
+        assertEquals(indexResponses.size(), responses.length);
+        for (MultiSearchResponse.Item item : responses) {
+            SearchResponse response = item.getResponse();
+            assertNotNull(response);
+            assertNotNull(response.getHits());
+            assertEquals(1, response.getHits().getHits().length);
+        }
+    }
+
+    @Test
+    public void testMultiSearchRequestWithFailures() throws ExecutionException, InterruptedException {
+        List<IndexResponse> indexResponses = indexDocument(3);
+        MultiSearchRequestBuilder requestBuilder = client.prepareMultiSearch();
+
+        for (IndexResponse indexResponse : indexResponses) {
+            IdsQueryBuilder query = QueryBuilders.idsQuery(indexResponse.getType()).ids(indexResponse.getId());
+            SearchRequestBuilder searchRequestBuilder = client.prepareSearch(indexResponse.getIndex() + " " + indexResponse.getIndex());
+            requestBuilder.add(searchRequestBuilder.setQuery(query));
+        }
+        MultiSearchResponse multiSearchResponse = requestBuilder.get();
+        assertNotNull(multiSearchResponse);
+
+        MultiSearchResponse.Item[] responses = multiSearchResponse.getResponses();
+        assertNotNull(responses);
+        assertEquals(indexResponses.size(), responses.length);
+        for (MultiSearchResponse.Item item : responses) {
+            assertTrue(item.isFailure());
+            assertTrue(Strings.isNotEmpty(item.getFailureMessage()));
+        }
+    }
+
+
 
 
     private void validateScrollResponse(SearchResponse response) {
@@ -1218,6 +1281,7 @@ public class RestClientTest {
         source.put("author", author);
 
         request.source(source);
+        request.refresh(true);
         return request;
     }
 

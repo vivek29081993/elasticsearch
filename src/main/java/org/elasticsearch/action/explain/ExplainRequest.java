@@ -244,6 +244,11 @@ public class ExplainRequest extends SingleShardOperationRequest<ExplainRequest> 
                 .putIfNotNull("routing", this.routing)
                 .putIfNotNull("preference", this.preference);
 
+        if (this.fields != null) {
+            builder.putIfNotNull("fields", Joiner.on(',').join(this.fields));
+        }
+
+
         return builder.map();
 
     }

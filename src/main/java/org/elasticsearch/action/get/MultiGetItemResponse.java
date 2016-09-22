@@ -19,9 +19,12 @@
 
 package org.elasticsearch.action.get;
 
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.index.get.GetResult;
 
 import java.io.IOException;
 
@@ -118,5 +121,10 @@ public class MultiGetItemResponse implements Streamable {
             out.writeBoolean(false);
             response.writeTo(out);
         }
+    }
+
+    public void readFrom(XContentParser parser) throws IOException {
+        SearchResponse searchResponse = new SearchResponse();
+        searchResponse.readFrom(parser);
     }
 }

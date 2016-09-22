@@ -20,18 +20,19 @@
 package org.elasticsearch.action.search;
 
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
-import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.*;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A multi search response.
@@ -179,4 +180,41 @@ public class MultiSearchResponse extends ActionResponse implements Iterable<Mult
             return "{ \"error\" : \"" + e.getMessage() + "\"}";
         }
     }
+
+    enum JsonFields implements XContentParsable<MultiSearchResponse> {
+        responses {
+            @Override
+            public void apply(XContentParser parser, MultiSearchResponse response) throws IOException {
+                List<Item> items = Lists.newArrayList();
+                for (parser.nextToken(); parser.currentToken() != XContentParser.Token.END_ARRAY; parser.nextToken()) {
+                    XContentObject xContentObject = parser.xContentObject();
+
+                    String failureMessage = null;
+                    SearchResponse searchResponse = null;
+                    if (xContentObject.containsKey("error")) {
+                        failureMessage = xContentObject.get("error");
+                    }
+                    else {
+                        searchResponse = new SearchResponse();
+                        searchResponse.readFrom(xContentObject);
+                    }
+                    items.add(new Item(searchResponse, failureMessage));
+                }
+                response.items = items.toArray(new Item[items.size()]);
+            }
+        };
+
+        static Map<String, XContentParsable<MultiSearchResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (MultiSearchResponse.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, MultiSearchResponse.JsonFields.fields, this);
+    }
+
 }

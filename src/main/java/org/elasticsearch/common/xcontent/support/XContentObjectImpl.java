@@ -203,7 +203,12 @@ public class XContentObjectImpl implements XContentObject {
         }
         return value;
     }
-    
+
+    @Override
+    public Boolean getAsBoolean(Enum key) {
+        return getAsBoolean(key.name());
+    }
+
     @Override
     public XContentObject getAsXContentObject(String key) {
         Object value = internalMap.get(key);

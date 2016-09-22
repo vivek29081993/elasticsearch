@@ -140,7 +140,7 @@ public class InternalTopHits extends InternalMetricsAggregation implements TopHi
 
     public void readFrom(XContentObject in) throws IOException {
         this.name = in.get(CommonJsonField._name);
-        searchHits = InternalSearchHits.readSearchHits(in);
+        searchHits = InternalSearchHits.readSearchHits(in.getAsXContentObject("hits"));
 
     }
 

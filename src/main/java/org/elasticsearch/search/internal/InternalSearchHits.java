@@ -31,10 +31,7 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.SearchShardTarget;
 
 import java.io.IOException;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.elasticsearch.search.SearchShardTarget.readSearchShardTarget;
 import static org.elasticsearch.search.internal.InternalSearchHit.readSearchHit;
@@ -43,7 +40,6 @@ import static org.elasticsearch.search.internal.InternalSearchHit.readSearchHit;
  *
  */
 public class InternalSearchHits implements SearchHits {
-
 
     public static class StreamContext {
 
@@ -220,7 +216,7 @@ public class InternalSearchHits implements SearchHits {
     }
 
 
-    enum JsonFields implements XContentParsable<InternalSearchHits> {
+    enum JsonFields implements XContentParsable<InternalSearchHits>, XContentObjectParseable<InternalSearchHits> {
         total {
             @Override
             public void apply(XContentParser parser, InternalSearchHits hits) throws IOException {
@@ -250,14 +246,17 @@ public class InternalSearchHits implements SearchHits {
             @Override
             public void apply(XContentObject object, InternalSearchHits hits) throws IOException {
                 List<XContentObject> hitsList = object.getAsXContentObjectsOrEmpty(this);
-                List<InternalSearchHit> items = Lists.newArrayListWithCapacity(hitsList.size());
-                for (XContentObject xContentObject : hitsList) {
-                    InternalSearchHit item = new InternalSearchHit();
-                    item.readFrom(xContentObject);
-                    items.add(item);
+                if (hitsList.isEmpty()) {
+                    hits.hits = EMPTY;
+                } else {
+                    List<InternalSearchHit> items = Lists.newArrayListWithCapacity(hitsList.size());
+                    for (XContentObject xContentObject : hitsList) {
+                        InternalSearchHit item = new InternalSearchHit();
+                        item.readFrom(xContentObject);
+                        items.add(item);
+                    }
+                    hits.hits = items.toArray(new InternalSearchHit[items.size()]);
                 }
-                hits.hits = items.toArray(new InternalSearchHit[items.size()]);
-
             }
         },
         max_score {
@@ -283,10 +282,7 @@ public class InternalSearchHits implements SearchHits {
     }
 
     public void readFrom(XContentObject in) throws IOException {
-        XContentObject hits = in.getAsXContentObject("hits");
-        for (JsonFields field : JsonFields.values()) {
-            field.apply(hits, this);
-        }
+        XContentHelper.populate(in, JsonFields.values(), this);
 
     }
 

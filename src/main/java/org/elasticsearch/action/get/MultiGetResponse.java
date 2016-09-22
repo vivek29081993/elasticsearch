@@ -20,16 +20,19 @@
 package org.elasticsearch.action.get;
 
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.deletebyquery.IndexDeleteByQueryResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
+import org.elasticsearch.common.xcontent.*;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class MultiGetResponse extends ActionResponse implements Iterable<MultiGetItemResponse>, ToXContent {
 
@@ -102,6 +105,47 @@ public class MultiGetResponse extends ActionResponse implements Iterable<MultiGe
             out.writeString(id);
             out.writeString(message);
         }
+
+        enum JsonFields implements XContentObjectParseable<Failure> {
+            _index {
+                @Override
+                public void apply(XContentObject source, Failure object) throws IOException {
+                    object.index = source.get(this);
+                }
+            },
+            _type {
+                @Override
+                public void apply(XContentObject source, Failure object) throws IOException {
+                    object.type = source.get(this);
+                }
+            },
+            _id {
+                @Override
+                public void apply(XContentObject source, Failure object) throws IOException {
+                    object.id = source.get(this);
+                }
+            },
+            error {
+                @Override
+                public void apply(XContentObject source, Failure object) throws IOException {
+                    object.message = source.get(this);
+                }
+            };
+
+            static Map<String, XContentObjectParseable<Failure>> fields = Maps.newLinkedHashMap();
+            static {
+                for (JsonFields field : values()) {
+                    fields.put(field.name(), field);
+                }
+            }
+
+            }
+
+        private static Failure readFailure(XContentObject in) throws IOException {
+            Failure failure = new Failure();
+            XContentHelper.populate(in, JsonFields.values(), failure);
+            return failure;
+        }
     }
 
     private MultiGetItemResponse[] responses;
@@ -151,6 +195,41 @@ public class MultiGetResponse extends ActionResponse implements Iterable<MultiGe
         static final XContentBuilderString _TYPE = new XContentBuilderString("_type");
         static final XContentBuilderString _ID = new XContentBuilderString("_id");
         static final XContentBuilderString ERROR = new XContentBuilderString("error");
+    }
+
+    enum JsonFields implements XContentParsable<MultiGetResponse> {
+        docs {
+            @Override
+            public void apply(XContentParser parser, MultiGetResponse response) throws IOException {
+                List<MultiGetItemResponse> items = Lists.newArrayList();
+                for (parser.nextToken(); parser.currentToken() != XContentParser.Token.END_ARRAY; parser.nextToken()) {
+                    Failure failure = null;
+                    GetResponse getResponse = null;
+                    XContentObject xContentObject = parser.xContentObject();
+                    if (xContentObject.containsKey(Failure.JsonFields.error)) {
+                        failure = Failure.readFailure(xContentObject);
+                    }
+                    else {
+                        getResponse = GetResponse.readGetResponse(xContentObject);
+                    }
+                    MultiGetItemResponse item = new MultiGetItemResponse(getResponse, failure);
+                    items.add(item);
+                }
+                response.responses = items.toArray(new MultiGetItemResponse[items.size()]);
+            }
+        };
+
+        static Map<String, XContentParsable<MultiGetResponse>> fields = Maps.newLinkedHashMap();
+        static {
+            for (MultiGetResponse.JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, MultiGetResponse.JsonFields.fields, this);
     }
 
     @Override

@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.elasticsearch.common.xcontent.ToXContent.EMPTY_PARAMS;
 
@@ -515,8 +516,16 @@ public class XContentHelper {
     }
 
     public static <T> void populate(XContentObject source, XContentObjectParseable<T>[] fields, T o) throws IOException {
+        Set<String> keys = source.keySet();
         for (XContentObjectParseable<T> field : fields) {
-            field.apply(source, o);
+            if (keys.contains(field.name())) {
+                field.apply(source, o);
+            }
+            else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Skipping field: " + field.name() + " for class: " + o.getClass().getName());
+                }
+            }
         }
     }
 }

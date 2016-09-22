@@ -20,6 +20,7 @@
 package org.elasticsearch.common.xcontent;
 
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.index.get.GetResult;
 import org.elasticsearch.search.aggregations.CommonJsonField;
 
 import java.util.List;
@@ -90,6 +91,13 @@ public interface XContentObject {
      * @return The value, <tt>null</tt> if it does not exists.
      */
     Boolean getAsBoolean(String key);
+
+    /**
+     * Returns the Boolean value associated with the key.
+     *
+     * @return The value, <tt>null</tt> if it does not exists.
+     */
+    Boolean getAsBoolean(Enum key);
 
     /**
      * Returns the Boolean value associated with the key.
@@ -372,4 +380,6 @@ public interface XContentObject {
     Object getAsObject(String key);
 
     Object getAsObject(Enum key);
+
+
 }
