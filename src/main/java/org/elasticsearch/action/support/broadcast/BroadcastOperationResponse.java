@@ -108,14 +108,20 @@ public abstract class BroadcastOperationResponse extends ActionResponse {
         }
     }
 
+    enum ShardFields {
+        total,
+        successful,
+        failed
+    }
+
     enum JsonFields implements XContentObjectParseable<BroadcastOperationResponse> {
         _shards {
             @Override
             public void apply(XContentObject source, BroadcastOperationResponse object) throws IOException {
                 XContentObject shardInfo = source.getAsXContentObject(this);
-                object.totalShards = shardInfo.getAsInt("total");
-                object.successfulShards = shardInfo.getAsInt("successful");
-                object.failedShards = shardInfo.getAsInt("failed");
+                object.totalShards = shardInfo.getAsInt(ShardFields.total);
+                object.successfulShards = shardInfo.getAsInt(ShardFields.successful);
+                object.failedShards = shardInfo.getAsInt(ShardFields.failed);
             }
         }
     }
