@@ -19,15 +19,19 @@
 
 package org.elasticsearch.action.admin.indices.close;
 
+import com.google.common.base.Joiner;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.action.support.master.AcknowledgedRequest;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.util.CollectionUtils;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
@@ -116,4 +120,15 @@ public class CloseIndexRequest extends AcknowledgedRequest<CloseIndexRequest> im
         writeTimeout(out);
         indicesOptions.writeIndicesOptions(out);
     }
+
+    @Override
+    public String getRestEndPoint() {
+        return Joiner.on('/').join(Joiner.on(',').join(indices), "_close");
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.POST;
+    }
+
 }

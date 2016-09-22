@@ -19,13 +19,19 @@
 
 package org.elasticsearch.action.admin.indices.flush;
 
+import com.google.common.base.Joiner;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationRequest;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * A flush request to flush one or more indices. The flush process of an index basically frees memory from the index
@@ -132,5 +138,24 @@ public class FlushRequest extends BroadcastOperationRequest<FlushRequest> {
             waitIfOngoing = false;
         }
     }
+
+    @Override
+    public String getRestEndPoint() {
+        return Joiner.on('/').join(Joiner.on(',').join(indices), "_flush");
+    }
+
+    @Override
+    public Map<String, String> getRestParams() {
+        return new MapBuilder<String, String>()
+                .putIf("full", String.valueOf(full), full)
+                .putIf("wait_if_ongoing", String.valueOf(waitIfOngoing), waitIfOngoing)
+                .putIf("force", String.valueOf(force), force).map();
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.POST;
+    }
+
 
 }

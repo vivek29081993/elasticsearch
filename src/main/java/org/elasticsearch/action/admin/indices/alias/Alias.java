@@ -19,9 +19,11 @@
 
 package org.elasticsearch.action.admin.indices.alias;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.ElasticsearchGenerationException;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -225,5 +227,16 @@ public class Alias implements Streamable {
     @Override
     public int hashCode() {
         return name != null ? name.hashCode() : 0;
+    }
+
+    public Map<String, Object> asMap() {
+        Map<String, Object> map = Maps.newLinkedHashMap();
+
+        MapBuilder<String, Object> filterOps = new MapBuilder<String, Object>()
+                .putIfNotNull("filter", this.filter)
+                .putIfNotNull("index_routing", this.indexRouting)
+                .putIfNotNull("search_routing", this.searchRouting);
+        map.put(this.name(), filterOps.map());
+        return map;
     }
 }
