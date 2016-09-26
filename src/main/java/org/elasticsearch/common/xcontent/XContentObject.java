@@ -19,11 +19,13 @@
 
 package org.elasticsearch.common.xcontent;
 
+import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.index.get.GetResult;
 import org.elasticsearch.search.aggregations.CommonJsonField;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -384,4 +386,11 @@ public interface XContentObject {
 
 
     Text getAsText(String key);
+
+    Map<String,Object> getInternalMap();
+
+    String getAsJson(String key) throws IOException;
+    String getAsJson(Enum key) throws IOException;
+
+    XContentParser getAsXContentParser(String key) throws IOException;
 }

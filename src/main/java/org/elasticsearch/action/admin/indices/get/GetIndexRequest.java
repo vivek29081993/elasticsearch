@@ -19,6 +19,9 @@
 
 package org.elasticsearch.action.admin.indices.get;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import com.google.common.collect.ObjectArrays;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.Version;
@@ -28,15 +31,24 @@ import org.elasticsearch.action.support.master.info.ClusterInfoRequest;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A request to delete an index. Best created with {@link org.elasticsearch.client.Requests#deleteIndexRequest(String)}.
  */
 public class GetIndexRequest extends ClusterInfoRequest<GetIndexRequest> {
+
+    public static final Function<Feature, String> FEATURE_TO_PREFERRED_NAME_TRANSFORMER = new Function<Feature, String>() {
+        @Override
+        public String apply(Feature feature) {
+            return feature.preferredName;
+        }
+    };
 
     public static enum Feature {
         ALIASES((byte) 0, "_aliases", "_alias"),
@@ -224,4 +236,21 @@ public class GetIndexRequest extends ClusterInfoRequest<GetIndexRequest> {
         return defaultIndicesOptions;
     }
 
+    @Override
+    public String getRestEndPoint() {
+
+        String indicesCsv = Joiner.on(',').join(this.indices());
+        String typesCsv = Joiner.on(',').join(this.types());
+        String featuresCsv = "";
+        if (this.features != DEFAULT_FEATURES) {
+            List<String> featureNames = Lists.transform(Arrays.asList(this.features), FEATURE_TO_PREFERRED_NAME_TRANSFORMER);
+            featuresCsv = Joiner.on(',').join(featureNames);
+        }
+        return Joiner.on('/').join(indicesCsv, typesCsv, featuresCsv);
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.GET;
+    }
 }

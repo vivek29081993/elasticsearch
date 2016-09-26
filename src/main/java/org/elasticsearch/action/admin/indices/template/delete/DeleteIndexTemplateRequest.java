@@ -18,12 +18,15 @@
  */
 package org.elasticsearch.action.admin.indices.template.delete;
 
+import com.google.common.base.Joiner;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.support.master.MasterNodeOperationRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
@@ -71,4 +74,15 @@ public class DeleteIndexTemplateRequest extends MasterNodeOperationRequest<Delet
         super.writeTo(out);
         out.writeString(name);
     }
+
+    @Override
+    public String getRestEndPoint() {
+        return Joiner.on('/').join("_template", name);
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.DELETE;
+    }
+
 }

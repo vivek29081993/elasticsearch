@@ -1,0 +1,44 @@
+{
+  "template" : "logs_*",
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "aliases" : {
+    "severe" : {
+      "filter" : {
+        "term" : {"level" : "severe" }
+      },
+      "routing" : "severe"
+    }
+  },
+  "mappings": {
+    "log": {
+      "properties": {
+        "level": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "message": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "date"
+        }
+      }
+    }
+  },
+  "warmers" : {
+    "match_all_warmer" : {
+      "types" : ["log"],
+      "source" : {
+        "query" : {
+          "filter" : {
+            "term" : {"level" : "severe" }
+          }
+        }
+      }
+    }
+  }
+}
+

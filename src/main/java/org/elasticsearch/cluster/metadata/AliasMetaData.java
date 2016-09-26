@@ -25,10 +25,7 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.compress.CompressedString;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.*;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -332,6 +329,19 @@ public class AliasMetaData {
                 searchRouting = in.readString();
             }
             return new AliasMetaData(alias, filter, indexRouting, searchRouting);
+        }
+
+        enum JsonField {
+            index_routing,
+            search_routing,
+            filter,
+            _alias
+        }
+        public static AliasMetaData readFrom(XContentObject in) throws IOException {
+            return new AliasMetaData(in.get(JsonField._alias),
+                                     new CompressedString(in.getAsJson(JsonField.filter)),
+                                     in.get(JsonField.index_routing),
+                                     in.get(JsonField.search_routing));
         }
     }
 

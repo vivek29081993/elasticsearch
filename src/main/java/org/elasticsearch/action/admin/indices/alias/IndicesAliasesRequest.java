@@ -20,8 +20,14 @@
 package org.elasticsearch.action.admin.indices.alias;
 
 import com.carrotsearch.hppc.cursors.ObjectCursor;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import groovy.json.JsonBuilder;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
@@ -30,19 +36,29 @@ import org.elasticsearch.action.support.master.AcknowledgedRequest;
 import org.elasticsearch.cluster.metadata.AliasAction;
 import org.elasticsearch.cluster.metadata.AliasAction.Type;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
+import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.util.CollectionUtils;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.index.query.FilterBuilder;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 import static org.elasticsearch.cluster.metadata.AliasAction.readAliasAction;
+import static org.elasticsearch.common.settings.ImmutableSettings.Builder.EMPTY_SETTINGS;
+import static org.elasticsearch.common.xcontent.ToXContent.EMPTY_PARAMS;
 
 /**
  * A request to add/remove aliases for one or more indices.
@@ -64,7 +80,7 @@ public class IndicesAliasesRequest extends AcknowledgedRequest<IndicesAliasesReq
      * holds the AliasAction and in addition the arrays or alias names and
      * indices that is later used to create the final AliasAction instances.
      */
-    public static class AliasActions {
+    public static class AliasActions implements ToXContent {
         private String[] indices = Strings.EMPTY_ARRAY;
         private String[] aliases = Strings.EMPTY_ARRAY;
         private AliasAction aliasAction;
@@ -190,6 +206,14 @@ public class IndicesAliasesRequest extends AcknowledgedRequest<IndicesAliasesReq
             out.writeStringArray(indices);
             out.writeStringArray(aliases);
             this.aliasAction.writeTo(out);
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            builder.startObject();
+            this.aliasAction.toXContent(builder, params);
+            builder.endObject();
+            return builder;
         }
     }
 
@@ -350,6 +374,28 @@ public class IndicesAliasesRequest extends AcknowledgedRequest<IndicesAliasesReq
     private AliasActions readAliasActions(StreamInput in) throws IOException {
         AliasActions actions = new AliasActions();
         return actions.readFrom(in);
+    }
+
+
+    @Override
+    public String getRestEndPoint() {
+        return "_aliases";
+    }
+
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.POST;
+    }
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        //todo bdk fix this, it's broke
+        XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
+        for (AliasActions aliasAction : allAliasActions) {
+            aliasAction.toXContent(jsonBuilder, EMPTY_PARAMS);
+        }
+        return new NStringEntity(jsonBuilder.string(), StandardCharsets.UTF_8);
     }
 
 }

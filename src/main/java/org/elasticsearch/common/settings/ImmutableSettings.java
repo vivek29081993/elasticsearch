@@ -36,6 +36,7 @@ import org.elasticsearch.common.settings.loader.SettingsLoader;
 import org.elasticsearch.common.settings.loader.SettingsLoaderFactory;
 import org.elasticsearch.common.unit.*;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -610,6 +611,14 @@ public class ImmutableSettings implements Settings {
         int result = settings != null ? settings.hashCode() : 0;
         result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
         return result;
+    }
+
+    public static Settings readSettingsFromStream(XContentObject in) {
+        Builder builder = new Builder();
+        for (String key : in.keySet()){
+            builder.put(key, in.get(key));
+        }
+        return builder.build();
     }
 
     public static Settings readSettingsFromStream(StreamInput in) throws IOException {

@@ -18,6 +18,11 @@
  */
 package org.elasticsearch.action.admin.indices.template.put;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Maps;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.ElasticsearchParseException;
@@ -38,8 +43,10 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,6 +56,7 @@ import static org.elasticsearch.action.ValidateActions.addValidationError;
 import static org.elasticsearch.common.settings.ImmutableSettings.Builder.EMPTY_SETTINGS;
 import static org.elasticsearch.common.settings.ImmutableSettings.readSettingsFromStream;
 import static org.elasticsearch.common.settings.ImmutableSettings.writeSettingsToStream;
+import static org.elasticsearch.common.xcontent.ToXContent.EMPTY_PARAMS;
 
 /**
  * A request to create an index template.
@@ -478,5 +486,64 @@ public class PutIndexTemplateRequest extends MasterNodeOperationRequest<PutIndex
                 alias.writeTo(out);
             }
         }
+    }
+
+    @Override
+    public String getRestEndPoint() {
+        return Joiner.on('/').join("_template", name);
+    }
+
+    @Override
+    public Map<String, String> getRestParams() {
+        return super.getRestParams();
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.PUT;
+    }
+
+    @Override
+    public HttpEntity getRestEntity() throws IOException {
+        Map<String, Object> mappings = Maps.newLinkedHashMap();
+        for (String json : this.mappings.values()) {
+            Map<String, Object> mapping = XContentHelper.fromJson(json);
+            mappings.putAll(mapping);
+        }
+
+        Map<String, Object> aliases = Maps.newLinkedHashMap();
+        for (Alias alias : this.aliases) {
+            aliases.putAll(alias.asMap());
+        }
+        Map<String, Object> custom = Maps.newLinkedHashMap();
+        for (Map.Entry<String, IndexMetaData.Custom> entry : this.customs.entrySet()) {
+            IndexMetaData.Custom.Factory<IndexMetaData.Custom> customFactory;
+            IndexMetaData.Custom customIndexMetaData = entry.getValue();
+            customFactory = IndexMetaData.lookupFactory(customIndexMetaData.type());
+            XContentBuilder builder = XContentFactory.jsonBuilder();
+            builder.startObject();
+            builder.startObject(customIndexMetaData.type());
+            customFactory.toXContent(customIndexMetaData, builder, EMPTY_PARAMS);
+            builder.endObject();
+            builder.endObject();
+            Map<String, Object> customMap = XContentHelper.fromJson(builder.string());
+            custom.put(entry.getKey(), customMap);
+        }
+
+
+        Map<String, Object> payload = new MapBuilder<String, Object>()
+                .put("template", template)
+                .put("order", String.valueOf(order))
+                .putIf("settings", settings.getAsMap(), settings != EMPTY_SETTINGS)
+                .putIf("mappings", mappings, !mappings.isEmpty())
+                .putAllIf(custom, !custom.isEmpty())
+                .putIfNotNull("aliases", aliases).map();
+        String json = XContentHelper.convertToJson(payload, false);
+        return new NStringEntity(json, StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public Header[] getRestHeaders() {
+        return super.getRestHeaders();
     }
 }

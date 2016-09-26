@@ -50,6 +50,7 @@ import java.util.Map;
  */
 public final class XContentBuilder implements BytesStream, Releasable {
 
+
     public static enum FieldCaseConversion {
         /**
          * No conversion will occur.
@@ -317,6 +318,15 @@ public final class XContentBuilder implements BytesStream, Releasable {
         }
         return this;
     }
+    public XContentBuilder fieldIfNotNull(String name, String value) throws IOException {
+        if (value == null) {
+            return this;
+        }
+        field(name);
+        generator.writeString(value);
+        return this;
+    }
+
 
     public XContentBuilder field(String name, String value, FieldCaseConversion conversion) throws IOException {
         field(name, conversion);

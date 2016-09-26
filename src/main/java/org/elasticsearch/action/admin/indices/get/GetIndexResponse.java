@@ -35,6 +35,10 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentObject;
+import org.elasticsearch.common.xcontent.XContentObjectParseable;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.search.warmer.IndexWarmersMetaData;
 import org.elasticsearch.search.warmer.IndexWarmersMetaData.Entry;
 
@@ -254,5 +258,65 @@ public class GetIndexResponse extends ActionResponse {
         GetIndexResponse response = new GetIndexResponse(indices.toArray(new String[indices.size()]), warmers, mappings,
                 aliases, indexToSettings);
         return response;
+    }
+
+
+    enum JsonField  {
+        mappings,
+        settings,
+        aliases,
+        warmers
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentObject xContentObject = parser.xContentObject();
+        Set<String> indices = xContentObject.keySet();
+        this.indices = indices.toArray(new String[indices.size()]);
+        ImmutableOpenMap.Builder<String, Settings> settingsMapBuilder = ImmutableOpenMap.builder();
+        ImmutableOpenMap.Builder<String, ImmutableOpenMap<String, MappingMetaData>> mappingsMapBuilder = ImmutableOpenMap.builder();
+        ImmutableOpenMap.Builder<String, ImmutableList<AliasMetaData>> aliasesMapBuilder = ImmutableOpenMap.builder();
+        ImmutableOpenMap.Builder<String, ImmutableList<IndexWarmersMetaData.Entry>> warmersMapBuilder = ImmutableOpenMap.builder();
+
+        for (String index : indices) {
+            XContentObject indexData = xContentObject.getAsXContentObject(index);
+
+            // handle mappings
+            XContentObject xMappings = indexData.getAsXContentObject(JsonField.mappings);
+            Set<String> types = xMappings.keySet();
+            ImmutableOpenMap.Builder<String, MappingMetaData> mappingEntryBuilder = ImmutableOpenMap.builder();
+            for (String type : types) {
+                mappingEntryBuilder.put(type, new MappingMetaData(type, xMappings.getInternalMap()));
+            }
+            mappingsMapBuilder.put(index, mappingEntryBuilder.build());
+
+            // handle aliases
+            XContentObject xAliases = indexData.getAsXContentObject(JsonField.aliases);
+            Set<String> aliases = xAliases.keySet();
+            ImmutableList.Builder<AliasMetaData> aliasEntryBuilder = ImmutableList.builder();
+            for (String alias : aliases) {
+                XContentObject xAlias = xAliases.getAsXContentObject(alias);
+                xAlias.put("_alias", alias);
+                aliasEntryBuilder.add(AliasMetaData.Builder.readFrom(xAlias));
+            }
+            aliasesMapBuilder.put(index, aliasEntryBuilder.build());
+
+            XContentObject xWarmers = indexData.getAsXContentObject(JsonField.warmers);
+            ImmutableList.Builder<IndexWarmersMetaData.Entry> warmerEntryBuilder = ImmutableList.builder();
+            IndexWarmersMetaData metaData = new IndexWarmersMetaData.Factory().fromMap(xWarmers.getInternalMap());
+            for (Entry entry : metaData.entries()) {
+                warmerEntryBuilder.add(entry);
+            }
+            warmersMapBuilder.put(index, warmerEntryBuilder.build());
+
+
+            // handle settings
+            settingsMapBuilder.put(index, ImmutableSettings.readSettingsFromStream(indexData.getAsXContentObject(JsonField.settings)));
+        }
+
+        this.mappings = mappingsMapBuilder.build();
+        this.settings = settingsMapBuilder.build();
+        this.aliases = aliasesMapBuilder.build();
+        this.warmers = warmersMapBuilder.build();
     }
 }

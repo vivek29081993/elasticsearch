@@ -1,6 +1,16 @@
 {
   "settings": {
-    "number_of_shards": 1
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "aliases" : {
+    "alias_1" : {},
+    "alias_2" : {
+      "filter" : {
+        "term" : {"color" : "red" }
+      },
+      "routing" : "red"
+    }
   },
   "mappings": {
     "stats": {
@@ -57,6 +67,16 @@
               "type": "string"
             }
           }
+        }
+      }
+    }
+  },
+  "warmers" : {
+    "match_all_warmer" : {
+      "types" : ["stats"],
+      "source" : {
+        "query" : {
+          "match_all" : {}
         }
       }
     }

@@ -24,6 +24,7 @@ import com.google.common.collect.Maps;
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.Tuple;
@@ -32,13 +33,11 @@ import org.elasticsearch.common.compress.Compressor;
 import org.elasticsearch.common.compress.CompressorFactory;
 import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.io.stream.BytesStreamInput;
+import org.elasticsearch.common.text.StringAndBytesText;
 import org.elasticsearch.common.xcontent.ToXContent.Params;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.elasticsearch.common.xcontent.ToXContent.EMPTY_PARAMS;
 
@@ -527,5 +526,14 @@ public class XContentHelper {
                 }
             }
         }
+    }
+
+    public static Map<String, Object> fromJson(String json) throws IOException {
+        if (Strings.isEmpty(json)) {
+            return Collections.emptyMap();
+        }
+        XContentParser parser = XContentHelper.createParser(new StringAndBytesText(json).bytes());
+        Map<String, Object> map = parser.mapOrderedAndClose();
+        return map;
     }
 }
