@@ -19,11 +19,13 @@
 
 package org.elasticsearch.action.admin.indices.cache.clear;
 
+import com.google.common.base.Joiner;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.index.shard.ShardId;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
 
@@ -115,4 +117,6 @@ class ShardClearIndicesCacheRequest extends BroadcastShardOperationRequest {
             out.writeBoolean(queryCache);
         }
     }
+
+
 }

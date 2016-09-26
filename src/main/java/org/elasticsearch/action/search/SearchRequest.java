@@ -50,6 +50,7 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.elasticsearch.search.Scroll.readScroll;
@@ -669,11 +670,11 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
                 .put("index", this.indices)
                 .put("type", this.types)
                 .putIfNotNull("routing", this.routing)
-                .putIf("search_type", searchType.name().toLowerCase(), searchType != SearchType.DEFAULT);
+                .putIf("search_type", searchType.name().toLowerCase(Locale.ROOT), searchType != SearchType.DEFAULT);
 
         String headerJson = XContentHelper.convertToJson(headerBuilder.map(), false);
         String sourceJson = XContentHelper.convertToJson(source, false);
-        return new NStringEntity(String.format("%s\n%s\n", headerJson, sourceJson), StandardCharsets.UTF_8);
+        return new NStringEntity(String.format(Locale.ROOT, "%s\n%s\n", headerJson, sourceJson), StandardCharsets.UTF_8);
     }
 
     @Override
@@ -685,7 +686,7 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
             builder.put("scroll", scroll.keepAlive().toString());
         }
         if (searchType != null && searchType != SearchType.DEFAULT) {
-            builder.put("search_type", searchType.name().toLowerCase());
+            builder.put("search_type", searchType.name().toLowerCase(Locale.ROOT));
         }
 
         return builder.map();

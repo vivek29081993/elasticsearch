@@ -21,11 +21,13 @@ package org.elasticsearch.common.xcontent.support;
 
 import org.elasticsearch.ElasticsearchException;
 
+import java.util.Locale;
+
 /**
  */
 public class XContentObjectValueException extends ElasticsearchException {
 
     public XContentObjectValueException(Class type, String key, Object value, Throwable cause) {
-        super(String.format("Failed to parse type: '%s' for key: '%s', value: '%s'", type.getSimpleName(), key, value), cause);
+        super(String.format(Locale.ROOT, "Failed to parse type: '%s' for key: '%s', value: '%s'", type.getSimpleName(), key, value), cause);
     }
 }
