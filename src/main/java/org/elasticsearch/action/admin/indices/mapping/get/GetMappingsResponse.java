@@ -20,13 +20,22 @@
 package org.elasticsearch.action.admin.indices.mapping.get;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
+import com.google.common.collect.ImmutableList;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
+import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentObject;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.search.warmer.IndexWarmersMetaData;
 
 import java.io.IOException;
+import java.util.Set;
 
 /**
  */
@@ -78,5 +87,35 @@ public class GetMappingsResponse extends ActionResponse {
                 MappingMetaData.writeTo(typeEntry.value, out);
             }
         }
+    }
+
+    enum JsonField  {
+        mappings,
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentObject xContentObject = parser.xContentObject();
+        readFrom(xContentObject);
+    }
+
+    public void readFrom(XContentObject xContentObject) throws IOException {
+        Set<String> indices = xContentObject.keySet();
+        ImmutableOpenMap.Builder<String, ImmutableOpenMap<String, MappingMetaData>> mappingsMapBuilder = ImmutableOpenMap.builder();
+
+        for (String index : indices) {
+            XContentObject indexData = xContentObject.getAsXContentObject(index);
+
+            // handle mappings
+            XContentObject xMappings = indexData.getAsXContentObject(JsonField.mappings);
+            Set<String> types = xMappings.keySet();
+            ImmutableOpenMap.Builder<String, MappingMetaData> mappingEntryBuilder = ImmutableOpenMap.builder();
+            for (String type : types) {
+                mappingEntryBuilder.put(type, new MappingMetaData(type, xMappings.getInternalMap()));
+            }
+            mappingsMapBuilder.put(index, mappingEntryBuilder.build());
+        }
+
+        this.mappings = mappingsMapBuilder.build();
     }
 }

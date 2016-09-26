@@ -19,11 +19,17 @@
 
 package org.elasticsearch.action.admin.indices.alias.exists;
 
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.exists.ExistsResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentParsable;
+import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  */
@@ -57,4 +63,28 @@ public class AliasesExistResponse extends ActionResponse {
         super.writeTo(out);
         out.writeBoolean(exists);
     }
+
+    enum JsonFields implements XContentParsable<AliasesExistResponse> {
+        exists {
+            @Override
+            public void apply(XContentParser parser, AliasesExistResponse response) throws IOException {
+                response.exists = parser.booleanValue();
+            }
+        };
+
+
+        static Map<String, XContentParsable<AliasesExistResponse>> fields = Maps.newLinkedHashMap();
+
+        static {
+            for (JsonFields field : values()) {
+                fields.put(field.name(), field);
+            }
+        }
+    }
+
+    @Override
+    public void readFrom(XContentParser parser) throws IOException {
+        XContentHelper.populate(parser, JsonFields.fields, this);
+    }
+
 }

@@ -18,7 +18,10 @@
  */
 package org.elasticsearch.client.rest.admin;
 
+import com.carrotsearch.ant.tasks.junit4.dependencies.com.google.common.collect.Maps;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesResponse;
+import org.elasticsearch.action.admin.indices.alias.exists.AliasesExistRequestBuilder;
+import org.elasticsearch.action.admin.indices.alias.exists.AliasesExistResponse;
 import org.elasticsearch.action.admin.indices.cache.clear.ClearIndicesCacheResponse;
 import org.elasticsearch.action.admin.indices.close.CloseIndexResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
@@ -26,24 +29,31 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.flush.FlushResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
+import org.elasticsearch.action.admin.indices.mapping.delete.DeleteMappingResponse;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
+import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
 import org.elasticsearch.action.admin.indices.open.OpenIndexResponse;
 import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
+import org.elasticsearch.action.support.broadcast.BroadcastOperationResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.client.rest.RestClient;
+import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.index.query.FilterBuilders;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Brandon Kearby
@@ -73,6 +83,11 @@ public class RestIndicesAdminClientTest {
 
     private String loadTestIndexTemplate() {
         InputStream in = this.getClass().getResourceAsStream("/org/elasticsearch/client/rest/test-index-template.json");
+        return Strings.valueOf(in);
+    }
+
+    private String loadTestIndexPutMapping() {
+        InputStream in = this.getClass().getResourceAsStream("/org/elasticsearch/client/rest/test-index-put-mapping.json");
         return Strings.valueOf(in);
     }
 
@@ -160,8 +175,57 @@ public class RestIndicesAdminClientTest {
     }
 
     @Test
-    public void test() {
+    public void testClearCache() {
         ClearIndicesCacheResponse response = indicesAdminClient.prepareClearCache(index).get();
+        assertBroadcastOperationResponse(response);
+    }
+
+    @Test
+    public void testDeleteMapping() {
+        DeleteMappingResponse response = indicesAdminClient.prepareDeleteMapping(index).get();
+        assertAcknowledged(response);
+    }
+
+    @Test
+    public void testGetMapping() throws IOException {
+        GetMappingsResponse response = indicesAdminClient.prepareGetMappings(index).get();
+        ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings;
+        mappings = response.getMappings();
+        assertTrue(!mappings.isEmpty());
+        ImmutableOpenMap<String, MappingMetaData> mapping = mappings.get(index);
+        assertNotNull(mapping);
+        assertTrue(!mapping.isEmpty());
+        MappingMetaData stats = mapping.get("stats");
+        assertNotNull(stats);
+    }
+
+    @Test
+    public void testPutMapping() throws IOException {
+        String mapping = loadTestIndexPutMapping();
+        PutMappingResponse response = indicesAdminClient.preparePutMapping(index)
+                .setType("stats")
+                .setSource(mapping)
+                .setIgnoreConflicts(true).get();
+        assertAcknowledged(response);
+    }
+
+    @Test
+    @Ignore
+    public void testAliasesExist() {
+        
+        AliasesExistResponse response;
+        AliasesExistRequestBuilder builder = indicesAdminClient.prepareAliasesExist("alias_1");
+        response = builder.get();
+        assertFalse(response.exists());
+
+        response = indicesAdminClient.prepareAliasesExist(UUID.randomUUID().toString()).get();
+        assertFalse(response.exists());
+
+    }
+
+    private void assertBroadcastOperationResponse(BroadcastOperationResponse response) {
+        assertTrue(response.getSuccessfulShards() > 0);
+        assertEquals(0, response.getFailedShards());
     }
 
     private void closeIndex() {

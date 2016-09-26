@@ -19,12 +19,18 @@
 
 package org.elasticsearch.action.admin.indices.cache.clear;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -134,5 +140,16 @@ public class ClearIndicesCacheRequest extends BroadcastOperationRequest<ClearInd
         if (out.getVersion().onOrAfter(Version.V_1_4_0_Beta1)) {
             out.writeBoolean(queryCache);
         }
+    }
+
+    @Override
+    public String getRestEndPoint() {
+        String indicesCsv = Joiner.on(',').join(this.indices());
+        return Joiner.on('/').join(indicesCsv, "_cache/clear");
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.POST;
     }
 }

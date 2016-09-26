@@ -84,24 +84,25 @@ public abstract class ActionRequest<T extends ActionRequest> extends TransportRe
         super.writeTo(out);
     }
 
+    public RestRequest.Method getRestMethod() {
+        throw new UnsupportedOperationException("Implement me in " + this.getClass());
+    }
+
     public String getRestEndPoint() {
         throw new UnsupportedOperationException("Implement me in " + this.getClass());
+    }
+
+    public HttpEntity getRestEntity() throws IOException {
+        return EMPTY_ENTITY;
     }
 
     public Map<String, String> getRestParams() {
         return Collections.emptyMap();
     }
 
-    public RestRequest.Method getRestMethod() {
-        throw new UnsupportedOperationException("Implement me in " + this.getClass());
-    }
 
     public HttpEntity getBulkRestEntity() throws IOException {
         throw new UnsupportedOperationException("Implement me in " + this.getClass());
-    }
-
-    public HttpEntity getRestEntity() throws IOException {
-        return EMPTY_ENTITY;
     }
 
     public Header[] getRestHeaders() {

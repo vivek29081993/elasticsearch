@@ -26,6 +26,8 @@ import org.elasticsearch.action.support.master.MasterNodeReadOperationRequest;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.util.UriBuilder;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
 
@@ -100,5 +102,18 @@ public class GetAliasesRequest extends MasterNodeReadOperationRequest<GetAliases
         out.writeStringArray(aliases);
         indicesOptions.writeIndicesOptions(out);
         writeLocal(out, Version.V_1_0_0_RC2);
+    }
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.GET;
+    }
+
+    @Override
+    public String getRestEndPoint() {
+        return UriBuilder.newBuilder()
+                .csv(indices())
+                .slash("_alias")
+                .csv(aliases).build();
     }
 }

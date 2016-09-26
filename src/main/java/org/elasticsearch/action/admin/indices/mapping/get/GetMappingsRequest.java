@@ -21,6 +21,8 @@ package org.elasticsearch.action.admin.indices.mapping.get;
 
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.support.master.info.ClusterInfoRequest;
+import org.elasticsearch.common.util.UriBuilder;
+import org.elasticsearch.rest.RestRequest;
 
 /**
  */
@@ -31,4 +33,17 @@ public class GetMappingsRequest extends ClusterInfoRequest<GetMappingsRequest> {
         return null;
     }
 
+
+    @Override
+    public RestRequest.Method getRestMethod() {
+        return RestRequest.Method.GET;
+    }
+
+    @Override
+    public String getRestEndPoint() {
+        return UriBuilder.newBuilder()
+                .csv(this.indices())
+                .csv(types())
+                .slash("_mappings").build();
+    }
 }

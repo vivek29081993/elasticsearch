@@ -115,12 +115,10 @@ public class Suggest implements Iterable<Suggest.Suggestion<? extends Entry<? ex
         suggest {
             @Override
             public void apply(XContentObject source, Suggest object) throws IOException {
-                System.out.println("source = " + source);
             }
 
             @Override
             public void apply(XContentParser parser, Suggest response) throws IOException {
-                System.out.println("source = " + parser);
             }
         };
         static Map<String, XContentParsable<Suggest>> fields = Maps.newLinkedHashMap();
