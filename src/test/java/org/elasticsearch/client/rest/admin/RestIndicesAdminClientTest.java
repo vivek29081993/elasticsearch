@@ -18,14 +18,11 @@
  */
 package org.elasticsearch.client.rest.admin;
 
-import com.carrotsearch.ant.tasks.junit4.dependencies.com.google.common.collect.Maps;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesResponse;
 import org.elasticsearch.action.admin.indices.alias.exists.AliasesExistRequestBuilder;
 import org.elasticsearch.action.admin.indices.alias.exists.AliasesExistResponse;
 import org.elasticsearch.action.admin.indices.cache.clear.ClearIndicesCacheResponse;
 import org.elasticsearch.action.admin.indices.close.CloseIndexResponse;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.flush.FlushResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
@@ -35,22 +32,14 @@ import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
 import org.elasticsearch.action.admin.indices.open.OpenIndexResponse;
 import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
-import org.elasticsearch.action.support.broadcast.BroadcastOperationResponse;
-import org.elasticsearch.action.support.master.AcknowledgedResponse;
-import org.elasticsearch.client.IndicesAdminClient;
-import org.elasticsearch.client.rest.RestClient;
+import org.elasticsearch.client.rest.AbstractRestClientTest;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.index.query.FilterBuilders;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
@@ -59,50 +48,9 @@ import static org.junit.Assert.*;
  * @author Brandon Kearby
  *         September 22, 2016
  */
-public class RestIndicesAdminClientTest {
+public class RestIndicesAdminClientTest extends AbstractRestClientTest {
 
-    private IndicesAdminClient indicesAdminClient;
-    private String index;
 
-    @Before
-    public void setUp() {
-        RestClient client = new RestClient("localhost");
-        this.indicesAdminClient = client.admin().indices();
-        this.index = createIndex();
-    }
-
-    @After
-    public void tearDown() {
-        deleteIndex(index);
-    }
-
-    private String loadTestIndex() {
-        InputStream in = this.getClass().getResourceAsStream("/org/elasticsearch/client/rest/test-index.json");
-        return Strings.valueOf(in);
-    }
-
-    private String loadTestIndexTemplate() {
-        InputStream in = this.getClass().getResourceAsStream("/org/elasticsearch/client/rest/test-index-template.json");
-        return Strings.valueOf(in);
-    }
-
-    private String loadTestIndexPutMapping() {
-        InputStream in = this.getClass().getResourceAsStream("/org/elasticsearch/client/rest/test-index-put-mapping.json");
-        return Strings.valueOf(in);
-    }
-
-    private void deleteIndex(String index) {
-        DeleteIndexResponse response = indicesAdminClient.prepareDelete(index).get();
-        assertAcknowledged(response);
-    }
-
-    private String createIndex() {
-        String index = UUID.randomUUID().toString();
-        CreateIndexResponse response = indicesAdminClient.prepareCreate(index)
-                .setSource(loadTestIndex()).get();
-        assertAcknowledged(response);
-        return index;
-    }
 
     @Test
     public void testGetIndex() {
@@ -212,7 +160,7 @@ public class RestIndicesAdminClientTest {
     @Test
     @Ignore
     public void testAliasesExist() {
-        
+
         AliasesExistResponse response;
         AliasesExistRequestBuilder builder = indicesAdminClient.prepareAliasesExist("alias_1");
         response = builder.get();
@@ -223,18 +171,9 @@ public class RestIndicesAdminClientTest {
 
     }
 
-    private void assertBroadcastOperationResponse(BroadcastOperationResponse response) {
-        assertTrue(response.getSuccessfulShards() > 0);
-        assertEquals(0, response.getFailedShards());
-    }
-
     private void closeIndex() {
         CloseIndexResponse response = indicesAdminClient.prepareClose(index).get();
         assertAcknowledged(response);
-    }
-
-    private void assertAcknowledged(AcknowledgedResponse response) {
-        assertTrue(response.isAcknowledged());
     }
 
 

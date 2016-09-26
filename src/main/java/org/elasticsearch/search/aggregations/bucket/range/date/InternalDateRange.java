@@ -19,6 +19,7 @@
 package org.elasticsearch.search.aggregations.bucket.range.date;
 
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentObject;
@@ -61,7 +62,9 @@ public class InternalDateRange extends InternalRange<InternalDateRange.Bucket> i
     }
 
     public static void registerStream() {
+
         AggregationStreams.registerStream(STREAM, TYPE.stream());
+        AggregationStreams.registerStream(STREAM, new BytesArray(TYPE.name())); // added for es 5.0
     }
 
     public static final Factory FACTORY = new Factory();

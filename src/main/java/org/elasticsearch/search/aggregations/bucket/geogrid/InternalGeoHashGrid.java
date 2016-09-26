@@ -20,6 +20,7 @@ package org.elasticsearch.search.aggregations.bucket.geogrid;
 
 import com.google.common.collect.Lists;
 import org.apache.lucene.util.PriorityQueue;
+import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.geo.GeoHashUtils;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -61,6 +62,7 @@ public class InternalGeoHashGrid extends InternalAggregation implements GeoHashG
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
+        AggregationStreams.registerStream(STREAM, new BytesArray(TYPE.name())); // added for es 5.0
     }
 
 
