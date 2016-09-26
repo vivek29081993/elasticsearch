@@ -19,7 +19,6 @@
 package org.elasticsearch.client.rest.admin;
 
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesResponse;
-import org.elasticsearch.action.admin.indices.cache.clear.ClearIndicesCacheRequest;
 import org.elasticsearch.action.admin.indices.cache.clear.ClearIndicesCacheResponse;
 import org.elasticsearch.action.admin.indices.close.CloseIndexResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
@@ -31,7 +30,7 @@ import org.elasticsearch.action.admin.indices.open.OpenIndexResponse;
 import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
-import org.elasticsearch.client.AdminClient;
+import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.client.rest.RestClient;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.index.query.FilterBuilders;
@@ -43,7 +42,6 @@ import org.junit.Test;
 import java.io.InputStream;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -51,15 +49,15 @@ import static org.junit.Assert.assertTrue;
  * @author Brandon Kearby
  *         September 22, 2016
  */
-public class RestAdminClientTest {
+public class RestIndicesAdminClientTest {
 
-    private AdminClient adminClient;
+    private IndicesAdminClient indicesAdminClient;
     private String index;
 
     @Before
     public void setUp() {
         RestClient client = new RestClient("localhost");
-        this.adminClient = client.admin();
+        this.indicesAdminClient = client.admin().indices();
         this.index = createIndex();
     }
 
@@ -79,13 +77,13 @@ public class RestAdminClientTest {
     }
 
     private void deleteIndex(String index) {
-        DeleteIndexResponse response = this.adminClient.indices().prepareDelete(index).get();
+        DeleteIndexResponse response = indicesAdminClient.prepareDelete(index).get();
         assertAcknowledged(response);
     }
 
     private String createIndex() {
         String index = UUID.randomUUID().toString();
-        CreateIndexResponse response = this.adminClient.indices().prepareCreate(index)
+        CreateIndexResponse response = indicesAdminClient.prepareCreate(index)
                 .setSource(loadTestIndex()).get();
         assertAcknowledged(response);
         return index;
@@ -94,7 +92,7 @@ public class RestAdminClientTest {
     @Test
     public void testGetIndex() {
         GetIndexResponse response;
-        response = this.adminClient.indices().prepareGetIndex().addIndices(index).get();
+        response = indicesAdminClient.prepareGetIndex().addIndices(index).get();
         assertFalse(response.getMappings().get(index).isEmpty());
         assertFalse(response.getSettings().get(index).names().isEmpty());
         assertFalse(response.getAliases().get(index).isEmpty());
@@ -105,7 +103,7 @@ public class RestAdminClientTest {
 
     @Test
     public void testFlushIndex() {
-        FlushResponse response = this.adminClient.indices().prepareFlush(index).get();
+        FlushResponse response = indicesAdminClient.prepareFlush(index).get();
         assertTrue(response.getFailedShards() == 0);
         assertTrue(response.getSuccessfulShards() > 0);
     }
@@ -120,13 +118,13 @@ public class RestAdminClientTest {
         closeIndex();
         Thread.sleep(2000);
 
-        OpenIndexResponse response = this.adminClient.indices().prepareOpen(index).get();
+        OpenIndexResponse response = indicesAdminClient.prepareOpen(index).get();
         assertAcknowledged(response);
     }
 
     @Test
     public void testExistsIndex() {
-        IndicesExistsResponse response = this.adminClient.indices().prepareExists(index).get();
+        IndicesExistsResponse response = indicesAdminClient.prepareExists(index).get();
         assertTrue(response.isExists());
     }
 
@@ -137,7 +135,7 @@ public class RestAdminClientTest {
 
     private void putTemplate() {
         PutIndexTemplateResponse response;
-        response = this.adminClient.indices().preparePutTemplate("logs_template").setSource(loadTestIndexTemplate()).get();
+        response = indicesAdminClient.preparePutTemplate("logs_template").setSource(loadTestIndexTemplate()).get();
         assertAcknowledged(response);
     }
 
@@ -146,7 +144,7 @@ public class RestAdminClientTest {
         putTemplate();
 
         DeleteIndexTemplateResponse response;
-        response = this.adminClient.indices().prepareDeleteTemplate("logs_template").get();
+        response = indicesAdminClient.prepareDeleteTemplate("logs_template").get();
         assertAcknowledged(response);
     }
 
@@ -154,7 +152,7 @@ public class RestAdminClientTest {
     @Ignore
     public void testAliases() {
         IndicesAliasesResponse response;
-        response = this.adminClient.indices().prepareAliases()
+        response = indicesAdminClient.prepareAliases()
                 .addAlias(index, "myAliasNoArg")
                 .addAlias(index, "blueGuy", FilterBuilders.termFilter("color", "blue"))
                 .removeAlias(index, "alias_1").get();
@@ -163,11 +161,11 @@ public class RestAdminClientTest {
 
     @Test
     public void test() {
-        ClearIndicesCacheResponse response = this.adminClient.indices().prepareClearCache(index).get();
+        ClearIndicesCacheResponse response = indicesAdminClient.prepareClearCache(index).get();
     }
 
     private void closeIndex() {
-        CloseIndexResponse response = this.adminClient.indices().prepareClose(index).get();
+        CloseIndexResponse response = indicesAdminClient.prepareClose(index).get();
         assertAcknowledged(response);
     }
 
