@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import org.apache.lucene.util.CollectionUtil;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.rounding.Rounding;
@@ -67,6 +68,7 @@ public class InternalHistogram<B extends InternalHistogram.Bucket> extends Inter
 
     public static void registerStream() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
+        AggregationStreams.registerStream(STREAM, new BytesArray(TYPE.name())); // added for es 5.0
     }
 
     public static class Bucket implements Histogram.Bucket {

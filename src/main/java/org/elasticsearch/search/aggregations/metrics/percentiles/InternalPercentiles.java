@@ -19,6 +19,7 @@
 package org.elasticsearch.search.aggregations.metrics.percentiles;
 
 import com.google.common.collect.UnmodifiableIterator;
+import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.search.aggregations.AggregationStreams;
@@ -33,7 +34,8 @@ import java.util.Iterator;
 */
 public class InternalPercentiles extends AbstractInternalPercentiles implements Percentiles {
 
-    public final static Type TYPE = new Type("percentiles");
+    // added name for es 5.0
+    public final static Type TYPE = new Type("tdigest_percentiles", "percentiles");
 
     public final static AggregationStreams.Stream STREAM = new AggregationStreams.Stream() {
         @Override
@@ -53,6 +55,7 @@ public class InternalPercentiles extends AbstractInternalPercentiles implements 
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
+        AggregationStreams.registerStream(STREAM, new BytesArray(TYPE.name()));
     }
 
     InternalPercentiles() {} // for serialization

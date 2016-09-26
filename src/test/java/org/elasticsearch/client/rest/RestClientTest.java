@@ -93,6 +93,7 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.search.suggest.Suggest;
 import org.elasticsearch.search.suggest.SuggestBuilders;
 import org.joda.time.DateTime;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -110,13 +111,11 @@ import static org.junit.Assert.*;
  * @author Brandon Kearby
  *         September 08, 2016
  */
-public class RestClientTest {
-    public static final String TEST_INDEX = "test";
+public class RestClientTest extends AbstractRestClientTest {
     public static final String POSTS_INDEX = "posts";
     public static final String POST_TYPE = "post";
     public static final String COMMENT_TYPE = "comment";
     public static final String STATS_TYPE = "stats";
-    private RestClient client;
 
     enum Color {
         red,
@@ -139,10 +138,14 @@ public class RestClientTest {
         documentary
     }
 
-
-    @Before
+  @Before
     public void setUp() {
-        this.client = new RestClient("localhost");
+        super.setUp();
+    }
+
+    @After
+    public void tearDown() {
+        super.tearDown();
     }
 
     @Test
@@ -155,7 +158,7 @@ public class RestClientTest {
     }
 
     private GetResponse getDocument(String id) throws InterruptedException, ExecutionException {
-        GetRequest getRequest = new GetRequest(TEST_INDEX, STATS_TYPE, id);
+        GetRequest getRequest = new GetRequest(index, STATS_TYPE, id);
         ActionFuture<GetResponse> getResponseActionFuture = this.client.get(getRequest);
         return getResponseActionFuture.get();
     }
@@ -163,13 +166,13 @@ public class RestClientTest {
     @Test
     public void testIndex() throws ExecutionException, InterruptedException {
         String id = UUID.randomUUID().toString();
-        IndexRequest request = new IndexRequest(TEST_INDEX, STATS_TYPE, id);
+        IndexRequest request = new IndexRequest(index, STATS_TYPE, id);
         Map<String, Object> source = Maps.newHashMap();
         source.put("datePretty", "2016-02-28T05:30:00+05:30");
         request.source(source);
         IndexResponse indexResponse = this.client.index(request).get();
         assertEquals(id, indexResponse.getId());
-        assertEquals(TEST_INDEX, indexResponse.getIndex());
+        assertEquals(index, indexResponse.getIndex());
         assertEquals(STATS_TYPE, indexResponse.getType());
 
         GetResponse getResponse = getDocument(id);
@@ -187,7 +190,7 @@ public class RestClientTest {
         DeleteResponse deleteResponse = client.delete(deleteRequest).get();
 
         assertEquals(indexResponse.getId(), deleteResponse.getId());
-        assertEquals(TEST_INDEX, deleteResponse.getIndex());
+        assertEquals(index, deleteResponse.getIndex());
         assertEquals(STATS_TYPE, deleteResponse.getType());
         assertTrue("Document should be found", deleteResponse.isFound());
 
@@ -243,7 +246,7 @@ public class RestClientTest {
     public void testCount() throws ExecutionException, InterruptedException {
         IndexResponse indexResponse = indexDocument();
         CountRequest request;
-        request = new CountRequest(TEST_INDEX);
+        request = new CountRequest(index);
         request.types(STATS_TYPE);
         CountResponse countResponse = client.count(request).get();
         assertTrue(countResponse.getCount() > 0);
@@ -265,7 +268,7 @@ public class RestClientTest {
     public void testSearch() throws ExecutionException, InterruptedException {
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX).addSort("datePretty", SortOrder.DESC);
+        SearchRequestBuilder search = client.prepareSearch(index).addSort("datePretty", SortOrder.DESC);
         SearchResponse response = client.search(search.request()).get();
         SearchHits hits = response.getHits();
         assertNotNull(hits);
@@ -278,7 +281,7 @@ public class RestClientTest {
     public void testSearchWithAggregationValueCount() throws ExecutionException, InterruptedException {
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String colorsAgg = "colors";
         search.addAggregation(AggregationBuilders.count(colorsAgg).field("color"));
         search.setSize(0); // no hits please
@@ -304,7 +307,7 @@ public class RestClientTest {
     public void testSearchWithAggregationSum() throws ExecutionException, InterruptedException {
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "amount_sum";
         search.addAggregation(AggregationBuilders.sum(name).field("amount"));
         search.setSize(0); // no hits please
@@ -331,7 +334,7 @@ public class RestClientTest {
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "amount_value";
         search.addAggregation(AggregationBuilders.avg(name).field("amount"));
         search.setSize(0); // no hits please
@@ -358,7 +361,7 @@ public class RestClientTest {
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "amount_value";
         search.addAggregation(AggregationBuilders.cardinality(name).field("amount"));
         search.setSize(0); // no hits please
@@ -385,7 +388,7 @@ public class RestClientTest {
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.global(name).subAggregation(AggregationBuilders.terms("colors").field("color")));
         search.setSize(0); // no hits please
@@ -408,7 +411,7 @@ public class RestClientTest {
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.filter(name).filter(FilterBuilders.termFilter("color", "red")));
         search.setSize(0); // no hits please
@@ -432,7 +435,7 @@ public class RestClientTest {
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         AggregationBuilder aggregation =
                 AggregationBuilders
@@ -468,7 +471,7 @@ public class RestClientTest {
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
 
 
@@ -494,7 +497,7 @@ public class RestClientTest {
         indexDocument();
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
 
 
@@ -560,7 +563,7 @@ public class RestClientTest {
     public void testSearchWithMaxAggregation() throws ExecutionException, InterruptedException {
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.max(name).field("amount"));
         search.setSize(0); // no hits please
@@ -582,7 +585,7 @@ public class RestClientTest {
     public void testSearchWithMinAggregation() throws ExecutionException, InterruptedException {
         indexDocument();
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.min(name).field("amount"));
         search.setSize(0); // no hits please
@@ -607,7 +610,7 @@ public class RestClientTest {
     public void testSearchWithPercentilesAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.percentiles(name).field("amount").percentiles(.9D,.8D,.7D));
         search.setSize(0); // no hits please
@@ -639,7 +642,7 @@ public class RestClientTest {
     public void testSearchWithPercentileRanksAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.percentileRanks(name).field("amount").percentiles(.9D,.8D,.7D));
         search.setSize(0); // no hits please
@@ -668,7 +671,7 @@ public class RestClientTest {
     public void testSearchWithRangeAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         String maxKey = "1toMax";
         search.addAggregation(AggregationBuilders.range(name).field("amount")
@@ -692,7 +695,7 @@ public class RestClientTest {
     public void testSearchWithDateRangeAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         String minKey = "first";
         search.addAggregation(AggregationBuilders.dateRange(name).field("datePretty")
@@ -720,7 +723,7 @@ public class RestClientTest {
     public void testSearchWithTopHitsAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.topHits(name).addFieldDataField("datePretty"));
 
@@ -751,7 +754,7 @@ public class RestClientTest {
     public void testSearchWithStatsAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.stats(name).field("amount"));
 
@@ -773,7 +776,7 @@ public class RestClientTest {
     public void testSearchWithExtendedStatsAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.extendedStats(name).field("amount"));
 
@@ -800,7 +803,7 @@ public class RestClientTest {
     public void testSearchWithIpRangeAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         String mask = "255.255.0.0/32";
         search.addAggregation(AggregationBuilders.ipRange(name).field("ipAddress").addMaskRange(mask));
@@ -820,7 +823,7 @@ public class RestClientTest {
     public void testSearchWithGeoBoundsAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.geoBounds(name).field("currentLocation"));
 
@@ -839,7 +842,7 @@ public class RestClientTest {
     public void testSearchWithGeoDistanceAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.geoDistance(name)
                 .field("currentLocation")
@@ -865,7 +868,7 @@ public class RestClientTest {
     public void testSearchWithGeoHashGridAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.geohashGrid(name)
                 .field("currentLocation")
@@ -888,7 +891,7 @@ public class RestClientTest {
     public void testSearchWithHistogramAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.histogram(name)
                 .field("amount")
@@ -910,7 +913,7 @@ public class RestClientTest {
     public void testSearchWithDateHistogramAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.dateHistogram(name)
                 .field("datePretty")
@@ -931,7 +934,7 @@ public class RestClientTest {
     public void testSearchWithSignificantStringTermsAggregation() throws ExecutionException, InterruptedException {
         indexDocument(1000);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.setQuery(QueryBuilders.termQuery("genre", "action"));
         search.addAggregation(AggregationBuilders.significantTerms(name)
@@ -955,7 +958,7 @@ public class RestClientTest {
     public void testSearchWithSignificantLongTermsAggregation() throws ExecutionException, InterruptedException {
         indexDocument(1000);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.setQuery(QueryBuilders.termQuery("genre", "action"));
         search.addAggregation(AggregationBuilders.significantTerms(name)
@@ -980,7 +983,7 @@ public class RestClientTest {
     public void testSearchWithFiltersAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.setQuery(QueryBuilders.termQuery("genre", "action"));
         search.addAggregation(AggregationBuilders.filters(name)
@@ -1002,7 +1005,7 @@ public class RestClientTest {
     public void testSearchWithScriptedMetricAggregation() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        SearchRequestBuilder search = client.prepareSearch(TEST_INDEX);
+        SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
         search.addAggregation(AggregationBuilders.scriptedMetric(name)
                 .initScript("_agg['positive_sentiment'] = []")
@@ -1026,7 +1029,7 @@ public class RestClientTest {
         indexDocument(100);
 
         TimeValue scrollKeepAlive = TimeValue.timeValueHours(1);
-        SearchResponse response = client.prepareSearch(TEST_INDEX)
+        SearchResponse response = client.prepareSearch(index)
                 .setSearchType(SearchType.SCAN)
                 .setScroll(scrollKeepAlive)
                 .setQuery(QueryBuilders.termQuery("color", Color.red))
@@ -1047,10 +1050,10 @@ public class RestClientTest {
     public void testDeleteByQuery() throws ExecutionException, InterruptedException {
         indexDocument(100);
         DeleteByQueryResponse response;
-        response = client.prepareDeleteByQuery(TEST_INDEX)
+        response = client.prepareDeleteByQuery(index)
                     .setQuery(QueryBuilders.termQuery("color", Color.red)).get();
         for (IndexDeleteByQueryResponse queryResponse : response) {
-            assertEquals(TEST_INDEX, queryResponse.getIndex());
+            assertEquals(index, queryResponse.getIndex());
         }
     }
 
@@ -1086,7 +1089,7 @@ public class RestClientTest {
     public void testExistsRequest() throws ExecutionException, InterruptedException {
         indexDocument(100);
 
-        ExistsResponse existsResponse = client.prepareExists(TEST_INDEX)
+        ExistsResponse existsResponse = client.prepareExists(index)
                 .setTypes(STATS_TYPE)
                 .setQuery(QueryBuilders.termQuery("color", "red")).get();
         assertNotNull(existsResponse);
@@ -1097,7 +1100,7 @@ public class RestClientTest {
     public void testExplainRequest() throws ExecutionException, InterruptedException {
         IndexRequest request = newIndexRequest();
         index(request);
-        ExplainResponse response = client.prepareExplain(TEST_INDEX, STATS_TYPE, request.id())
+        ExplainResponse response = client.prepareExplain(index, STATS_TYPE, request.id())
                 .setQuery(QueryBuilders.termQuery("color", request.sourceAsMap().get("color"))).get();
         assertNotNull(response);
     }
@@ -1173,7 +1176,7 @@ public class RestClientTest {
     public void testSuggestSearch() throws ExecutionException, InterruptedException {
         List<IndexResponse> indexResponses = indexDocument(3);
 
-        SuggestResponse response = client.prepareSuggest(TEST_INDEX)
+        SuggestResponse response = client.prepareSuggest(index)
                 .addSuggestion(SuggestBuilders.termSuggestion("perhaps")
                         .suggestMode("always")
                         .text("read")
@@ -1289,7 +1292,7 @@ public class RestClientTest {
 
     private IndexRequest newIndexRequest() {
         String id = UUID.randomUUID().toString();
-        IndexRequest request = new IndexRequest(TEST_INDEX, STATS_TYPE, id);
+        IndexRequest request = new IndexRequest(index, STATS_TYPE, id);
         Map<String, Object> source = Maps.newHashMap();
         source.put("datePretty", new DateTime().minusDays(Math.abs(new Random().nextInt() % 500)));
         source.put("sentiment", Math.abs(new Random().nextInt() % 10));
@@ -1298,12 +1301,12 @@ public class RestClientTest {
         source.put("amount", Math.abs(new Random().nextDouble()));
         Map<String, Object> reach = Maps.newHashMap();
         reach.put("type", "point");
-        reach.put("coordinates", Arrays.asList(-1 * Math.abs(new Random().nextDouble() % 300), Math.abs(new Random().nextDouble() % 300)));
+        reach.put("coordinates", Arrays.asList(-1 * Math.abs(new Random().nextDouble() % 90), Math.abs(new Random().nextDouble() % 180)));
         source.put("reach", reach);
 
         Map<String, Object> latLon = Maps.newLinkedHashMap();
-        latLon.put("lat", -1 * Math.abs(new Random().nextInt() % 360));
-        latLon.put("lon", Math.abs(new Random().nextInt() % 360));
+        latLon.put("lat", -1 * Math.abs(new Random().nextInt() % 90));
+        latLon.put("lon", Math.abs(new Random().nextInt() % 180));
         source.put("currentLocation", latLon);
         source.put("ipAddress", Joiner.on('.').join(Math.abs(new Random().nextInt() % 255), Math.abs(new Random().nextInt() % 255), Math.abs(new Random().nextInt() % 255), Math.abs(new Random().nextInt() % 255)));
 

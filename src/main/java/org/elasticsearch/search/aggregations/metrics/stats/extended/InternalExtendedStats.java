@@ -19,6 +19,7 @@
 package org.elasticsearch.search.aggregations.metrics.stats.extended;
 
 import org.elasticsearch.Version;
+import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
@@ -60,6 +61,7 @@ public class InternalExtendedStats extends InternalStats implements ExtendedStat
 
     public static void registerStreams() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
+        AggregationStreams.registerStream(STREAM, new BytesArray(TYPE.name())); // added for es 5.0
     }
 
     enum Metrics implements XContentObjectParseable<InternalExtendedStats> {

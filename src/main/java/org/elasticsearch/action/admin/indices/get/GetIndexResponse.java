@@ -43,9 +43,9 @@ import org.elasticsearch.search.warmer.IndexWarmersMetaData;
 import org.elasticsearch.search.warmer.IndexWarmersMetaData.Entry;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import static java.util.Collections.emptyMap;
 
 /**
  * A response for a delete index action.
@@ -303,7 +303,8 @@ public class GetIndexResponse extends ActionResponse {
 
             XContentObject xWarmers = indexData.getAsXContentObject(JsonField.warmers);
             ImmutableList.Builder<IndexWarmersMetaData.Entry> warmerEntryBuilder = ImmutableList.builder();
-            IndexWarmersMetaData metaData = new IndexWarmersMetaData.Factory().fromMap(xWarmers.getInternalMap());
+            Map<String, Object> xWarmersInternalMap = xWarmers == null ? Collections.<String, Object>emptyMap() : xWarmers.getInternalMap();
+            IndexWarmersMetaData metaData = new IndexWarmersMetaData.Factory().fromMap(xWarmersInternalMap);
             for (Entry entry : metaData.entries()) {
                 warmerEntryBuilder.add(entry);
             }
