@@ -229,11 +229,11 @@ public class Alias implements Streamable {
         return name != null ? name.hashCode() : 0;
     }
 
-    public Map<String, Object> asMap() {
+    public Map<String, Object> asMap() throws IOException {
         Map<String, Object> map = Maps.newLinkedHashMap();
 
         MapBuilder<String, Object> filterOps = new MapBuilder<String, Object>()
-                .putIfNotNull("filter", this.filter)
+                .putIfNotNull("filter", XContentHelper.fromJson(filter))
                 .putIfNotNull("index_routing", this.indexRouting)
                 .putIfNotNull("search_routing", this.searchRouting);
         map.put(this.name(), filterOps.map());

@@ -27,8 +27,12 @@ import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.text.StringAndBytesText;
 import org.elasticsearch.common.text.Text;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentObject;
+import org.elasticsearch.common.xcontent.XContentParser;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -269,6 +273,26 @@ public class XContentObjectImpl implements XContentObject {
     @Override
     public Text getAsText(String key) {
         return new StringAndBytesText(get(key));
+    }
+
+    @Override
+    public Map<String, Object> getInternalMap() {
+        return internalMap;
+    }
+
+    @Override
+    public String getAsJson(String key) throws IOException {
+        return XContentFactory.jsonBuilder().map(getAsMap(key)).string();
+    }
+
+    @Override
+    public String getAsJson(Enum key) throws IOException {
+        return getAsJson(key.name());
+    }
+
+    @Override
+    public XContentParser getAsXContentParser(String key) throws IOException {
+        return XContentHelper.createParser(new StringAndBytesText(getAsJson(key)).bytes());
     }
 
     @Override

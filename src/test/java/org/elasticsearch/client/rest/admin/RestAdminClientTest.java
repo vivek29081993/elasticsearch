@@ -18,23 +18,33 @@
  */
 package org.elasticsearch.client.rest.admin;
 
+import org.elasticsearch.action.admin.indices.alias.IndicesAliasesResponse;
+import org.elasticsearch.action.admin.indices.cache.clear.ClearIndicesCacheRequest;
+import org.elasticsearch.action.admin.indices.cache.clear.ClearIndicesCacheResponse;
 import org.elasticsearch.action.admin.indices.close.CloseIndexResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.flush.FlushResponse;
+import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.admin.indices.open.OpenIndexResponse;
+import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateResponse;
+import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.rest.RestClient;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.index.query.FilterBuilders;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
 import java.util.UUID;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -63,6 +73,11 @@ public class RestAdminClientTest {
         return Strings.valueOf(in);
     }
 
+    private String loadTestIndexTemplate() {
+        InputStream in = this.getClass().getResourceAsStream("/org/elasticsearch/client/rest/test-index-template.json");
+        return Strings.valueOf(in);
+    }
+
     private void deleteIndex(String index) {
         DeleteIndexResponse response = this.adminClient.indices().prepareDelete(index).get();
         assertAcknowledged(response);
@@ -75,6 +90,18 @@ public class RestAdminClientTest {
         assertAcknowledged(response);
         return index;
     }
+
+    @Test
+    public void testGetIndex() {
+        GetIndexResponse response;
+        response = this.adminClient.indices().prepareGetIndex().addIndices(index).get();
+        assertFalse(response.getMappings().get(index).isEmpty());
+        assertFalse(response.getSettings().get(index).names().isEmpty());
+        assertFalse(response.getAliases().get(index).isEmpty());
+        assertFalse(response.getWarmers().get(index).isEmpty());
+    }
+
+
 
     @Test
     public void testFlushIndex() {
@@ -104,8 +131,39 @@ public class RestAdminClientTest {
     }
 
     @Test
-    public void testIndexTemplate() {
-        //todo bdk
+    public void testPutTemplate() {
+        putTemplate();
+    }
+
+    private void putTemplate() {
+        PutIndexTemplateResponse response;
+        response = this.adminClient.indices().preparePutTemplate("logs_template").setSource(loadTestIndexTemplate()).get();
+        assertAcknowledged(response);
+    }
+
+    @Test
+    public void testDeleteTemplate() {
+        putTemplate();
+
+        DeleteIndexTemplateResponse response;
+        response = this.adminClient.indices().prepareDeleteTemplate("logs_template").get();
+        assertAcknowledged(response);
+    }
+
+    @Test
+    @Ignore
+    public void testAliases() {
+        IndicesAliasesResponse response;
+        response = this.adminClient.indices().prepareAliases()
+                .addAlias(index, "myAliasNoArg")
+                .addAlias(index, "blueGuy", FilterBuilders.termFilter("color", "blue"))
+                .removeAlias(index, "alias_1").get();
+        assertAcknowledged(response);
+    }
+
+    @Test
+    public void test() {
+        ClearIndicesCacheResponse response = this.adminClient.indices().prepareClearCache(index).get();
     }
 
     private void closeIndex() {

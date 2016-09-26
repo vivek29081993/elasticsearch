@@ -20,7 +20,6 @@
 package org.elasticsearch.action.admin.indices.create;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.http.Header;
@@ -37,7 +36,9 @@ import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.action.support.master.AcknowledgedRequest;
+import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.MapBuilder;
@@ -45,7 +46,6 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.text.StringAndBytesText;
 import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.rest.RestRequest;
 
@@ -59,6 +59,7 @@ import static org.elasticsearch.action.ValidateActions.addValidationError;
 import static org.elasticsearch.common.settings.ImmutableSettings.readSettingsFromStream;
 import static org.elasticsearch.common.settings.ImmutableSettings.writeSettingsToStream;
 import static org.elasticsearch.common.settings.ImmutableSettings.Builder.EMPTY_SETTINGS;
+import static org.elasticsearch.common.xcontent.ToXContent.EMPTY_PARAMS;
 
 /**
  * A request to create an index. Best created with {@link org.elasticsearch.client.Requests#createIndexRequest(String)}.
@@ -525,10 +526,15 @@ public class CreateIndexRequest extends AcknowledgedRequest<CreateIndexRequest> 
 
     @Override
     public HttpEntity getRestEntity() throws IOException {
+        Map<String, Object> payload = toMap();
+        String json = XContentHelper.convertToJson(payload, false);
+        return new NStringEntity(json, StandardCharsets.UTF_8);
+    }
+
+    public Map<String, Object> toMap() throws IOException {
         Map<String, Object> mappings = Maps.newLinkedHashMap();
         for (String json : this.mappings.values()) {
-            XContentParser parser = XContentHelper.createParser(new StringAndBytesText(json).bytes());
-            Map<String, Object> mapping = parser.mapAndClose();
+            Map<String, Object> mapping = XContentHelper.fromJson(json);
             mappings.putAll(mapping);
         }
 
@@ -536,15 +542,29 @@ public class CreateIndexRequest extends AcknowledgedRequest<CreateIndexRequest> 
         for (Alias alias : this.aliases) {
             aliases.putAll(alias.asMap());
         }
+        Map<String, Object> custom = Maps.newLinkedHashMap();
+        for (Map.Entry<String, IndexMetaData.Custom> entry : this.customs.entrySet()) {
+            IndexMetaData.Custom.Factory<IndexMetaData.Custom> customFactory;
+            IndexMetaData.Custom customIndexMetaData = entry.getValue();
+            customFactory = IndexMetaData.lookupFactory(customIndexMetaData.type());
+            XContentBuilder builder = XContentFactory.jsonBuilder();
+            builder.startObject();
+            builder.startObject(customIndexMetaData.type());
+            customFactory.toXContent(customIndexMetaData, builder, EMPTY_PARAMS);
+            builder.endObject();
+            builder.endObject();
+            Map<String, Object> customMap = XContentHelper.fromJson(builder.string());
+            custom.put(entry.getKey(), customMap);
+        }
 
 
-        Map<String, Object> payload = new MapBuilder<String, Object>()
+        return new MapBuilder<String, Object>()
                 .putIf("settings", settings.getAsMap(), settings != EMPTY_SETTINGS)
                 .putIf("mappings", mappings, !mappings.isEmpty())
+                .putAllIf(custom, !custom.isEmpty())
                 .putIfNotNull("aliases", aliases).map();
-        String json = XContentHelper.convertToJson(payload, false);
-        return new NStringEntity(json, StandardCharsets.UTF_8);
     }
+
 
     @Override
     public Header[] getRestHeaders() {

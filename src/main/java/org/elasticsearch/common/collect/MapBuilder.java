@@ -101,4 +101,11 @@ public class MapBuilder<K, V> {
         }
         return this;
     }
+
+    public MapBuilder<K, V> putAllIf(Map<K, V> map, boolean preCondition) {
+        if (preCondition) {
+            putAll(map);
+        }
+        return this;
+    }
 }
