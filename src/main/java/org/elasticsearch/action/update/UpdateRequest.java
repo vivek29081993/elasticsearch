@@ -737,17 +737,17 @@ public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> 
 
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return Joiner.on('/').join(index(), type(), id(), "_update");
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.POST;
     }
 
     @Override
-    public HttpEntity getBulkRestEntity() throws IOException {
+    public HttpEntity getBulkEntity() throws IOException {
         Map<String, Object> payload = Maps.newLinkedHashMap();
         Map<String, Object> actionMetadata = Maps.newLinkedHashMap();
         actionMetadata.put("_index", index);
@@ -761,7 +761,7 @@ public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> 
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         Map<String, Object> payload = getPayload();
         return new NStringEntity(XContentHelper.convertToJson(payload, false), StandardCharsets.UTF_8);
 

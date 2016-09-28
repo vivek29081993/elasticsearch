@@ -21,12 +21,11 @@ package org.elasticsearch.action.update;
 
 import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
-import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.VersionedXContentParser;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParsable;
-import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.get.GetResult;
 import org.elasticsearch.rest.RestStatus;
 
@@ -136,39 +135,39 @@ public class UpdateResponse extends ActionResponse {
     enum JsonFields implements XContentParsable<UpdateResponse> {
         _index {
             @Override
-            public void apply(XContentParser parser, UpdateResponse response) throws IOException {
-                response.index = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, UpdateResponse response) throws IOException {
+                response.index = versionedXContentParser.getParser().text();
             }
         },
         _type {
             @Override
-            public void apply(XContentParser parser, UpdateResponse response) throws IOException {
-                response.type = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, UpdateResponse response) throws IOException {
+                response.type = versionedXContentParser.getParser().text();
             }
         },
         _id {
             @Override
-            public void apply(XContentParser parser, UpdateResponse response) throws IOException {
-                response.id = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, UpdateResponse response) throws IOException {
+                response.id = versionedXContentParser.getParser().text();
             }
         },
         _version {
             @Override
-            public void apply(XContentParser parser, UpdateResponse response) throws IOException {
-                response.version = parser.intValue();
+            public void apply(VersionedXContentParser versionedXContentParser, UpdateResponse response) throws IOException {
+                response.version = versionedXContentParser.getParser().intValue();
             }
         },
         status {
             @Override
-            public void apply(XContentParser parser, UpdateResponse response) throws IOException {
-                response.bulkStatus = RestStatus.valueOf(parser.intValue());
+            public void apply(VersionedXContentParser versionedXContentParser, UpdateResponse response) throws IOException {
+                response.bulkStatus = RestStatus.valueOf(versionedXContentParser.getParser().intValue());
             }
         },
 
         created {
             @Override
-            public void apply(XContentParser parser, UpdateResponse response) throws IOException {
-                response.created = parser.booleanValue();
+            public void apply(VersionedXContentParser versionedXContentParser, UpdateResponse response) throws IOException {
+                response.created = versionedXContentParser.getParser().booleanValue();
             }
         };
 
@@ -179,8 +178,8 @@ public class UpdateResponse extends ActionResponse {
             }
         }
     }
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, UpdateResponse.JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
 }

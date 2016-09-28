@@ -20,8 +20,6 @@
 package org.elasticsearch.action.admin.indices.flush;
 
 import com.google.common.base.Joiner;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationRequest;
@@ -140,12 +138,12 @@ public class FlushRequest extends BroadcastOperationRequest<FlushRequest> {
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return Joiner.on('/').join(Joiner.on(',').join(indices), "_flush");
     }
 
     @Override
-    public Map<String, String> getRestParams() {
+    public Map<String, String> getParams() {
         return new MapBuilder<String, String>()
                 .putIf("full", String.valueOf(full), full)
                 .putIf("wait_if_ongoing", String.valueOf(waitIfOngoing), waitIfOngoing)
@@ -153,7 +151,7 @@ public class FlushRequest extends BroadcastOperationRequest<FlushRequest> {
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.POST;
     }
 

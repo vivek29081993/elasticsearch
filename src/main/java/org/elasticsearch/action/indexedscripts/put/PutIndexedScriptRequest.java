@@ -380,22 +380,18 @@ public class PutIndexedScriptRequest extends ActionRequest<PutIndexedScriptReque
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return Joiner.on("/").join("_scripts", scriptLang, id);
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.PUT;
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         return new NStringEntity(XContentHelper.convertToJson(source, false), StandardCharsets.UTF_8);
     }
 
-    @Override
-    public Header[] getRestHeaders() {
-        return super.getRestHeaders();
-    }
 }

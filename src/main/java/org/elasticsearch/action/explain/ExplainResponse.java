@@ -25,10 +25,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.XContentHelper;
-import org.elasticsearch.common.xcontent.XContentObject;
-import org.elasticsearch.common.xcontent.XContentParsable;
-import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.index.get.GetResult;
 
 import java.io.IOException;
@@ -105,32 +102,32 @@ public class ExplainResponse extends ActionResponse {
     enum JsonFields implements XContentParsable<ExplainResponse> {
         _index {
             @Override
-            public void apply(XContentParser parser, ExplainResponse response) throws IOException {
-                response.index = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, ExplainResponse response) throws IOException {
+                response.index = versionedXContentParser.getParser().text();
             }
         },
         _type {
             @Override
-            public void apply(XContentParser parser, ExplainResponse response) throws IOException {
-                response.type = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, ExplainResponse response) throws IOException {
+                response.type = versionedXContentParser.getParser().text();
             }
         },
         _id {
             @Override
-            public void apply(XContentParser parser, ExplainResponse response) throws IOException {
-                response.id = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, ExplainResponse response) throws IOException {
+                response.id = versionedXContentParser.getParser().text();
             }
         },
         matched {
             @Override
-            public void apply(XContentParser parser, ExplainResponse response) throws IOException {
-                response.exists = parser.booleanValue();
+            public void apply(VersionedXContentParser versionedXContentParser, ExplainResponse response) throws IOException {
+                response.exists = versionedXContentParser.getParser().booleanValue();
             }
         },
         explanation {
             @Override
-            public void apply(XContentParser parser, ExplainResponse response) throws IOException {
-                XContentObject source = parser.xContentObject();
+            public void apply(VersionedXContentParser versionedXContentParser, ExplainResponse response) throws IOException {
+                XContentObject source = versionedXContentParser.getParser().xContentObject();
                 response.explanation = getExplanation(source);
             }
 
@@ -157,8 +154,8 @@ public class ExplainResponse extends ActionResponse {
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
     public void readFrom(StreamInput in) throws IOException {

@@ -733,12 +733,12 @@ public class IndexRequest extends ShardReplicationOperationRequest<IndexRequest>
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return Joiner.on('/').join(index(), type(), id());
     }
 
     @Override
-    public Map<String, String> getRestParams() {
+    public Map<String, String> getParams() {
         MapBuilder<String, String> builder = new MapBuilder<>();
         builder.putIfNotNull("routing", routing);
         builder.putIf("ttl", String.valueOf(ttl), ttl != -1);
@@ -750,12 +750,12 @@ public class IndexRequest extends ShardReplicationOperationRequest<IndexRequest>
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.PUT;
     }
 
     @Override
-    public HttpEntity getBulkRestEntity() throws IOException {
+    public HttpEntity getBulkEntity() throws IOException {
         Map<String, Object> payload = Maps.newLinkedHashMap();
         Map<String, Object> actionMetadata = Maps.newLinkedHashMap();
         actionMetadata.put("_index", index);
@@ -769,7 +769,7 @@ public class IndexRequest extends ShardReplicationOperationRequest<IndexRequest>
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         return new NStringEntity(XContentHelper.convertToJson(source, false), StandardCharsets.UTF_8);
     }
 }

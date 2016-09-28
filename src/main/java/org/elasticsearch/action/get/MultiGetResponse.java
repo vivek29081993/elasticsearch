@@ -23,7 +23,6 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
-import org.elasticsearch.action.deletebyquery.IndexDeleteByQueryResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -200,12 +199,12 @@ public class MultiGetResponse extends ActionResponse implements Iterable<MultiGe
     enum JsonFields implements XContentParsable<MultiGetResponse> {
         docs {
             @Override
-            public void apply(XContentParser parser, MultiGetResponse response) throws IOException {
+            public void apply(VersionedXContentParser versionedXContentParser, MultiGetResponse response) throws IOException {
                 List<MultiGetItemResponse> items = Lists.newArrayList();
-                for (parser.nextToken(); parser.currentToken() != XContentParser.Token.END_ARRAY; parser.nextToken()) {
+                for (versionedXContentParser.getParser().nextToken(); versionedXContentParser.getParser().currentToken() != XContentParser.Token.END_ARRAY; versionedXContentParser.getParser().nextToken()) {
                     Failure failure = null;
                     GetResponse getResponse = null;
-                    XContentObject xContentObject = parser.xContentObject();
+                    XContentObject xContentObject = versionedXContentParser.getParser().xContentObject();
                     if (xContentObject.containsKey(Failure.JsonFields.error)) {
                         failure = Failure.readFailure(xContentObject);
                     }
@@ -228,8 +227,8 @@ public class MultiGetResponse extends ActionResponse implements Iterable<MultiGe
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, MultiGetResponse.JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
     @Override

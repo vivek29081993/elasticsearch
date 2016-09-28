@@ -22,6 +22,7 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
+import org.elasticsearch.client.ClusterAdminClient;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.common.Strings;
 import org.junit.After;
@@ -40,6 +41,7 @@ import static org.junit.Assert.assertTrue;
 public abstract class AbstractRestClientTest {
 
     protected IndicesAdminClient indicesAdminClient;
+    protected ClusterAdminClient clusterAdminClient;
     protected String index;
     protected RestClient client;
 
@@ -47,6 +49,7 @@ public abstract class AbstractRestClientTest {
     public void setUp() {
         client = new RestClient("localhost");
         this.indicesAdminClient = client.admin().indices();
+        this.clusterAdminClient = client.admin().cluster();
         this.index = createIndex();
     }
 

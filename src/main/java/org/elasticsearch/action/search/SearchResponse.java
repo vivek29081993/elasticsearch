@@ -295,8 +295,8 @@ public class SearchResponse extends ActionResponse implements StatusToXContent {
             }
 
             @Override
-            public void apply(XContentParser parser, SearchResponse response) throws IOException {
-                response.scrollId = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, SearchResponse response) throws IOException {
+                response.scrollId = versionedXContentParser.getParser().text();
             }
         },
         took {
@@ -306,8 +306,8 @@ public class SearchResponse extends ActionResponse implements StatusToXContent {
             }
 
             @Override
-            public void apply(XContentParser parser, SearchResponse response) throws IOException {
-                response.tookInMillis = parser.longValue();
+            public void apply(VersionedXContentParser versionedXContentParser, SearchResponse response) throws IOException {
+                response.tookInMillis = versionedXContentParser.getParser().longValue();
             }
         },
         timed_out {
@@ -317,8 +317,8 @@ public class SearchResponse extends ActionResponse implements StatusToXContent {
             }
 
             @Override
-            public void apply(XContentParser parser, SearchResponse response) throws IOException {
-                response.internalResponse = newInternalSearchResponse(parser.booleanValue());
+            public void apply(VersionedXContentParser versionedXContentParser, SearchResponse response) throws IOException {
+                response.internalResponse = newInternalSearchResponse(versionedXContentParser.getParser().booleanValue());
             }
 
         },
@@ -329,8 +329,8 @@ public class SearchResponse extends ActionResponse implements StatusToXContent {
             }
 
             @Override
-            public void apply(XContentParser parser, SearchResponse response) throws IOException {
-                response.internalResponse.readHits(parser);
+            public void apply(VersionedXContentParser versionedXContentParser, SearchResponse response) throws IOException {
+                response.internalResponse.readHits(versionedXContentParser);
             }
 
         },
@@ -341,8 +341,8 @@ public class SearchResponse extends ActionResponse implements StatusToXContent {
             }
 
             @Override
-            public void apply(XContentParser parser, SearchResponse response) throws IOException {
-                response.internalResponse.readAggregations(parser);
+            public void apply(VersionedXContentParser versionedXContentParser, SearchResponse response) throws IOException {
+                response.internalResponse.readAggregations(versionedXContentParser.getParser());
             }
 
         },
@@ -355,8 +355,8 @@ public class SearchResponse extends ActionResponse implements StatusToXContent {
             }
 
             @Override
-            public void apply(XContentParser parser, SearchResponse response) throws IOException {
-                Map<String, Object> shardInfo = parser.map();
+            public void apply(VersionedXContentParser versionedXContentParser, SearchResponse response) throws IOException {
+                Map<String, Object> shardInfo = versionedXContentParser.getParser().map();
                 response.totalShards = (Integer) shardInfo.get("total");
                 response.successfulShards = (Integer) shardInfo.get("successful");
             }
@@ -371,8 +371,8 @@ public class SearchResponse extends ActionResponse implements StatusToXContent {
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, SearchResponse.JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
     public void readFrom(XContentObject in) throws IOException {

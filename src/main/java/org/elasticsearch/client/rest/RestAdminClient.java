@@ -26,8 +26,6 @@ import org.elasticsearch.client.rest.support.InternalRestClusterAdminClient;
 import org.elasticsearch.client.rest.support.InternalRestIndicesAdminClient;
 
 /**
- * @author Brandon Kearby
- *         September 22, 2016
  */
 public class RestAdminClient implements AdminClient {
     private ClusterAdminClient clusterAdminClient;

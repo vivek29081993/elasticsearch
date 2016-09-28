@@ -20,21 +20,18 @@
 package org.elasticsearch.action.search;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.Maps;
 import org.apache.http.HttpEntity;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.elasticsearch.action.ValidateActions.addValidationError;
@@ -94,19 +91,19 @@ public class ClearScrollRequest extends ActionRequest<ClearScrollRequest> {
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return "_search/scroll";
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.DELETE;
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
 /*
-    //todo for version 2.x
+      //todo bdk for version 2.x
         Map<String, Object> payload = Maps.newHashMap();
         payload.put("scroll_id", scrollIds.toArray(new String[scrollIds.size()]));
         return new NStringEntity(XContentHelper.convertToJson(payload, false), StandardCharsets.UTF_8);

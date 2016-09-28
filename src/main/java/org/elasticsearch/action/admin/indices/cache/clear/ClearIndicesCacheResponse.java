@@ -23,8 +23,7 @@ import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.XContentObject;
-import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.VersionedXContentParser;
 
 import java.io.IOException;
 import java.util.List;
@@ -55,7 +54,7 @@ public class ClearIndicesCacheResponse extends BroadcastOperationResponse {
     }
 
     @Override
-    public void readFrom(XContentParser in) throws IOException {
-        super.readFrom(in.xContentObject());
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        super.readFrom(versionedXContentParser.getParser().xContentObject());
     }
 }

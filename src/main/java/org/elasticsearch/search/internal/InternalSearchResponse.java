@@ -116,7 +116,7 @@ public class InternalSearchResponse implements Streamable, ToXContent {
         return response;
     }
 
-    public void readHits(XContentParser parser) throws IOException {
+    public void readHits(VersionedXContentParser parser) throws IOException {
         this.hits = InternalSearchHits.readSearchHits(parser);
     }
 

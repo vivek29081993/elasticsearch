@@ -519,17 +519,17 @@ public class MultiGetRequest extends ActionRequest<MultiGetRequest> implements I
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return "/_mget";
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.GET;
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         //todo add support for streaming version of getRestEntity()
         StringBuilder builder = new StringBuilder();
         Map<String, Object> payload = Maps.newLinkedHashMap();

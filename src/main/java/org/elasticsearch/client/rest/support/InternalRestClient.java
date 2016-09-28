@@ -41,11 +41,18 @@ import org.apache.http.nio.client.methods.HttpAsyncMethods;
 import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
 import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
 import org.apache.lucene.util.CollectionUtil;
+import org.elasticsearch.Version;
+import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentObject;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -105,6 +112,33 @@ public class InternalRestClient implements Closeable {
         this.pathPrefix = pathPrefix;
         setHosts(hosts);
     }
+
+    private Version version;
+    private String clusterName;
+    public Version getVersion() {
+        return version;
+    }
+
+    public String getClusterName() {
+        return clusterName;
+    }
+
+    public void readVersionAndClusterName() {
+        try {
+            RestResponse restResponse = performRequest(RestRequest.Method.GET.toString(), "/");
+            HttpEntity entity = restResponse.getEntity();
+            assert entity != null;
+            String content = HttpUtils.readUtf8(entity);
+            XContentParser parser = XContentHelper.createParser(new BytesArray(content));
+            XContentObject xContentObject = parser.xContentObject();
+            this.clusterName = xContentObject.get("cluster_name");
+            XContentObject xVersion = xContentObject.getAsXContentObject("version");
+            this.version = Version.readVersion(xVersion);
+        } catch (IOException | ParseException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
 
     /**
      * Returns a new {@link InternalRestClientBuilder} to help with {@link InternalRestClient} creation.
@@ -453,7 +487,7 @@ public class InternalRestClient implements Closeable {
     }
 
     private static boolean isSuccessfulResponse(String method, int statusCode) {
-        return statusCode < 300 || statusCode == 404;
+        return statusCode < 300 /*|| statusCode == 404*/;
     }
 
     private static boolean isRetryStatus(int statusCode) {

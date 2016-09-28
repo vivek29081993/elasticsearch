@@ -34,13 +34,15 @@ import org.elasticsearch.threadpool.ThreadPool;
 public abstract class ActionRequestBuilder<Request extends ActionRequest, Response extends ActionResponse, RequestBuilder extends ActionRequestBuilder, Client extends ElasticsearchClient> {
 
     protected final Request request;
-    private final ThreadPool threadPool;
+    private ThreadPool threadPool;
     protected final Client client;
 
     protected ActionRequestBuilder(Client client, Request request) {
         this.request = request;
         this.client = client;
-        threadPool = client.threadPool();
+        if (this.client != null) {
+            threadPool = client.threadPool();
+        }
     }
 
 

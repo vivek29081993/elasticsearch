@@ -23,8 +23,8 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
+import org.elasticsearch.common.xcontent.VersionedXContentParser;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.index.get.GetResult;
 
 import java.io.IOException;
 
@@ -123,7 +123,7 @@ public class MultiGetItemResponse implements Streamable {
         }
     }
 
-    public void readFrom(XContentParser parser) throws IOException {
+    public void readFrom(VersionedXContentParser parser) throws IOException {
         SearchResponse searchResponse = new SearchResponse();
         searchResponse.readFrom(parser);
     }

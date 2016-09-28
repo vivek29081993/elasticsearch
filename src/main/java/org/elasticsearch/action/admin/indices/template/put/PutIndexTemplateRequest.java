@@ -489,22 +489,22 @@ public class PutIndexTemplateRequest extends MasterNodeOperationRequest<PutIndex
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return Joiner.on('/').join("_template", name);
     }
 
     @Override
-    public Map<String, String> getRestParams() {
-        return super.getRestParams();
+    public Map<String, String> getParams() {
+        return super.getParams();
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.PUT;
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         Map<String, Object> mappings = Maps.newLinkedHashMap();
         for (String json : this.mappings.values()) {
             Map<String, Object> mapping = XContentHelper.fromJson(json);
@@ -542,8 +542,4 @@ public class PutIndexTemplateRequest extends MasterNodeOperationRequest<PutIndex
         return new NStringEntity(json, StandardCharsets.UTF_8);
     }
 
-    @Override
-    public Header[] getRestHeaders() {
-        return super.getRestHeaders();
-    }
 }

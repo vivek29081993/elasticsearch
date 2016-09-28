@@ -19,7 +19,6 @@
 
 package org.elasticsearch.action.admin.indices.mapping.delete;
 
-import org.apache.http.Header;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -32,7 +31,6 @@ import org.elasticsearch.common.util.UriBuilder;
 import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
-import java.util.Map;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
@@ -147,7 +145,7 @@ public class DeleteMappingRequest extends AcknowledgedRequest<DeleteMappingReque
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return UriBuilder.newBuilder()
                 .csv(indices)
                 .csvOrDefault("_all", types)
@@ -155,7 +153,7 @@ public class DeleteMappingRequest extends AcknowledgedRequest<DeleteMappingReque
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.DELETE;
     }
 

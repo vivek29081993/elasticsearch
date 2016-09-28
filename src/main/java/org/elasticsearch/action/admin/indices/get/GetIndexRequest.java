@@ -36,7 +36,6 @@ import org.elasticsearch.rest.RestRequest;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A request to delete an index. Best created with {@link org.elasticsearch.client.Requests#deleteIndexRequest(String)}.
@@ -237,7 +236,7 @@ public class GetIndexRequest extends ClusterInfoRequest<GetIndexRequest> {
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
 
         String indicesCsv = Joiner.on(',').join(this.indices());
         String typesCsv = Joiner.on(',').join(this.types());
@@ -250,7 +249,7 @@ public class GetIndexRequest extends ClusterInfoRequest<GetIndexRequest> {
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.GET;
     }
 }

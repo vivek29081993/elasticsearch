@@ -288,33 +288,30 @@ public class MultiSearchRequest extends ActionRequest<MultiSearchRequest> implem
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return "/_msearch";
     }
 
     @Override
-    public Map<String, String> getRestParams() {
-        return super.getRestParams();
+    public Map<String, String> getParams() {
+        return super.getParams();
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.GET;
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         //todo add support for streaming version of getRestEntity()
         StringBuilder builder = new StringBuilder();
         for (SearchRequest request : requests) {
-            String payload = HttpUtils.readUtf8(request.getBulkRestEntity());
+            String payload = HttpUtils.readUtf8(request.getBulkEntity());
             builder.append(payload);
         }
         return new NStringEntity(builder.toString(), "UTF-8");
 
     }
-    @Override
-    public Header[] getRestHeaders() {
-        return super.getRestHeaders();
-    }
+
 }

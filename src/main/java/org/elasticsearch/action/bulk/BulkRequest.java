@@ -19,12 +19,9 @@
 
 package org.elasticsearch.action.bulk;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.action.*;
@@ -527,33 +524,29 @@ public class BulkRequest extends ActionRequest<BulkRequest> implements Composite
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return "/_bulk";
     }
 
     @Override
-    public Map<String, String> getRestParams() {
-        return super.getRestParams();
+    public Map<String, String> getParams() {
+        return super.getParams();
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.POST;
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         //todo add support for streaming version of getRestEntity()
         StringBuilder builder = new StringBuilder();
         for (ActionRequest request : requests) {
-            String payload = HttpUtils.readUtf8(request.getBulkRestEntity());
+            String payload = HttpUtils.readUtf8(request.getBulkEntity());
             builder.append(payload);
         }
         return new NStringEntity(builder.toString(), "UTF-8");
     }
 
-    @Override
-    public Header[] getRestHeaders() {
-        return super.getRestHeaders();
-    }
 }

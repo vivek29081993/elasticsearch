@@ -228,18 +228,18 @@ public class ExplainRequest extends SingleShardOperationRequest<ExplainRequest> 
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return Joiner.on('/').join(index, type, id, "_explain");
     }
 
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.GET;
     }
 
     @Override
-    public Map<String, String> getRestParams() {
+    public Map<String, String> getParams() {
         MapBuilder<String, String> builder = MapBuilder.<String, String>newMapBuilder()
                 .putIfNotNull("routing", this.routing)
                 .putIfNotNull("preference", this.preference);
@@ -255,7 +255,7 @@ public class ExplainRequest extends SingleShardOperationRequest<ExplainRequest> 
 
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         if (source != null) {
             return new NStringEntity(XContentHelper.convertToJson(source, false), StandardCharsets.UTF_8);
         }

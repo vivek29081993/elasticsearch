@@ -23,7 +23,13 @@ import com.google.common.base.Joiner;
 import org.apache.http.HttpEntity;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
+import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
+import org.elasticsearch.action.ActionRestRequest;
+import org.elasticsearch.action.deletebyquery.DeleteByQueryRequest;
+import org.elasticsearch.action.search.SearchAction;
+import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.support.QuerySourceBuilder;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationRequest;
 import org.elasticsearch.client.Requests;
@@ -35,6 +41,7 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.util.UriBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentHelper;
@@ -43,6 +50,7 @@ import org.elasticsearch.rest.RestRequest;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 public class ExistsRequest extends BroadcastOperationRequest<ExistsRequest> {
@@ -256,40 +264,101 @@ public class ExistsRequest extends BroadcastOperationRequest<ExistsRequest> {
 
 
     @Override
-    public String getRestEndPoint() {
-        String indicesCsv = Joiner.on(',').join(this.indices);
-        String typesCsv = Joiner.on(',').join(this.types);
-        return Joiner.on('/').join(indicesCsv, typesCsv, "_search/exists");
-    }
-
-
-    @Override
-    public RestRequest.Method getRestMethod() {
-        return RestRequest.Method.GET;
-    }
-
-    @Override
-    public Map<String, String> getRestParams() {
-        MapBuilder<String, String> builder = MapBuilder.<String, String>newMapBuilder()
+    public Map<String, String> getParams() {
+        return  MapBuilder.<String, String>newMapBuilder()
                 .putIfNotNull("routing", this.routing)
-                .putIfNotNull("preference", this.preference);
-        if (minScore != DEFAULT_MIN_SCORE) {
-            builder.put("min_score", String.valueOf(minScore));
-        }
-
-        return builder.map();
+                .putIfNotNull("preference", this.preference)
+                .putIf("min_score", String.valueOf(minScore), minScore != DEFAULT_MIN_SCORE).map();
 
     }
 
-
     @Override
-    public HttpEntity getRestEntity() throws IOException {
-        if (source != null) {
-            return new NStringEntity(XContentHelper.convertToJson(source, false), StandardCharsets.UTF_8);
+    public ActionRestRequest getActionRestRequest(Version version) {
+        if (version.onOrAfter(Version.V_5_0_0)) {
+            return SearchAction.INSTANCE.newRequestBuilder(null)
+                    .setIndices(this.indices)
+                    .setTypes(this.types)
+                    .setSource(this.source).setSize(0).request();
         }
         else {
-            return HttpUtils.EMPTY_ENTITY;
+            return new LegacyActionRestRequest(this);
         }
     }
+
+    private static class LegacyActionRestRequest implements ActionRestRequest {
+        private ExistsRequest request;
+
+        LegacyActionRestRequest(ExistsRequest request) {
+            this.request = request;
+        }
+
+        @Override
+        public RestRequest.Method getMethod() {
+            return RestRequest.Method.DELETE;
+        }
+
+        @Override
+        public String getEndPoint() {
+            UriBuilder uriBuilder = UriBuilder.newBuilder()
+                    .csv(request.indices())
+                    .csv(request.types())
+                    .slash("_query");
+            return uriBuilder.build();
+        }
+
+        @Override
+        public HttpEntity getEntity() throws IOException {
+            return new NStringEntity(XContentHelper.convertToJson(request.source, false), StandardCharsets.UTF_8);
+        }
+
+        @Override
+        public Map<String, String> getParams() {
+            return request.getParams();
+        }
+
+        @Override
+        public HttpEntity getBulkEntity() throws IOException {
+            return ActionRequest.EMPTY_ENTITY;
+        }
+
+    }
+
+    private static class ActionRequestV5 implements ActionRestRequest {
+        private ExistsRequest request;
+
+        ActionRequestV5(ExistsRequest request) {
+            this.request = request;
+        }
+
+        @Override
+        public RestRequest.Method getMethod() {
+            return RestRequest.Method.POST;
+        }
+
+        @Override
+        public String getEndPoint() {
+            UriBuilder uriBuilder = UriBuilder.newBuilder()
+                    .csv(request.indices())
+                    .csv(request.types())
+                    .slash("_search");
+            return uriBuilder.build();
+        }
+
+        @Override
+        public HttpEntity getEntity() throws IOException {
+            return new NStringEntity(XContentHelper.convertToJson(request.source, false), StandardCharsets.UTF_8);
+        }
+
+        @Override
+        public Map<String, String> getParams() {
+            return request.getParams();
+        }
+
+        @Override
+        public HttpEntity getBulkEntity() throws IOException {
+            return ActionRequest.EMPTY_ENTITY;
+        }
+    }
+
 
 }

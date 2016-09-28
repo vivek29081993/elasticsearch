@@ -38,8 +38,6 @@ import org.elasticsearch.threadpool.ThreadPool;
 import java.io.IOException;
 
 /**
- * @author Brandon Kearby
- *         September 22, 2016
  */
 public class InternalRestIndicesAdminClient extends AbstractIndicesAdminClient implements IndicesAdminClient {
 

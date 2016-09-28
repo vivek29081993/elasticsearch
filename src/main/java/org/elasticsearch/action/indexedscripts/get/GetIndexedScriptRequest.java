@@ -20,8 +20,6 @@
 package org.elasticsearch.action.indexedscripts.get;
 
 import com.google.common.base.Joiner;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -260,17 +258,17 @@ public class GetIndexedScriptRequest extends ActionRequest<GetIndexedScriptReque
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return Joiner.on('/').join("_scripts", scriptLang, id());
     }
 
     @Override
-    public Map<String, String> getRestParams() {
-        return super.getRestParams();
+    public Map<String, String> getParams() {
+        return super.getParams();
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.GET;
     }
 }

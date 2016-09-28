@@ -17,33 +17,28 @@
  * under the License.
  */
 
-package org.elasticsearch.action.admin.indices.mapping.get;
+package org.elasticsearch.action;
 
-import org.elasticsearch.action.ActionRequestValidationException;
-import org.elasticsearch.action.support.master.info.ClusterInfoRequest;
-import org.elasticsearch.common.util.UriBuilder;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.elasticsearch.rest.RestRequest;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 
 /**
  */
-public class GetMappingsRequest extends ClusterInfoRequest<GetMappingsRequest> {
+public interface ActionRestRequest {
+    
+    RestRequest.Method getMethod();
 
-    @Override
-    public ActionRequestValidationException validate() {
-        return null;
-    }
+    String getEndPoint();
 
+    HttpEntity getEntity() throws IOException;
 
-    @Override
-    public RestRequest.Method getMethod() {
-        return RestRequest.Method.GET;
-    }
+    Map<String, String> getParams();
 
-    @Override
-    public String getEndPoint() {
-        return UriBuilder.newBuilder()
-                .csv(this.indices())
-                .csv(types())
-                .slash("_mappings").build();
-    }
+    HttpEntity getBulkEntity() throws IOException;
+
 }

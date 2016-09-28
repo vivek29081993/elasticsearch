@@ -105,12 +105,12 @@ public class GetAliasesRequest extends MasterNodeReadOperationRequest<GetAliases
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.GET;
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return UriBuilder.newBuilder()
                 .csv(indices())
                 .slash("_alias")

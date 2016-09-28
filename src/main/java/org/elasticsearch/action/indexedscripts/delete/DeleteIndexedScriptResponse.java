@@ -21,12 +21,11 @@ package org.elasticsearch.action.indexedscripts.delete;
 
 import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
-import org.elasticsearch.action.indexedscripts.put.PutIndexedScriptResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.VersionedXContentParser;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParsable;
-import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
 import java.util.Map;
@@ -115,32 +114,32 @@ public class DeleteIndexedScriptResponse extends ActionResponse {
     enum JsonFields implements XContentParsable<DeleteIndexedScriptResponse> {
         _id {
             @Override
-            public void apply(XContentParser parser, DeleteIndexedScriptResponse response) throws IOException {
-                response.id = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, DeleteIndexedScriptResponse response) throws IOException {
+                response.id = versionedXContentParser.getParser().text();
             }
         },
         _index {
             @Override
-            public void apply(XContentParser parser, DeleteIndexedScriptResponse response) throws IOException {
-                response.index = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, DeleteIndexedScriptResponse response) throws IOException {
+                response.index = versionedXContentParser.getParser().text();
             }
         },
         _type {
             @Override
-            public void apply(XContentParser parser, DeleteIndexedScriptResponse response) throws IOException {
-                response.type = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, DeleteIndexedScriptResponse response) throws IOException {
+                response.type = versionedXContentParser.getParser().text();
             }
         },
         found {
             @Override
-            public void apply(XContentParser parser, DeleteIndexedScriptResponse response) throws IOException {
-                response.found = parser.booleanValue();
+            public void apply(VersionedXContentParser versionedXContentParser, DeleteIndexedScriptResponse response) throws IOException {
+                response.found = versionedXContentParser.getParser().booleanValue();
             }
         },
         _version {
             @Override
-            public void apply(XContentParser parser, DeleteIndexedScriptResponse response) throws IOException {
-                response.version = parser.longValue();
+            public void apply(VersionedXContentParser versionedXContentParser, DeleteIndexedScriptResponse response) throws IOException {
+                response.version = versionedXContentParser.getParser().longValue();
             }
         };
 
@@ -154,8 +153,8 @@ public class DeleteIndexedScriptResponse extends ActionResponse {
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, DeleteIndexedScriptResponse.JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
 }

@@ -34,8 +34,7 @@ import java.util.Iterator;
 */
 public class InternalPercentiles extends AbstractInternalPercentiles implements Percentiles {
 
-    // added name for es 5.0
-    public final static Type TYPE = new Type("tdigest_percentiles", "percentiles");
+    public final static Type TYPE = new Type("percentiles");
 
     public final static AggregationStreams.Stream STREAM = new AggregationStreams.Stream() {
         @Override

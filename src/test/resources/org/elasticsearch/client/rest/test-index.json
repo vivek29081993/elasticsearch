@@ -16,7 +16,7 @@
     "stats": {
       "properties": {
         "color": {
-          "type": "string",
+          "type": "keyword",
           "index": "not_analyzed"
         },
         "sentiment": {
@@ -24,7 +24,7 @@
           "index": "not_analyzed"
         },
         "genre": {
-          "type": "string",
+          "type": "keyword",
           "index": "not_analyzed"
         },
         "amount": {

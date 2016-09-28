@@ -22,6 +22,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -66,6 +67,7 @@ import org.elasticsearch.search.aggregations.bucket.filter.Filter;
 import org.elasticsearch.search.aggregations.bucket.filters.Filters;
 import org.elasticsearch.search.aggregations.bucket.geogrid.GeoHashGrid;
 import org.elasticsearch.search.aggregations.bucket.global.Global;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.bucket.missing.Missing;
 import org.elasticsearch.search.aggregations.bucket.nested.Nested;
@@ -108,8 +110,6 @@ import java.util.concurrent.ExecutionException;
 import static org.junit.Assert.*;
 
 /**
- * @author Brandon Kearby
- *         September 08, 2016
  */
 public class RestClientTest extends AbstractRestClientTest {
     public static final String POSTS_INDEX = "posts";
@@ -917,7 +917,7 @@ public class RestClientTest extends AbstractRestClientTest {
         String name = "agg";
         search.addAggregation(AggregationBuilders.dateHistogram(name)
                 .field("datePretty")
-                .interval(1000));
+                .interval(DateHistogram.Interval.YEAR));
 
         search.setSize(0); // no hits please
 
@@ -1007,9 +1007,12 @@ public class RestClientTest extends AbstractRestClientTest {
 
         SearchRequestBuilder search = client.prepareSearch(index);
         String name = "agg";
+        Map params = Maps.newHashMap();
+        params.put("_agg", Maps.newHashMap());
         search.addAggregation(AggregationBuilders.scriptedMetric(name)
-                .initScript("_agg['positive_sentiment'] = []")
-                .mapScript(" if (doc['sentiment'].value > 4) { _agg.positive_sentiment.add(doc['sentiment']) } "));
+                .params(params)
+                .initScript("params._agg.positive_sentiment = []")
+                .mapScript(" if (doc['sentiment'].value > 4) { params._agg.positive_sentiment.add(doc['sentiment']) } "));
 
 
         search.setSize(0); // no hits please
@@ -1030,7 +1033,7 @@ public class RestClientTest extends AbstractRestClientTest {
 
         TimeValue scrollKeepAlive = TimeValue.timeValueHours(1);
         SearchResponse response = client.prepareSearch(index)
-                .setSearchType(SearchType.SCAN)
+//                .setSearchType(SearchType.SCAN)
                 .setScroll(scrollKeepAlive)
                 .setQuery(QueryBuilders.termQuery("color", Color.red))
                 .setSize(2).execute().actionGet();
@@ -1040,7 +1043,8 @@ public class RestClientTest extends AbstractRestClientTest {
         SearchResponse response2 = client.prepareSearchScroll(response.getScrollId()).setScroll(scrollKeepAlive).execute().actionGet();
         validateScrollResponse(response2);
 
-        client.prepareClearScroll().addScrollId(response.getScrollId()).get();
+        ClearScrollResponse clearScrollResponse = client.prepareClearScroll().addScrollId(response.getScrollId()).get();
+        assertTrue(clearScrollResponse.isSucceeded());
         SearchResponse response3 = client.prepareSearchScroll(response.getScrollId()).setScroll(scrollKeepAlive).execute().actionGet();
         assertEquals(0, response3.getHits().hits().length);
 
@@ -1051,6 +1055,7 @@ public class RestClientTest extends AbstractRestClientTest {
         indexDocument(100);
         DeleteByQueryResponse response;
         response = client.prepareDeleteByQuery(index)
+                    .setTypes(STATS_TYPE)
                     .setQuery(QueryBuilders.termQuery("color", Color.red)).get();
         for (IndexDeleteByQueryResponse queryResponse : response) {
             assertEquals(index, queryResponse.getIndex());

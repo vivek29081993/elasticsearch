@@ -120,12 +120,12 @@ public class OpenIndexRequest extends AcknowledgedRequest<OpenIndexRequest> impl
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return Joiner.on('/').join(Joiner.on(',').join(indices), "_close");
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.POST;
     }
 

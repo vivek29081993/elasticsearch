@@ -26,6 +26,6 @@ import java.io.IOException;
  */
 public interface XContentParsable<T> {
 
-    void apply(XContentParser parser, T object) throws IOException;
+    void apply(VersionedXContentParser versionedXContentParser, T object) throws IOException;
 
 }

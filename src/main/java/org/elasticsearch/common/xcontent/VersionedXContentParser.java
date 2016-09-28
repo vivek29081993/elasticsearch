@@ -17,33 +17,31 @@
  * under the License.
  */
 
-package org.elasticsearch.action.admin.indices.mapping.get;
+package org.elasticsearch.common.xcontent;
 
-import org.elasticsearch.action.ActionRequestValidationException;
-import org.elasticsearch.action.support.master.info.ClusterInfoRequest;
-import org.elasticsearch.common.util.UriBuilder;
-import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.Version;
 
 /**
  */
-public class GetMappingsRequest extends ClusterInfoRequest<GetMappingsRequest> {
+public class VersionedXContentParser  {
 
-    @Override
-    public ActionRequestValidationException validate() {
-        return null;
+    private final Version version;
+    private final XContentParser parser;
+
+    private VersionedXContentParser(Version version, XContentParser parser) {
+        this.version = version;
+        this.parser = parser;
     }
 
-
-    @Override
-    public RestRequest.Method getMethod() {
-        return RestRequest.Method.GET;
+    public static VersionedXContentParser newInstance(Version version, XContentParser parser) {
+        return new VersionedXContentParser(version, parser);
     }
 
-    @Override
-    public String getEndPoint() {
-        return UriBuilder.newBuilder()
-                .csv(this.indices())
-                .csv(types())
-                .slash("_mappings").build();
+    public Version getVersion() {
+        return version;
+    }
+
+    public XContentParser getParser() {
+        return parser;
     }
 }

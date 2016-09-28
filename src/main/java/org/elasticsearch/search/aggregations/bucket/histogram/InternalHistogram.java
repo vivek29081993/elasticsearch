@@ -368,7 +368,7 @@ public class InternalHistogram<B extends InternalHistogram.Bucket> extends Inter
         for (XContentObject xBucket: bucketsXContent) {
             InternalAggregations aggregations = InternalAggregations.readAggregations(xBucket);
             String key = xBucket.get(CommonJsonField.key);
-            buckets.add(createBucket(Long.parseLong(key), xBucket.getAsLong(CommonJsonField.doc_count), aggregations, formatter));
+            buckets.add(createBucket(new Double(key).longValue(), xBucket.getAsLong(CommonJsonField.doc_count), aggregations, formatter));
         }
         this.buckets = buckets;
         this.bucketsMap = null;

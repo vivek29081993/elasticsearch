@@ -99,8 +99,8 @@ public class ClearScrollResponse extends ActionResponse implements StatusToXCont
     enum JsonFields implements XContentParsable<ClearScrollResponse> {
         succeeded {
             @Override
-            public void apply(XContentParser parser, ClearScrollResponse response) throws IOException {
-                response.succeeded = parser.booleanValue();
+            public void apply(VersionedXContentParser versionedXContentParser, ClearScrollResponse response) throws IOException {
+                response.succeeded = versionedXContentParser.getParser().booleanValue();
             }
         };
 
@@ -113,8 +113,8 @@ public class ClearScrollResponse extends ActionResponse implements StatusToXCont
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, ClearScrollResponse.JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
 }

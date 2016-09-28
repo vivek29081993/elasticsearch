@@ -25,11 +25,15 @@ import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.action.support.master.MasterNodeReadOperationRequest;
 import org.elasticsearch.common.Priority;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.util.UriBuilder;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.common.unit.TimeValue.readTimeValue;
@@ -200,5 +204,22 @@ public class ClusterHealthRequest extends MasterNodeReadOperationRequest<Cluster
             out.writeBoolean(true);
             Priority.writeTo(waitForEvents, out);
         }
+    }
+
+    @Override
+    public RestRequest.Method getMethod() {
+        return RestRequest.Method.GET;
+    }
+
+    @Override
+    public String getEndPoint() {
+        return UriBuilder.newBuilder().slash("_cluster/health").csv(indices()).build();
+    }
+
+    @Override
+    public Map<String, String> getParams() {
+        return new MapBuilder<>(super.getParams())
+                .putIfNotNull("timeout", timeout.toString())
+                .map();
     }
 }

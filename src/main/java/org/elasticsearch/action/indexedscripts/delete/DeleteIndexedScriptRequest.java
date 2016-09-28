@@ -20,15 +20,11 @@
 package org.elasticsearch.action.indexedscripts.delete;
 
 import com.google.common.base.Joiner;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.common.collect.MapBuilder;
-import org.elasticsearch.common.inject.internal.Join;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.uid.Versions;
@@ -173,24 +169,24 @@ public class DeleteIndexedScriptRequest extends ActionRequest<DeleteIndexedScrip
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return Joiner.on('/').join("_scripts", scriptLang, id());
     }
 
     @Override
-    public Map<String, String> getRestParams() {
-        if (version != Versions.MATCH_ANY) {
+    public Map<String, String> getParams() {
+        if (this.version != Versions.MATCH_ANY) {
             MapBuilder<String, String> builder = MapBuilder.newMapBuilder();
             builder.put("version", String.valueOf(this.version));
             return builder.map();
         }
         else {
-            return super.getRestParams();
+            return super.getParams();
         }
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.DELETE;
     }
 
