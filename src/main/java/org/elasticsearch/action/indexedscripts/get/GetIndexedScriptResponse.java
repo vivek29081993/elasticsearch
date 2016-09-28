@@ -19,10 +19,8 @@
 
 package org.elasticsearch.action.indexedscripts.get;
 
-import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.indexedscripts.put.PutIndexedScriptResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.*;
@@ -31,7 +29,6 @@ import org.elasticsearch.script.ScriptService;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * The response of a get script action.
@@ -107,7 +104,7 @@ public class GetIndexedScriptResponse extends ActionResponse implements Iterable
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        getResponse = GetResponse.readGetResponse(parser);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        getResponse = GetResponse.readGetResponse(versionedXContentParser);
     }
 }

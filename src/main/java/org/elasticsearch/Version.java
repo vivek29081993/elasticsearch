@@ -26,10 +26,12 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.Lucene;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.monitor.jvm.JvmInfo;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.text.ParseException;
 
 /**
  */
@@ -227,6 +229,7 @@ public class Version implements Serializable {
     public static final Version V_1_4_5 = new Version(V_1_4_5_ID, false, org.apache.lucene.util.Version.LUCENE_4_10_4);
     public static final int V_1_4_6_ID = 1040699;
     public static final Version V_1_4_6 = new Version(V_1_4_6_ID, true, org.apache.lucene.util.Version.LUCENE_4_10_4);
+    public static final Version V_5_0_0 = Version.fromId(5000000);
 
     public static final Version CURRENT = V_1_4_6;
 
@@ -466,26 +469,42 @@ public class Version implements Serializable {
         if (!Strings.hasLength(version)) {
             return Version.CURRENT;
         }
-
-        String[] parts = version.split("\\.");
+        final boolean snapshot; // this is some BWC for 2.x and before indices
+        if (snapshot = version.endsWith("-SNAPSHOT")) {
+            version = version.substring(0, version.length() - 9);
+        }
+        String[] parts = version.split("\\.|\\-");
         if (parts.length < 3 || parts.length > 4) {
-            throw new IllegalArgumentException("the version needs to contain major, minor and revision, and optionally the build");
+            throw new IllegalArgumentException(
+                    "the version needs to contain major, minor, and revision, and optionally the build: " + version);
         }
 
         try {
+            final int rawMajor = Integer.parseInt(parts[0]);
+            if (rawMajor >= 5 && snapshot) { // we don't support snapshot as part of the version here anymore
+                throw new IllegalArgumentException("illegal version format - snapshots are only supported until version 2.x");
+            }
+            final int betaOffset = rawMajor < 5 ? 0 : 25;
             //we reverse the version id calculation based on some assumption as we can't reliably reverse the modulo
-            int major = Integer.parseInt(parts[0]) * 1000000;
-            int minor = Integer.parseInt(parts[1]) * 10000;
-            int revision = Integer.parseInt(parts[2]) * 100;
+            final int major = rawMajor * 1000000;
+            final int minor = Integer.parseInt(parts[1]) * 10000;
+            final int revision = Integer.parseInt(parts[2]) * 100;
+
 
             int build = 99;
             if (parts.length == 4) {
                 String buildStr = parts[3];
-                if (buildStr.startsWith("Beta")) {
-                    build = Integer.parseInt(buildStr.substring(4));
-                }
-                if (buildStr.startsWith("RC")) {
+                if (buildStr.startsWith("alpha")) {
+                    assert rawMajor >= 5 : "major must be >= 5 but was " + major;
+                    build = Integer.parseInt(buildStr.substring(5));
+                    assert build < 25 : "expected a beta build but " + build + " >= 25";
+                } else if (buildStr.startsWith("Beta") || buildStr.startsWith("beta")) {
+                    build = betaOffset + Integer.parseInt(buildStr.substring(4));
+                    assert build < 50 : "expected a beta build but " + build + " >= 50";
+                } else if (buildStr.startsWith("RC") || buildStr.startsWith("rc")) {
                     build = Integer.parseInt(buildStr.substring(2)) + 50;
+                } else {
+                    throw new IllegalArgumentException("unable to parse version " + version);
                 }
             }
 
@@ -566,11 +585,38 @@ public class Version implements Serializable {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(number());
-        if (snapshot()) {
-            sb.append("-SNAPSHOT");
+        sb.append(major).append('.').append(minor).append('.').append(revision);
+        if (isAlpha()) {
+            sb.append("-alpha");
+            sb.append(build);
+        } else if (isBeta()) {
+            if (major >= 2) {
+                sb.append("-beta");
+            } else {
+                sb.append(".Beta");
+            }
+            sb.append(major < 5 ? build : build-25);
+        } else if (build < 99) {
+            if (major >= 2) {
+                sb.append("-rc");
+            } else {
+                sb.append(".RC");
+            }
+            sb.append(build - 50);
         }
         return sb.toString();
+    }
+    public boolean isBeta() {
+        return major < 5 ? build < 50 : build >= 25 && build < 50;
+    }
+
+    /**
+     * Returns true iff this version is an alpha version
+     * Note: This has been introduced in elasticsearch version 5. Previous versions will never
+     * have an alpha version.
+     */
+    public boolean isAlpha() {
+        return major < 5 ? false :  build < 25;
     }
 
     @Override
@@ -594,6 +640,10 @@ public class Version implements Serializable {
     @Override
     public int hashCode() {
         return id;
+    }
+
+    public static Version readVersion(XContentObject xVersion) throws ParseException {
+        return Version.fromString(xVersion.get("number"));
     }
 
     public static class Module extends AbstractModule {

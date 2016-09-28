@@ -38,6 +38,14 @@ import static com.google.common.collect.Maps.newHashMap;
  */
 public class InternalAggregations implements Aggregations, ToXContent, Streamable {
 
+    private static final Map<String, String> aggregationTypeMapping = Maps.newHashMap();
+    static {
+        aggregationTypeMapping.put("tdigest_percentiles", "percentiles");
+        aggregationTypeMapping.put("tdigest_percentile_ranks", "percentile_ranks");
+        aggregationTypeMapping.put("geo_distance", "percentile_ranks");
+        aggregationTypeMapping.put("geo_distance", "percentile_ranks");
+    }
+
     public final static InternalAggregations EMPTY = new InternalAggregations();
     private static final Function<InternalAggregation, Aggregation> SUPERTYPE_CAST = new Function<InternalAggregation, Aggregation>() {
         @Override
@@ -211,7 +219,16 @@ public class InternalAggregations implements Aggregations, ToXContent, Streamabl
             aggregations = Lists.newArrayListWithCapacity(aggs.size());
             for (XContentObject agg : aggs) {
                 String type = agg.get(CommonJsonField._type);
-                AggregationStreams.Stream stream = AggregationStreams.stream(new BytesArray(type));
+
+                AggregationStreams.Stream stream;
+                stream = AggregationStreams.stream(new BytesArray(type));
+                if (stream == null && aggregationTypeMapping.containsKey(type)) {
+                    String aliasType = aggregationTypeMapping.get(type);
+                    stream = AggregationStreams.stream(new BytesArray(aliasType));
+                }
+                if (stream == null) {
+                    throw new IllegalStateException("Unknown aggregation type: " + type);
+                }
                 InternalAggregation internalAggregation = stream.readResult(agg);
                 aggregations.add(internalAggregation);
             }

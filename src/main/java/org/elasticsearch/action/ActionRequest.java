@@ -22,6 +22,7 @@ package org.elasticsearch.action;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.nio.entity.NStringEntity;
+import org.elasticsearch.Version;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.rest.RestRequest;
@@ -31,13 +32,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
  */
-public abstract class ActionRequest<T extends ActionRequest> extends TransportRequest {
+public abstract class ActionRequest<T extends ActionRequest> extends TransportRequest implements ActionRestRequest {
 
-    public static final Header[] EMPTY_HEADERS = new Header[0];
+    public static final Set<Header> EMPTY_HEADERS = Collections.emptySet();
     public static final NStringEntity EMPTY_ENTITY = new NStringEntity("", StandardCharsets.UTF_8);
 
     private boolean listenerThreaded = false;
@@ -84,30 +86,31 @@ public abstract class ActionRequest<T extends ActionRequest> extends TransportRe
         super.writeTo(out);
     }
 
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         throw new UnsupportedOperationException("Implement me in " + this.getClass());
     }
 
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         throw new UnsupportedOperationException("Implement me in " + this.getClass());
     }
 
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         return EMPTY_ENTITY;
     }
 
-    public Map<String, String> getRestParams() {
+    public Map<String, String> getParams() {
         return Collections.emptyMap();
     }
 
 
-    public HttpEntity getBulkRestEntity() throws IOException {
+    public HttpEntity getBulkEntity() throws IOException {
         throw new UnsupportedOperationException("Implement me in " + this.getClass());
     }
 
-    public Header[] getRestHeaders() {
-        return EMPTY_HEADERS;
+    public ActionRestRequest getActionRestRequest(Version version) {
+        return this;
     }
+
 
 
 }

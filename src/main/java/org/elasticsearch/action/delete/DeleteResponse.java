@@ -23,9 +23,9 @@ import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.VersionedXContentParser;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParsable;
-import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
@@ -120,38 +120,38 @@ public class DeleteResponse extends ActionResponse {
     enum JsonFields implements XContentParsable<DeleteResponse> {
         _index {
             @Override
-            public void apply(XContentParser parser, DeleteResponse response) throws IOException {
-                response.index = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, DeleteResponse response) throws IOException {
+                response.index = versionedXContentParser.getParser().text();
             }
         },
         _type {
             @Override
-            public void apply(XContentParser parser, DeleteResponse response) throws IOException {
-                response.type = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, DeleteResponse response) throws IOException {
+                response.type = versionedXContentParser.getParser().text();
             }
         },
         _id {
             @Override
-            public void apply(XContentParser parser, DeleteResponse response) throws IOException {
-                response.id = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, DeleteResponse response) throws IOException {
+                response.id = versionedXContentParser.getParser().text();
             }
         },
         _version {
             @Override
-            public void apply(XContentParser parser, DeleteResponse response) throws IOException {
-                response.version = parser.intValue();
+            public void apply(VersionedXContentParser versionedXContentParser, DeleteResponse response) throws IOException {
+                response.version = versionedXContentParser.getParser().intValue();
             }
         },
         status {
             @Override
-            public void apply(XContentParser parser, DeleteResponse response) throws IOException {
-                response.bulkStatus = RestStatus.valueOf(parser.intValue());
+            public void apply(VersionedXContentParser versionedXContentParser, DeleteResponse response) throws IOException {
+                response.bulkStatus = RestStatus.valueOf(versionedXContentParser.getParser().intValue());
             }
         },
         found {
             @Override
-            public void apply(XContentParser parser, DeleteResponse response) throws IOException {
-                response.found = parser.booleanValue();
+            public void apply(VersionedXContentParser versionedXContentParser, DeleteResponse response) throws IOException {
+                response.found = versionedXContentParser.getParser().booleanValue();
             }
         };
 
@@ -162,8 +162,8 @@ public class DeleteResponse extends ActionResponse {
             }
         }
     }
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, DeleteResponse.JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
 }

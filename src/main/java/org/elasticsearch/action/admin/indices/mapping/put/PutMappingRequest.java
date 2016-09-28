@@ -287,19 +287,19 @@ public class PutMappingRequest extends AcknowledgedRequest<PutMappingRequest> im
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.PUT;
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return UriBuilder.newBuilder()
                 .csv(indices())
                 .slash("_mappings", type).build();
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         return new NStringEntity(this.source, StandardCharsets.UTF_8);
     }
 }

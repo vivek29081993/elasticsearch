@@ -23,10 +23,10 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
-import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.VersionedXContentParser;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParsable;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -132,23 +132,23 @@ public class BulkResponse extends ActionResponse implements Iterable<BulkItemRes
     enum JsonFields implements XContentParsable<BulkResponse> {
         took {
             @Override
-            public void apply(XContentParser parser, BulkResponse response) throws IOException {
-                response.tookInMillis = parser.longValue();
+            public void apply(VersionedXContentParser versionedXContentParser, BulkResponse response) throws IOException {
+                response.tookInMillis = versionedXContentParser.getParser().longValue();
             }
         },
         errors {
             @Override
-            public void apply(XContentParser parser, BulkResponse response) throws IOException {
-                response.errors = parser.booleanValue();
+            public void apply(VersionedXContentParser versionedXContentParser, BulkResponse response) throws IOException {
+                response.errors = versionedXContentParser.getParser().booleanValue();
             }
         },
         items {
             @Override
-            public void apply(XContentParser parser, BulkResponse response) throws IOException {
+            public void apply(VersionedXContentParser versionedXContentParser, BulkResponse response) throws IOException {
                 List<BulkItemResponse> items = Lists.newArrayList();
-                for (parser.nextToken(); parser.currentToken() != XContentParser.Token.END_ARRAY; parser.nextToken()) {
+                for (versionedXContentParser.getParser().nextToken(); versionedXContentParser.getParser().currentToken() != XContentParser.Token.END_ARRAY; versionedXContentParser.getParser().nextToken()) {
                     BulkItemResponse item = new BulkItemResponse();
-                    item.readFrom(parser);
+                    item.readFrom(versionedXContentParser);
                     items.add(item);
                 }
                 response.responses = items.toArray(new BulkItemResponse[items.size()]);
@@ -164,8 +164,8 @@ public class BulkResponse extends ActionResponse implements Iterable<BulkItemRes
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, BulkResponse.JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
 }

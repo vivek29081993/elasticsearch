@@ -21,13 +21,9 @@ package org.elasticsearch.action.deletebyquery;
 
 import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
-import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.XContentHelper;
-import org.elasticsearch.common.xcontent.XContentObject;
-import org.elasticsearch.common.xcontent.XContentParsable;
-import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
@@ -112,8 +108,8 @@ public class DeleteByQueryResponse extends ActionResponse implements Iterable<In
     enum JsonFields implements XContentParsable<DeleteByQueryResponse> {
         _indices {
             @Override
-            public void apply(XContentParser parser, DeleteByQueryResponse response) throws IOException {
-                XContentObject xIndices = parser.xContentObject();
+            public void apply(VersionedXContentParser versionedXContentParser, DeleteByQueryResponse response) throws IOException {
+                XContentObject xIndices = versionedXContentParser.getParser().xContentObject();
                 Set<String> indexNames = xIndices.keySet();
                 for (String indexName : indexNames) {
                     IndexDeleteByQueryResponse deleteByQueryResponse = new IndexDeleteByQueryResponse();
@@ -132,7 +128,7 @@ public class DeleteByQueryResponse extends ActionResponse implements Iterable<In
             }
         }
     }
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, DeleteByQueryResponse.JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 }

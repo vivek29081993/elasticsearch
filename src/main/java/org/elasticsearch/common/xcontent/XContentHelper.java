@@ -490,23 +490,25 @@ public class XContentHelper {
         }
     }
 
-    public static <T> void populate(XContentParser parser, Map<String, XContentParsable<T>> fields, T o) throws IOException {
+    public static <T> void populate(VersionedXContentParser versionedXContentParser, Map<String, XContentParsable<T>> fields, T o) throws IOException {
         XContentParser.Token token;
-        if (parser.currentToken() == null) {
-            token = parser.nextToken();
+        if (versionedXContentParser.getParser().currentToken() == null) {
+            token = versionedXContentParser.getParser().nextToken();
         }
-        while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
+        while ((token = versionedXContentParser.getParser().nextToken()) != XContentParser.Token.END_OBJECT) {
             if (token == XContentParser.Token.FIELD_NAME) {
-                String currentFieldName = parser.currentName();
-                token = parser.nextToken();
+                String currentFieldName = versionedXContentParser.getParser().currentName();
+                token = versionedXContentParser.getParser().nextToken();
                 XContentParsable xContentParsable = fields.get(currentFieldName);
                 if (xContentParsable != null) {
-                    xContentParsable.apply(parser, o);
+                    xContentParsable.apply(versionedXContentParser, o);
                 }
                 else {
-                    log.warn("Skipping unknown field: " + currentFieldName);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Skipping unknown field: " + currentFieldName);
+                    }
                     if (token == XContentParser.Token.START_OBJECT) {
-                        parser.skipChildren();
+                        versionedXContentParser.getParser().skipChildren();
                     }
                 }
             }

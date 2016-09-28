@@ -36,9 +36,7 @@ import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.action.support.master.AcknowledgedRequest;
-import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
-import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.MapBuilder;
@@ -505,27 +503,27 @@ public class CreateIndexRequest extends AcknowledgedRequest<CreateIndexRequest> 
 
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return "/" + this.index;
     }
 
     @Override
-    public Map<String, String> getRestParams() {
-        return super.getRestParams();
+    public Map<String, String> getParams() {
+        return super.getParams();
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.PUT;
     }
 
     @Override
-    public HttpEntity getBulkRestEntity() throws IOException {
-        return super.getBulkRestEntity();
+    public HttpEntity getBulkEntity() throws IOException {
+        return super.getBulkEntity();
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         Map<String, Object> payload = toMap();
         String json = XContentHelper.convertToJson(payload, false);
         return new NStringEntity(json, StandardCharsets.UTF_8);
@@ -565,9 +563,4 @@ public class CreateIndexRequest extends AcknowledgedRequest<CreateIndexRequest> 
                 .putIfNotNull("aliases", aliases).map();
     }
 
-
-    @Override
-    public Header[] getRestHeaders() {
-        return super.getRestHeaders();
-    }
 }

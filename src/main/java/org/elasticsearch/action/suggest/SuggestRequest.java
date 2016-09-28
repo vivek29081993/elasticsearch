@@ -190,25 +190,25 @@ public final class SuggestRequest extends BroadcastOperationRequest<SuggestReque
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         String indicesCsv = Joiner.on(',').join(this.indices);
         return Joiner.on('/').join(indicesCsv, "_suggest");
     }
 
     @Override
-    public Map<String, String> getRestParams() {
+    public Map<String, String> getParams() {
         return new MapBuilder<String, String>()
                 .putIfNotNull("routing", routing)
                 .putIfNotNull("preference", preference).map();
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.POST;
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         return new NStringEntity(XContentHelper.convertToJson(suggestSource, false), StandardCharsets.UTF_8);
     }
 }

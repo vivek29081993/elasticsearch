@@ -21,7 +21,6 @@ package org.elasticsearch.action.mlt;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
-import org.apache.http.HttpEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.Version;
@@ -720,12 +719,12 @@ public class MoreLikeThisRequest extends ActionRequest<MoreLikeThisRequest> impl
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return Joiner.on('/').join(this.index(), this.type(), this.id(), "_mlt");
     }
 
     @Override
-    public Map<String, String> getRestParams() {
+    public Map<String, String> getParams() {
         MapBuilder<String, String> builder = new MapBuilder<String, String>()
                 .putIfNotNull("routing", routing);
         if (this.fields != null) {
@@ -739,7 +738,7 @@ public class MoreLikeThisRequest extends ActionRequest<MoreLikeThisRequest> impl
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.GET;
     }
 

@@ -198,7 +198,7 @@ public class InternalSearchHits implements SearchHits {
         return hits;
     }
 
-    public static InternalSearchHits readSearchHits(XContentParser parser) throws IOException {
+    public static InternalSearchHits readSearchHits(VersionedXContentParser parser) throws IOException {
         InternalSearchHits hits = new InternalSearchHits();
         hits.readFrom(parser);
         return hits;
@@ -219,8 +219,8 @@ public class InternalSearchHits implements SearchHits {
     enum JsonFields implements XContentParsable<InternalSearchHits>, XContentObjectParseable<InternalSearchHits> {
         total {
             @Override
-            public void apply(XContentParser parser, InternalSearchHits hits) throws IOException {
-                hits.totalHits = parser.longValue();
+            public void apply(VersionedXContentParser versionedXContentParser, InternalSearchHits hits) throws IOException {
+                hits.totalHits = versionedXContentParser.getParser().longValue();
             }
             @Override
             public void apply(XContentObject object, InternalSearchHits hits) {
@@ -229,15 +229,15 @@ public class InternalSearchHits implements SearchHits {
         },
         hits {
             @Override
-            public void apply(XContentParser parser, InternalSearchHits hits) throws IOException {
+            public void apply(VersionedXContentParser versionedXContentParser, InternalSearchHits hits) throws IOException {
                 if (hits.totalHits == 0 ) {
                     hits.hits = EMPTY;
                 }
                 else {
                     List<InternalSearchHit> items = Lists.newArrayList();
-                    for (parser.nextToken(); parser.currentToken() != XContentParser.Token.END_ARRAY; parser.nextToken()) {
+                    for (versionedXContentParser.getParser().nextToken(); versionedXContentParser.getParser().currentToken() != XContentParser.Token.END_ARRAY; versionedXContentParser.getParser().nextToken()) {
                         InternalSearchHit item = new InternalSearchHit();
-                        item.readFrom(parser);
+                        item.readFrom(versionedXContentParser);
                         items.add(item);
                     }
                     hits.hits = items.toArray(new InternalSearchHit[items.size()]);
@@ -261,9 +261,9 @@ public class InternalSearchHits implements SearchHits {
         },
         max_score {
             @Override
-            public void apply(XContentParser parser, InternalSearchHits hits) throws IOException {
-                if (parser.currentToken() != XContentParser.Token.VALUE_NULL) {
-                    hits.maxScore = parser.floatValue();
+            public void apply(VersionedXContentParser versionedXContentParser, InternalSearchHits hits) throws IOException {
+                if (versionedXContentParser.getParser().currentToken() != XContentParser.Token.VALUE_NULL) {
+                    hits.maxScore = versionedXContentParser.getParser().floatValue();
                 }
             }
             @Override
@@ -288,8 +288,8 @@ public class InternalSearchHits implements SearchHits {
 
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, InternalSearchHits.JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
 

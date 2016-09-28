@@ -386,8 +386,8 @@ public class InternalSearchHit implements SearchHit {
             }
 
             @Override
-            public void apply(XContentParser parser, InternalSearchHit hit) throws IOException {
-                hit.shard = SearchShardTarget.readSearchShardTarget(parser.text());
+            public void apply(VersionedXContentParser versionedXContentParser, InternalSearchHit hit) throws IOException {
+                hit.shard = SearchShardTarget.readSearchShardTarget(versionedXContentParser.getParser().text());
             }
         },
         _type {
@@ -397,8 +397,8 @@ public class InternalSearchHit implements SearchHit {
             }
 
             @Override
-            public void apply(XContentParser parser, InternalSearchHit hit) throws IOException {
-                hit.type = new StringAndBytesText(parser.text());
+            public void apply(VersionedXContentParser versionedXContentParser, InternalSearchHit hit) throws IOException {
+                hit.type = new StringAndBytesText(versionedXContentParser.getParser().text());
             }
         },
         _source {
@@ -408,9 +408,9 @@ public class InternalSearchHit implements SearchHit {
             }
 
             @Override
-            public void apply(XContentParser parser, InternalSearchHit hit) throws IOException {
+            public void apply(VersionedXContentParser versionedXContentParser, InternalSearchHit hit) throws IOException {
                 XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
-                jsonBuilder.copyCurrentStructure(parser);
+                jsonBuilder.copyCurrentStructure(versionedXContentParser.getParser());
                 hit.source = jsonBuilder.bytes();
             }
         },
@@ -421,9 +421,9 @@ public class InternalSearchHit implements SearchHit {
             }
 
             @Override
-            public void apply(XContentParser parser, InternalSearchHit hit) throws IOException {
-                if (parser.currentToken() != XContentParser.Token.VALUE_NULL) {
-                    hit.score = parser.floatValue();
+            public void apply(VersionedXContentParser versionedXContentParser, InternalSearchHit hit) throws IOException {
+                if (versionedXContentParser.getParser().currentToken() != XContentParser.Token.VALUE_NULL) {
+                    hit.score = versionedXContentParser.getParser().floatValue();
                 }
             }
         },
@@ -435,8 +435,8 @@ public class InternalSearchHit implements SearchHit {
             }
 
             @Override
-            public void apply(XContentParser parser, InternalSearchHit hit) throws IOException {
-                hit.sortValues = parser.array();
+            public void apply(VersionedXContentParser versionedXContentParser, InternalSearchHit hit) throws IOException {
+                hit.sortValues = versionedXContentParser.getParser().array();
             }
         },
         _id {
@@ -446,8 +446,8 @@ public class InternalSearchHit implements SearchHit {
             }
 
             @Override
-            public void apply(XContentParser parser, InternalSearchHit hits) throws IOException {
-                hits.id = new StringAndBytesText(parser.text());
+            public void apply(VersionedXContentParser versionedXContentParser, InternalSearchHit hits) throws IOException {
+                hits.id = new StringAndBytesText(versionedXContentParser.getParser().text());
             }
         };
 
@@ -461,8 +461,8 @@ public class InternalSearchHit implements SearchHit {
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, InternalSearchHit.JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
     public static class Fields {

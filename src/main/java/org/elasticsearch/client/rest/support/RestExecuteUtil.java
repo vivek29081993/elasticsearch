@@ -19,17 +19,15 @@
 package org.elasticsearch.client.rest.support;
 
 import org.apache.http.HttpEntity;
+import org.elasticsearch.Version;
 import org.elasticsearch.action.*;
 import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.xcontent.VersionedXContentParser;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.RestRequest;
 
-import java.io.IOException;
-
 /**
- * @author Brandon Kearby
- *         September 22, 2016
  */
 public class RestExecuteUtil {
 
@@ -39,9 +37,19 @@ public class RestExecuteUtil {
     void execute(InternalRestClient internalRestClient,
                  Action<Request, Response, RequestBuilder, ?> action, Request request, ActionListener<Response> listener) {
         try {
-            RestResponse restResponse = internalRestClient.performRequest(request.getRestMethod().name(), request.getRestEndPoint(), request.getRestParams(),  request.getRestEntity(), request.getRestHeaders());
+            if (internalRestClient.getVersion() == null) {
+                internalRestClient.readVersionAndClusterName();
+            }
+            Version version = internalRestClient.getVersion();
+            assert version != null;
+            ActionRestRequest actionRestRequest = request.getActionRestRequest(version);
+            RestResponse restResponse = internalRestClient.performRequest (
+                    actionRestRequest.getMethod().name(),
+                    actionRestRequest.getEndPoint(),
+                    actionRestRequest.getParams(),
+                    actionRestRequest.getEntity());
             Response response = action.newResponse();
-            if (request.getRestMethod() == RestRequest.Method.HEAD) {
+            if (actionRestRequest.getMethod() == RestRequest.Method.HEAD) {
                 response.exists(restResponse.getHttpResponse().getStatusLine().getStatusCode() == STATUS_OK);
             }
             else {
@@ -49,12 +57,12 @@ public class RestExecuteUtil {
                 assert entity != null;
                 String content = HttpUtils.readUtf8(entity);
                 XContentParser parser = XContentHelper.createParser(new BytesArray(content));
-                response.readFrom(parser);
+                response.readFrom(VersionedXContentParser.newInstance(version, parser));
             }
             listener.onResponse(response);
 
-        } catch (IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+        } catch (Exception e) {
+            listener.onFailure(e);
         }
     }
 }

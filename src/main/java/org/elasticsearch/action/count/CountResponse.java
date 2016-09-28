@@ -22,14 +22,10 @@ package org.elasticsearch.action.count;
 import com.google.common.collect.Maps;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ShardOperationFailedException;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.FromXContent;
-import org.elasticsearch.common.xcontent.XContentHelper;
-import org.elasticsearch.common.xcontent.XContentParsable;
-import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
@@ -110,13 +106,13 @@ public class CountResponse extends BroadcastOperationResponse implements FromXCo
     enum JsonFields implements XContentParsable<CountResponse> {
         count {
             @Override
-            public void apply(XContentParser parser, CountResponse response) throws IOException {
-                response.count = parser.longValue();
+            public void apply(VersionedXContentParser versionedXContentParser, CountResponse response) throws IOException {
+                response.count = versionedXContentParser.getParser().longValue();
             }
         },
         _shards {
             @Override
-            public void apply(XContentParser parser, CountResponse response) throws IOException {
+            public void apply(VersionedXContentParser versionedXContentParser, CountResponse response) throws IOException {
                 //todo
             }
         };
@@ -130,8 +126,8 @@ public class CountResponse extends BroadcastOperationResponse implements FromXCo
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, CountResponse.JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
 }

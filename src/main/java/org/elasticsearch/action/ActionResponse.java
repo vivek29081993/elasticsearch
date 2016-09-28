@@ -22,7 +22,7 @@ package org.elasticsearch.action;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.FromXContent;
-import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.VersionedXContentParser;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.transport.TransportResponse;
 
@@ -43,7 +43,7 @@ public abstract class ActionResponse extends TransportResponse implements FromXC
         super.writeTo(out);
     }
 
-    public void readFrom(XContentParser parser) throws IOException {
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
         throw new UnsupportedOperationException("Implement me in: " + this.getClass().getName());
     }
 

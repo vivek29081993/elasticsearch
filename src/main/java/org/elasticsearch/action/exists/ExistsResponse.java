@@ -21,10 +21,10 @@ package org.elasticsearch.action.exists;
 
 import com.google.common.collect.Maps;
 import org.elasticsearch.action.ShardOperationFailedException;
-import org.elasticsearch.action.indexedscripts.delete.DeleteIndexedScriptResponse;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.VersionedXContentParser;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParsable;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -66,10 +66,18 @@ public class ExistsResponse extends BroadcastOperationResponse {
     }
 
     enum JsonFields implements XContentParsable<ExistsResponse> {
+        // bdk version 5.0
+        hits {
+            @Override
+            public void apply(VersionedXContentParser versionedXContentParser, ExistsResponse response) throws IOException {
+                XContentParser parser = versionedXContentParser.getParser();
+                response.exists = parser.xContentObject().getAsLong("total") > 0;
+            }
+        },
         exists {
             @Override
-            public void apply(XContentParser parser, ExistsResponse response) throws IOException {
-                response.exists = parser.booleanValue();
+            public void apply(VersionedXContentParser versionedXContentParser, ExistsResponse response) throws IOException {
+                response.exists = versionedXContentParser.getParser().booleanValue();
             }
         };
 
@@ -84,8 +92,8 @@ public class ExistsResponse extends BroadcastOperationResponse {
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
 }

@@ -20,11 +20,13 @@
 package org.elasticsearch.action.support.master;
 
 import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.TimeValue;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * A based request for master based operation.
@@ -73,5 +75,13 @@ public abstract class MasterNodeOperationRequest<T extends MasterNodeOperationRe
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
         masterNodeTimeout.writeTo(out);
+    }
+
+    @Override
+    public Map<String, String> getParams() {
+        return new MapBuilder<String, String>()
+                .putIfNotNull("master_timeout", masterNodeTimeout.toString())
+                .map();
+
     }
 }

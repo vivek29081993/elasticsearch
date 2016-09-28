@@ -45,8 +45,6 @@ import java.util.UUID;
 import static org.junit.Assert.*;
 
 /**
- * @author Brandon Kearby
- *         September 22, 2016
  */
 public class RestIndicesAdminClientTest extends AbstractRestClientTest {
 

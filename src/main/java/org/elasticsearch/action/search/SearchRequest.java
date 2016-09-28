@@ -643,19 +643,19 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         String indicesCsv = Joiner.on(',').join(this.indices);
         String typesCsv = Joiner.on(',').join(this.types);
         return Joiner.on('/').join(indicesCsv, typesCsv, "_search");
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.GET;
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         if (source != null) {
             return new NStringEntity(XContentHelper.convertToJson(source, false), StandardCharsets.UTF_8);
         }
@@ -665,7 +665,7 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
     }
 
     @Override
-    public HttpEntity getBulkRestEntity() throws IOException {
+    public HttpEntity getBulkEntity() throws IOException {
         MapBuilder<String, Object> headerBuilder = new MapBuilder<String, Object>()
                 .put("index", this.indices)
                 .put("type", this.types)
@@ -678,16 +678,18 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
     }
 
     @Override
-    public Map<String, String> getRestParams() {
+    public Map<String, String> getParams() {
         MapBuilder<String, String> builder = MapBuilder.<String, String>newMapBuilder()
                 .putIfNotNull("routing", this.routing);
 
         if (scroll != null) {
             builder.put("scroll", scroll.keepAlive().toString());
         }
+/*
         if (searchType != null && searchType != SearchType.DEFAULT) {
             builder.put("search_type", searchType.name().toLowerCase(Locale.ROOT));
         }
+*/
 
         return builder.map();
     }

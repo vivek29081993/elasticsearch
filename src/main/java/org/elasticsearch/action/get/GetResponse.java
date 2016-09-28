@@ -24,10 +24,7 @@ import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentObject;
-import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.index.get.GetField;
 import org.elasticsearch.index.get.GetResult;
 
@@ -159,7 +156,7 @@ public class GetResponse extends ActionResponse implements Iterable<GetField>, T
         return result;
     }
 
-    public static GetResponse readGetResponse(XContentParser in) throws IOException {
+    public static GetResponse readGetResponse(VersionedXContentParser in) throws IOException {
         GetResponse result = new GetResponse();
         result.readFrom(in);
         return result;
@@ -188,8 +185,8 @@ public class GetResponse extends ActionResponse implements Iterable<GetField>, T
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        getResult = GetResult.readGetResult(parser);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        getResult = GetResult.readGetResult(versionedXContentParser);
     }
 
 }

@@ -20,8 +20,6 @@
 package org.elasticsearch.action.admin.indices.delete;
 
 import com.google.common.base.Joiner;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -145,19 +143,19 @@ public class DeleteIndexRequest extends MasterNodeOperationRequest<DeleteIndexRe
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         String indicesCsv = Joiner.on(',').join(this.indices);
         return "/" + indicesCsv;
     }
 
     @Override
-    public Map<String, String> getRestParams() {
+    public Map<String, String> getParams() {
         //todo bdk handle timeout
-        return super.getRestParams();
+        return super.getParams();
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.DELETE;
     }
 

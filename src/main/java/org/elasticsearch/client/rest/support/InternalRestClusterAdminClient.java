@@ -25,8 +25,6 @@ import org.elasticsearch.client.support.AbstractClusterAdminClient;
 import org.elasticsearch.threadpool.ThreadPool;
 
 /**
- * @author Brandon Kearby
- *         September 22, 2016
  */
 public class InternalRestClusterAdminClient extends AbstractClusterAdminClient implements ClusterAdminClient {
 

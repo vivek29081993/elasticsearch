@@ -20,7 +20,6 @@
 package org.elasticsearch.action.count;
 
 import com.google.common.base.Joiner;
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
@@ -289,7 +288,7 @@ public class CountRequest extends BroadcastOperationRequest<CountRequest> {
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         String indicesCsv = Joiner.on(',').join(this.indices);
         String typesCsv = Joiner.on(',').join(this.types);
         return Joiner.on('/').join(indicesCsv, typesCsv, "_count");
@@ -297,12 +296,12 @@ public class CountRequest extends BroadcastOperationRequest<CountRequest> {
 
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.GET;
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         if (source != null) {
             return new NStringEntity(XContentHelper.convertToJson(source, false), StandardCharsets.UTF_8);
         }

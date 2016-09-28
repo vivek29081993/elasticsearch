@@ -22,7 +22,6 @@ package org.elasticsearch.index.get;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.compress.CompressorFactory;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -272,9 +271,9 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
         return result;
     }
 
-    public static GetResult readGetResult(XContentParser parser) throws IOException {
+    public static GetResult readGetResult(VersionedXContentParser versionedXContentParser) throws IOException {
         GetResult result = new GetResult();
-        result.readFrom(parser);
+        result.readFrom(versionedXContentParser);
         return result;
     }
 
@@ -293,8 +292,8 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
             }
 
             @Override
-            public void apply(XContentParser parser, GetResult response) throws IOException {
-                response.index = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, GetResult response) throws IOException {
+                response.index = versionedXContentParser.getParser().text();
             }
         },
         _type {
@@ -304,8 +303,8 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
             }
 
             @Override
-            public void apply(XContentParser parser, GetResult response) throws IOException {
-                response.type = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, GetResult response) throws IOException {
+                response.type = versionedXContentParser.getParser().text();
             }
         },
         _id {
@@ -315,8 +314,8 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
             }
 
             @Override
-            public void apply(XContentParser parser, GetResult response) throws IOException {
-                response.id = parser.text();
+            public void apply(VersionedXContentParser versionedXContentParser, GetResult response) throws IOException {
+                response.id = versionedXContentParser.getParser().text();
             }
         },
         _version {
@@ -326,8 +325,8 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
             }
 
             @Override
-            public void apply(XContentParser parser, GetResult response) throws IOException {
-                response.version = parser.intValue();
+            public void apply(VersionedXContentParser versionedXContentParser, GetResult response) throws IOException {
+                response.version = versionedXContentParser.getParser().intValue();
             }
         },
         found {
@@ -337,8 +336,8 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
             }
 
             @Override
-            public void apply(XContentParser parser, GetResult response) throws IOException {
-                response.exists = parser.booleanValue();
+            public void apply(VersionedXContentParser versionedXContentParser, GetResult response) throws IOException {
+                response.exists = versionedXContentParser.getParser().booleanValue();
             }
         },
         _source {
@@ -348,9 +347,9 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
             }
 
             @Override
-            public void apply(XContentParser parser, GetResult response) throws IOException {
+            public void apply(VersionedXContentParser versionedXContentParser, GetResult response) throws IOException {
                 XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
-                jsonBuilder.copyCurrentStructure(parser);
+                jsonBuilder.copyCurrentStructure(versionedXContentParser.getParser());
                 response.source = jsonBuilder.bytes();
             }
         },
@@ -364,8 +363,8 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
             }
 
             @Override
-            public void apply(XContentParser parser, GetResult response) throws IOException {
-                _source.apply(parser, response);
+            public void apply(VersionedXContentParser versionedXContentParser, GetResult response) throws IOException {
+                _source.apply(versionedXContentParser, response);
                 if (response.source != null && response.source.length() > 0) {
                     response.exists = true;
                 }
@@ -379,7 +378,7 @@ public class GetResult implements Streamable, Iterable<GetField>, ToXContent {
         }
     }
 
-    public void readFrom(XContentParser parser) throws IOException {
+    public void readFrom(VersionedXContentParser parser) throws IOException {
         XContentHelper.populate(parser, JsonFields.fields, this);
     }
 

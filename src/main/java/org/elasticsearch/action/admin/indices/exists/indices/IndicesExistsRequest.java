@@ -91,18 +91,18 @@ public class IndicesExistsRequest extends MasterNodeReadOperationRequest<Indices
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return "/" + Joiner.on(',').join(indices);
     }
 
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.HEAD;
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         return null;
     }
 }

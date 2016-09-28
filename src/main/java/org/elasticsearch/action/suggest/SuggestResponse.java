@@ -23,10 +23,7 @@ import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentObject;
-import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.search.suggest.Suggest;
 
 import java.io.IOException;
@@ -64,8 +61,8 @@ public final class SuggestResponse extends BroadcastOperationResponse {
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentObject in = parser.xContentObject();
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentObject in = versionedXContentParser.getParser().xContentObject();
         super.readFrom(in);
         this.suggest.readFrom(in);
     }

@@ -20,6 +20,7 @@ package org.elasticsearch.search.aggregations.bucket.histogram;
 
 import com.carrotsearch.hppc.ObjectObjectOpenHashMap;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentObject;
@@ -59,6 +60,7 @@ public class InternalDateHistogram extends InternalHistogram<InternalDateHistogr
 
     public static void registerStream() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
+        AggregationStreams.registerStream(STREAM, new BytesArray(TYPE.name()));
     }
 
     static class Bucket extends InternalHistogram.Bucket implements DateHistogram.Bucket {

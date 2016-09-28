@@ -35,17 +35,13 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.VersionedXContentParser;
 import org.elasticsearch.common.xcontent.XContentObject;
-import org.elasticsearch.common.xcontent.XContentObjectParseable;
-import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.search.warmer.IndexWarmersMetaData;
 import org.elasticsearch.search.warmer.IndexWarmersMetaData.Entry;
 
 import java.io.IOException;
 import java.util.*;
-
-import static java.util.Collections.emptyMap;
 
 /**
  * A response for a delete index action.
@@ -269,8 +265,8 @@ public class GetIndexResponse extends ActionResponse {
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentObject xContentObject = parser.xContentObject();
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentObject xContentObject = versionedXContentParser.getParser().xContentObject();
         Set<String> indices = xContentObject.keySet();
         this.indices = indices.toArray(new String[indices.size()]);
         ImmutableOpenMap.Builder<String, Settings> settingsMapBuilder = ImmutableOpenMap.builder();

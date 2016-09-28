@@ -28,10 +28,7 @@ import org.elasticsearch.cluster.routing.IndexRoutingTable;
 import org.elasticsearch.cluster.routing.RoutingTableValidation;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
-import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
@@ -313,5 +310,15 @@ public class ClusterHealthResponse extends ActionResponse implements Iterable<Cl
             builder.endObject();
         }
         return builder;
+    }
+
+    enum JsonField {
+
+    }
+
+    @Override
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        System.out.println("parser = " + versionedXContentParser.getParser().xContentObject());
+//        XContentHelper.populate(parser, );
     }
 }

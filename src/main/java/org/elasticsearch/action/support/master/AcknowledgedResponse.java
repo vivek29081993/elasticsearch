@@ -20,13 +20,11 @@ package org.elasticsearch.action.support.master;
 
 import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionResponse;
-import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.VersionedXContentParser;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParsable;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 import java.util.Map;
@@ -73,8 +71,8 @@ public abstract class AcknowledgedResponse extends ActionResponse {
     enum JsonFields implements XContentParsable<AcknowledgedResponse> {
         acknowledged {
             @Override
-            public void apply(XContentParser parser, AcknowledgedResponse response) throws IOException {
-                response.acknowledged = parser.booleanValue();
+            public void apply(VersionedXContentParser versionedXContentParser, AcknowledgedResponse response) throws IOException {
+                response.acknowledged = versionedXContentParser.getParser().booleanValue();
             }
         };
 
@@ -85,8 +83,8 @@ public abstract class AcknowledgedResponse extends ActionResponse {
             }
         }
     }
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, AcknowledgedResponse.JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
 }

@@ -19,6 +19,7 @@
 package org.elasticsearch.search.aggregations.bucket.range.geodistance;
 
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentObject;
@@ -60,6 +61,7 @@ public class InternalGeoDistance extends InternalRange<InternalGeoDistance.Bucke
 
     public static void registerStream() {
         AggregationStreams.registerStream(STREAM, TYPE.stream());
+        AggregationStreams.registerStream(STREAM, new BytesArray(TYPE.name()));
     }
 
     public static final Factory FACTORY = new Factory();

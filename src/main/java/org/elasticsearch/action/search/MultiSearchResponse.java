@@ -184,10 +184,10 @@ public class MultiSearchResponse extends ActionResponse implements Iterable<Mult
     enum JsonFields implements XContentParsable<MultiSearchResponse> {
         responses {
             @Override
-            public void apply(XContentParser parser, MultiSearchResponse response) throws IOException {
+            public void apply(VersionedXContentParser versionedXContentParser, MultiSearchResponse response) throws IOException {
                 List<Item> items = Lists.newArrayList();
-                for (parser.nextToken(); parser.currentToken() != XContentParser.Token.END_ARRAY; parser.nextToken()) {
-                    XContentObject xContentObject = parser.xContentObject();
+                for (versionedXContentParser.getParser().nextToken(); versionedXContentParser.getParser().currentToken() != XContentParser.Token.END_ARRAY; versionedXContentParser.getParser().nextToken()) {
+                    XContentObject xContentObject = versionedXContentParser.getParser().xContentObject();
 
                     String failureMessage = null;
                     SearchResponse searchResponse = null;
@@ -213,8 +213,8 @@ public class MultiSearchResponse extends ActionResponse implements Iterable<Mult
     }
 
     @Override
-    public void readFrom(XContentParser parser) throws IOException {
-        XContentHelper.populate(parser, MultiSearchResponse.JsonFields.fields, this);
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentHelper.populate(versionedXContentParser, JsonFields.fields, this);
     }
 
 }

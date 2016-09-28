@@ -19,13 +19,11 @@
 
 package org.elasticsearch.action.search;
 
-import com.google.common.base.Joiner;
 import org.apache.http.HttpEntity;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
-import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.TimeValue;
@@ -133,22 +131,22 @@ public class SearchScrollRequest extends ActionRequest<SearchScrollRequest> {
     }
 
     @Override
-    public String getRestEndPoint() {
+    public String getEndPoint() {
         return "_search/scroll";
     }
 
     @Override
-    public RestRequest.Method getRestMethod() {
+    public RestRequest.Method getMethod() {
         return RestRequest.Method.GET;
     }
 
     @Override
-    public Map<String, String> getRestParams() {
+    public Map<String, String> getParams() {
         return Collections.emptyMap();
     }
 
     @Override
-    public HttpEntity getRestEntity() throws IOException {
+    public HttpEntity getEntity() throws IOException {
         return new NStringEntity(scrollId, StandardCharsets.UTF_8);
     }
 }

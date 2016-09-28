@@ -118,7 +118,7 @@ public class Suggest implements Iterable<Suggest.Suggestion<? extends Entry<? ex
             }
 
             @Override
-            public void apply(XContentParser parser, Suggest response) throws IOException {
+            public void apply(VersionedXContentParser versionedXContentParser, Suggest response) throws IOException {
             }
         };
         static Map<String, XContentParsable<Suggest>> fields = Maps.newLinkedHashMap();
@@ -129,7 +129,7 @@ public class Suggest implements Iterable<Suggest.Suggestion<? extends Entry<? ex
         }
     }
 
-    public void readFrom(XContentParser parser) throws IOException {
+    public void readFrom(VersionedXContentParser parser) throws IOException {
         XContentHelper.populate(parser, JsonFields.fields, this);
     }
 
