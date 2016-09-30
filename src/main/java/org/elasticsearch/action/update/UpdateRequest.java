@@ -19,7 +19,10 @@
 
 package org.elasticsearch.action.update;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.DocumentRequest;
@@ -37,8 +40,6 @@ import org.elasticsearch.common.lucene.uid.Versions;
 import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.index.VersionType;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.script.ScriptParameterParser;
-import org.elasticsearch.script.ScriptParameterParser.ScriptParameterValue;
 import org.elasticsearch.script.ScriptService;
 
 import java.io.IOException;
@@ -580,7 +581,6 @@ public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> 
     }
 
     public UpdateRequest source(BytesReference source) throws Exception {
-        ScriptParameterParser scriptParameterParser = new ScriptParameterParser();
         XContentType xContentType = XContentFactory.xContentType(source);
         try (XContentParser parser = XContentFactory.xContent(xContentType).createParser(source)) {
             XContentParser.Token token = parser.nextToken();
@@ -591,8 +591,16 @@ public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> 
             while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
                 if (token == XContentParser.Token.FIELD_NAME) {
                     currentFieldName = parser.currentName();
+                } else if ("script".equals(currentFieldName)) {
+                    script = parser.textOrNull();
+                    scriptType = ScriptService.ScriptType.INLINE;
+                } else if ("script_id".equals(currentFieldName)) {
+                    script = parser.textOrNull();
+                    scriptType = ScriptService.ScriptType.INDEXED;
                 } else if ("params".equals(currentFieldName)) {
                     scriptParams = parser.map();
+                } else if ("lang".equals(currentFieldName)) {
+                    scriptLang = parser.text();
                 } else if ("scripted_upsert".equals(currentFieldName)) {
                     scriptedUpsert = parser.booleanValue();
                 } else if ("upsert".equals(currentFieldName)) {
@@ -607,16 +615,8 @@ public class UpdateRequest extends InstanceShardOperationRequest<UpdateRequest> 
                     docAsUpsert(parser.booleanValue());
                 } else if ("detect_noop".equals(currentFieldName)) {
                     detectNoop(parser.booleanValue());
-                } else {
-                    scriptParameterParser.token(currentFieldName, token, parser);
                 }
             }
-            ScriptParameterValue scriptValue = scriptParameterParser.getDefaultScriptParameterValue();
-            if (scriptValue != null) {
-                script = scriptValue.script();
-                scriptType = scriptValue.scriptType();
-            }
-            scriptLang = scriptParameterParser.lang();
         }
         return this;
     }
