@@ -30,4 +30,7 @@ public class XContentObjectValueException extends ElasticsearchException {
     public XContentObjectValueException(Class type, String key, Object value, Throwable cause) {
         super(String.format(Locale.ROOT, "Failed to parse type: '%s' for key: '%s', value: '%s'", type.getSimpleName(), key, value), cause);
     }
+    public XContentObjectValueException(Class type, String key, Object value) {
+        this(type, key, value, null);
+    }
 }

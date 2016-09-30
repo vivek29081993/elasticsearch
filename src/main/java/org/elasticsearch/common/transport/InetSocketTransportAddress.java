@@ -130,4 +130,11 @@ public class InetSocketTransportAddress implements TransportAddress {
     public String toString() {
         return "inet[" + address + "]";
     }
+
+    public static TransportAddress readInetSocketTransportAddress(String address) {
+        String[] parts = address.split(":");
+        String host = parts[0];
+        int port = Integer.parseInt(parts[1]);
+        return new InetSocketTransportAddress(host, port);
+    }
 }

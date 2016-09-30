@@ -22,6 +22,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentObject;
 
 import java.io.IOException;
 
@@ -98,5 +99,12 @@ public class RepositoryMetaData {
         out.writeString(name);
         out.writeString(type);
         ImmutableSettings.writeSettingsToStream(settings, out);
+    }
+
+    public static RepositoryMetaData readFrom(XContentObject repository) {
+        String name = repository.get("name");
+        String type = repository.get("type");
+        Settings settings = ImmutableSettings.readSettingsFromStream(repository.getAsXContentObject("settings"));
+        return new RepositoryMetaData(name, type, settings);
     }
 }

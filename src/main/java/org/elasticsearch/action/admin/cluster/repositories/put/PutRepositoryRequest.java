@@ -19,27 +19,32 @@
 
 package org.elasticsearch.action.admin.cluster.repositories.put;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.support.master.AcknowledgedRequest;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.common.util.UriBuilder;
+import org.elasticsearch.common.xcontent.*;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 import static org.elasticsearch.common.settings.ImmutableSettings.Builder.EMPTY_SETTINGS;
 import static org.elasticsearch.common.settings.ImmutableSettings.readSettingsFromStream;
 import static org.elasticsearch.common.settings.ImmutableSettings.writeSettingsToStream;
+import static org.elasticsearch.common.xcontent.ToXContent.EMPTY_PARAMS;
 
 /**
  * Register repository request.
@@ -47,7 +52,7 @@ import static org.elasticsearch.common.settings.ImmutableSettings.writeSettingsT
  * Registers a repository with given name, type and settings. If the repository with the same name already
  * exists in the cluster, the new repository will replace the existing repository.
  */
-public class PutRepositoryRequest extends AcknowledgedRequest<PutRepositoryRequest> {
+public class PutRepositoryRequest extends AcknowledgedRequest<PutRepositoryRequest> implements ToXContent {
 
     private String name;
 
@@ -303,5 +308,37 @@ public class PutRepositoryRequest extends AcknowledgedRequest<PutRepositoryReque
         if (out.getVersion().onOrAfter(Version.V_1_4_0)) {
             out.writeBoolean(verify);
         }
+    }
+
+    @Override
+    public RestRequest.Method getMethod() {
+        return RestRequest.Method.PUT;
+    }
+
+    @Override
+    public String getEndPoint() {
+        return UriBuilder.newBuilder()
+                .slash("_snapshot")
+                .slash(name).build();
+    }
+
+    @Override
+    public Map<String, String> getParams() {
+        return MapBuilder.newMapBuilder(super.getParams())
+                .put("verify", String.valueOf(verify)).map();
+    }
+
+    @Override
+    public HttpEntity getEntity() throws IOException {
+        return new NStringEntity(XContentHelper.toString(this), StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.field("type", type());
+        builder.startObject("settings");
+        settings.toXContent(builder, params);
+        builder.endObject();
+        return builder;
     }
 }

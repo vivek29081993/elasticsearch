@@ -31,12 +31,10 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.joda.time.DateTime;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  *
@@ -293,6 +291,42 @@ public class XContentObjectImpl implements XContentObject {
     @Override
     public XContentParser getAsXContentParser(String key) throws IOException {
         return XContentHelper.createParser(new StringAndBytesText(getAsJson(key)).bytes());
+    }
+
+    @Override
+    public DateTime getAsDate(String key) {
+        Object value = internalMap.get(key);
+        if (!this.containsKey(key)) {
+            return null;
+        }
+        if (this.internalMap.get(key) instanceof String) {
+            return new DateTime(get(key));
+        }
+        else if (this.internalMap.get(key) instanceof Number) {
+            return new DateTime(getAsLong(key));
+        }
+        else {
+            throw new XContentObjectValueException(DateTime.class, key, value);
+        }
+
+    }
+
+    @Override
+    public List<String> getAsStrings(String key) {
+        Object value = internalMap.get(key);
+        try {
+            if (value instanceof String[]) {
+                String[] valueAsArray = (String[]) value;
+                if (valueAsArray == null) {
+                    return Collections.emptyList();
+                }
+                return Arrays.asList(valueAsArray);
+            }
+            return (List<String>) value;
+        }
+        catch (ClassCastException e) {
+            throw new XContentObjectValueException(String[].class, key, value);
+        }
     }
 
     @Override

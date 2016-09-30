@@ -1452,6 +1452,30 @@ public class MetaData implements Iterable<IndexMetaData> {
             }
             return builder.build();
         }
+        public static MetaData readFrom(XContentObject in) {
+            Builder builder = new Builder();
+            builder.transientSettings(readSettingsFromStream(in));
+            builder.persistentSettings(readSettingsFromStream(in));
+            //todo bdk finish
+/*
+            int size = in.readVInt();
+            for (int i = 0; i < size; i++) {
+                builder.put(IndexMetaData.Builder.readFrom(in), false);
+            }
+            size = in.readVInt();
+            for (int i = 0; i < size; i++) {
+                builder.put(IndexTemplateMetaData.Builder.readFrom(in));
+            }
+            int customSize = in.readVInt();
+            for (int i = 0; i < customSize; i++) {
+                String type = in.readString();
+                Custom customIndexMetaData = lookupFactorySafe(type).readFrom(in);
+                builder.putCustom(type, customIndexMetaData);
+            }
+*/
+            return builder.build();
+        }
+
 
         public static void writeTo(MetaData metaData, StreamOutput out) throws IOException {
             out.writeLong(metaData.version);
@@ -1472,5 +1496,6 @@ public class MetaData implements Iterable<IndexMetaData> {
                 lookupFactorySafe(cursor.key).writeTo(cursor.value, out);
             }
         }
+
     }
 }

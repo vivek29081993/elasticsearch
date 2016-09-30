@@ -33,6 +33,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.regex.Regex;
 import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.common.xcontent.XContentObject;
 
 import java.io.IOException;
 import java.util.List;
@@ -644,6 +645,21 @@ public class DiscoveryNodes implements Iterable<DiscoveryNode> {
                 node.writeTo(out);
             }
         }
+        public static DiscoveryNodes readFrom(XContentObject in) {
+            XContentObject nodes = in.getAsXContentObject("nodes");
+            Builder builder = new Builder();
+            builder.masterNodeId = in.get("master_node");
+            builder.localNodeId = in.get("local_node");
+            Set<String> nodeIds = nodes.keySet();
+            for (String nodeId : nodeIds) {
+                XContentObject xNode = nodes.getAsXContentObject(nodeId);
+                xNode.put("node_id", nodeId);
+                DiscoveryNode discoveryNode = DiscoveryNode.readNode(xNode);
+                builder.put(discoveryNode);
+            }
+            return builder.build();
+        }
+
 
         public static DiscoveryNodes readFrom(StreamInput in, @Nullable DiscoveryNode localNode) throws IOException {
             Builder builder = new Builder();

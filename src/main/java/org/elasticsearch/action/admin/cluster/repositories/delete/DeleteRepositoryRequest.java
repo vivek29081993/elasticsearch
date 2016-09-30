@@ -23,6 +23,8 @@ import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.support.master.AcknowledgedRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.util.UriBuilder;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
 
@@ -89,5 +91,17 @@ public class DeleteRepositoryRequest extends AcknowledgedRequest<DeleteRepositor
         super.writeTo(out);
         out.writeString(name);
         writeTimeout(out);
+    }
+
+    @Override
+    public RestRequest.Method getMethod() {
+        return RestRequest.Method.DELETE;
+    }
+
+    @Override
+    public String getEndPoint() {
+        return UriBuilder.newBuilder()
+                .slash("_snapshot")
+                .slash(name).build();
     }
 }

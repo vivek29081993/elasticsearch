@@ -27,6 +27,7 @@ import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaDataIndexStateService;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
@@ -345,6 +346,10 @@ public class ClusterBlocks {
                 builder.add(ClusterBlock.readClusterBlock(in));
             }
             return builder.build();
+        }
+
+        public static ClusterBlocks readClusterBlocks(XContentObject in) {
+            return null;
         }
     }
 }

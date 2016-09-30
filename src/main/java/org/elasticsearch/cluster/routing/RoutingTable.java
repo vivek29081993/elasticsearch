@@ -26,6 +26,7 @@ import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.indices.IndexMissingException;
@@ -454,6 +455,20 @@ public class RoutingTable implements Iterable<IndexRoutingTable> {
             return new RoutingTable(version, indicesRouting);
         }
 
+        public static RoutingTable readFrom(XContentObject in) {
+            Builder builder = new Builder();
+/*
+            builder.version = in.readLong();
+            int size = in.readVInt();
+            for (int i = 0; i < size; i++) {
+                IndexRoutingTable index = IndexRoutingTable.Builder.readFrom(in);
+                builder.add(index);
+            }
+*/
+
+            return builder.build();
+        }
+
         public static RoutingTable readFrom(StreamInput in) throws IOException {
             Builder builder = new Builder();
             builder.version = in.readLong();
@@ -473,6 +488,7 @@ public class RoutingTable implements Iterable<IndexRoutingTable> {
                 IndexRoutingTable.Builder.writeTo(index, out);
             }
         }
+
     }
 
     public String prettyPrint() {

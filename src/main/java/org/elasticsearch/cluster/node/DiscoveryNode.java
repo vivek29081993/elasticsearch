@@ -21,6 +21,8 @@ package org.elasticsearch.cluster.node;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.common.net.HostAndPort;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.Booleans;
@@ -30,13 +32,17 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
 import org.elasticsearch.common.network.NetworkUtils;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.DummyTransportAddress;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.transport.TransportAddressSerializers;
+import org.elasticsearch.common.xcontent.XContentObject;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
 
+import static org.elasticsearch.common.transport.TransportAddressSerializers.addressFromStream;
 import static org.elasticsearch.common.transport.TransportAddressSerializers.addressToStream;
 
 /**
@@ -49,6 +55,12 @@ public class DiscoveryNode implements Streamable, Serializable {
      * of the current elasticsearch major version.
      */
     public static final Version MINIMUM_DISCOVERY_NODE_VERSION = Version.CURRENT.minimumCompatibilityVersion();
+    public static final Maps.EntryTransformer<String, Object, String> STRING_OBJECT_STRING_ENTRY_TRANSFORMER = new Maps.EntryTransformer<String, Object, String>() {
+        @Override
+        public String transformEntry(String key, Object value) {
+            return value.toString();
+        }
+    };
 
     public static boolean localNode(Settings settings) {
         if (settings.get("node.local") != null) {
@@ -371,5 +383,14 @@ public class DiscoveryNode implements Streamable, Serializable {
             sb.append(attributes);
         }
         return sb.toString();
+    }
+
+    public static DiscoveryNode readNode(XContentObject xNode) {
+        DiscoveryNode discoveryNode  = new DiscoveryNode();
+        discoveryNode.nodeId = xNode.get("node_id");
+        discoveryNode.nodeName = xNode.get("name");
+        discoveryNode.address = InetSocketTransportAddress.readInetSocketTransportAddress(xNode.get("transport_address"));
+        discoveryNode.attributes = ImmutableMap.copyOf(Maps.transformEntries(xNode.getAsMap("attributes"), STRING_OBJECT_STRING_ENTRY_TRANSFORMER));
+        return discoveryNode;
     }
 }
