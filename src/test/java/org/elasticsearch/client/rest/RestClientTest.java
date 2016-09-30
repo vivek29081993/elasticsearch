@@ -795,7 +795,6 @@ public class RestClientTest extends AbstractRestClientTest {
         assertTrue(stats.getStdDeviation() != 0);
         assertTrue(stats.getSumOfSquares() != 0);
         assertTrue(stats.getVariance() != 0);
-        assertTrue(stats.getStdDeviationBound(ExtendedStats.Bounds.UPPER) != 0);
 
     }
 
