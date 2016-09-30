@@ -171,7 +171,7 @@ public class TermsAggregatorFactory extends ValuesSourceAggregatorFactory {
         if (Aggregator.hasParentBucketAggregator(parent)) {
             // There is a parent that creates buckets, potentially with a very long tail of buckets with few documents
             // Let's be conservative with memory in that case
-            estimatedBucketCount = Math.min(estimatedBucketCount, 8);
+            estimatedBucketCount = Math.min(estimatedBucketCount, 1);
         }
 
         return estimatedBucketCount;

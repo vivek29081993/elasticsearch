@@ -40,6 +40,7 @@ public class DateHistogramBuilder extends ValuesSourceAggregationBuilder<DateHis
     private String preZone;
     private String postZone;
     private boolean preZoneAdjustLargeInterval;
+    private boolean reversePostTz;
     private String format;
     private String preOffset;
     private String postOffset;
@@ -106,6 +107,11 @@ public class DateHistogramBuilder extends ValuesSourceAggregationBuilder<DateHis
      */
     public DateHistogramBuilder preZoneAdjustLargeInterval(boolean preZoneAdjustLargeInterval) {
         this.preZoneAdjustLargeInterval = preZoneAdjustLargeInterval;
+        return this;
+    }
+
+    public DateHistogramBuilder reversePostTz(boolean reversePostTz) {
+        this.reversePostTz = reversePostTz;
         return this;
     }
 
@@ -204,6 +210,10 @@ public class DateHistogramBuilder extends ValuesSourceAggregationBuilder<DateHis
 
         if (preZoneAdjustLargeInterval) {
             builder.field("pre_zone_adjust_large_interval", true);
+        }
+
+        if (reversePostTz) {
+            builder.field("reversePostTz", true);
         }
 
         if (preOffset != null) {
