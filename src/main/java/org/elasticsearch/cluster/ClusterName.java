@@ -23,6 +23,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentObject;
 
 import java.io.IOException;
 
@@ -59,6 +60,16 @@ public class ClusterName implements Streamable {
         return clusterName;
     }
 
+    public static ClusterName readClusterName(XContentObject in) {
+        ClusterName clusterName = new ClusterName();
+        clusterName.readFrom(in);
+        return clusterName;
+    }
+
+    private void readFrom(XContentObject in) {
+        value = in.get("cluster_name");
+    }
+
     @Override
     public void readFrom(StreamInput in) throws IOException {
         value = in.readString().intern();
@@ -90,4 +101,6 @@ public class ClusterName implements Streamable {
     public String toString() {
         return "Cluster [" + value + "]";
     }
+
+
 }

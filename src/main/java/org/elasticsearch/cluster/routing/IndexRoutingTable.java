@@ -31,6 +31,7 @@ import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.collect.ImmutableOpenIntMap;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.index.shard.ShardId;
 
 import java.io.IOException;
@@ -331,6 +332,16 @@ public class IndexRoutingTable implements Iterable<IndexShardRoutingTable> {
             this.index = index;
         }
 
+        public static IndexRoutingTable readFrom(XContentObject in) {
+            Builder builder = new Builder(in.get("name"));
+            List<XContentObject> xShards = in.getAsXContentObjects("shards");
+            for (XContentObject xShard : xShards) {
+                builder.addIndexShard(IndexShardRoutingTable.Builder.readFrom(xShard));
+
+            }
+            return builder.build();
+        }
+
         /**
          * Reads an {@link IndexRoutingTable} from an {@link StreamInput}
          *
@@ -515,6 +526,7 @@ public class IndexRoutingTable implements Iterable<IndexShardRoutingTable> {
             indexRoutingTable.validate();
             return indexRoutingTable;
         }
+
     }
 
     public String prettyPrint() {

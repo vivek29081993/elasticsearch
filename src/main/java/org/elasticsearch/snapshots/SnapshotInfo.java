@@ -27,6 +27,7 @@ import org.elasticsearch.common.joda.Joda;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilderString;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
@@ -206,6 +207,25 @@ public class SnapshotInfo implements ToXContent, Streamable {
         static final XContentBuilderString FAILED = new XContentBuilderString("failed");
         static final XContentBuilderString SUCCESSFUL = new XContentBuilderString("successful");
     }
+
+    public static SnapshotInfo readSnapshotInfo(XContentObject xSnapshot) {
+        SnapshotInfo snapshotInfo = new SnapshotInfo();
+        snapshotInfo.readFrom(xSnapshot);
+        return snapshotInfo;
+    }
+
+    public void readFrom(XContentObject xSnapshot) {
+        name = xSnapshot.get("snapshot");
+        state = SnapshotState.valueOf(xSnapshot.get("state"));
+        reason = xSnapshot.get("reason");
+        indices = ImmutableList.copyOf(xSnapshot.getAsStrings("indices"));
+        startTime = xSnapshot.getAsLong("start_time_in_millis");
+        endTime = xSnapshot.getAsLong("end_time_in_millis");
+        XContentObject shardInfo = xSnapshot.getAsXContentObject("shards");
+        totalShards = shardInfo.getAsInt("total");
+        successfulShards = shardInfo.getAsInt("successful");
+    }
+
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {

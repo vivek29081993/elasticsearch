@@ -27,6 +27,7 @@ import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentObject;
 import org.elasticsearch.index.shard.ShardId;
 
 import java.io.IOException;
@@ -570,6 +571,23 @@ public class IndexShardRoutingTable implements Iterable<ShardRouting> {
             String index = in.readString();
             return readFromThin(in, index);
         }
+
+        public static IndexShardRoutingTable readFrom(XContentObject in) {
+            String index = in.get("index");
+            int iShardId = in.getAsInt("shard");
+            boolean allocatedPostApi = false;
+            Builder builder = new Builder(new ShardId(index, iShardId), allocatedPostApi);
+/*
+            int size = in.readVInt();
+            for (int i = 0; i < size; i++) {
+                ImmutableShardRouting shard = ImmutableShardRouting.readShardRoutingEntry(in, index, iShardId);
+                builder.addShard(shard);
+            }*/
+
+            return builder.build();
+
+        }
+
 
         public static IndexShardRoutingTable readFromThin(StreamInput in, String index) throws IOException {
             int iShardId = in.readVInt();

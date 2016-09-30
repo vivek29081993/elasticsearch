@@ -20,6 +20,7 @@
 package org.elasticsearch.common.xcontent;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
@@ -49,6 +50,7 @@ import java.util.Map;
  *
  */
 public final class XContentBuilder implements BytesStream, Releasable {
+
 
 
     public static enum FieldCaseConversion {
@@ -309,6 +311,16 @@ public final class XContentBuilder implements BytesStream, Releasable {
         return this;
     }
 
+    public XContentBuilder fieldAsCsv(String name, String... values) throws IOException {
+        field(name);
+        if (values == null) {
+            generator.writeNull();
+        } else {
+            generator.writeString(Joiner.on(',').join(values));
+        }
+        return this;
+    }
+
     public XContentBuilder field(String name, String value) throws IOException {
         field(name);
         if (value == null) {
@@ -325,6 +337,12 @@ public final class XContentBuilder implements BytesStream, Releasable {
         field(name);
         generator.writeString(value);
         return this;
+    }
+    public XContentBuilder fieldIfTrue(String name, boolean value) throws IOException {
+        if (!value) {
+            return this;
+        }
+        return field(name, value);
     }
 
 

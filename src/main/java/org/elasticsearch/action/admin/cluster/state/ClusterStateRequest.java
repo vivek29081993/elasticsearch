@@ -19,16 +19,25 @@
 
 package org.elasticsearch.action.admin.cluster.state;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.action.support.master.MasterNodeReadOperationRequest;
+import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.metrics.Metric;
+import org.elasticsearch.common.util.UriBuilder;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -147,5 +156,44 @@ public class ClusterStateRequest extends MasterNodeReadOperationRequest<ClusterS
             out.writeStringArray(Strings.EMPTY_ARRAY);
         }
         writeLocal(out);
+    }
+
+    @Override
+    public RestRequest.Method getMethod() {
+        return RestRequest.Method.GET;
+    }
+
+    @Override
+    public Map<String, String> getParams() {
+        List<String> metrics = getMetrics();
+        return new MapBuilder<>(super.getParams())
+                .putIf("indices", Joiner.on(',').join(indices()), indices.length > 0)
+                .putIf("metrics", Joiner.on(',').join(metrics), !metrics.isEmpty())
+                .map();
+    }
+
+    private List<String> getMetrics() {
+        List<String> metrics = Lists.newArrayList();
+        if (this.routingTable) {
+            metrics.add(ClusterState.Metric.ROUTING_TABLE.getValue());
+        }
+        if (this.blocks) {
+            metrics.add(ClusterState.Metric.BLOCKS.getValue());
+        }
+        if (this.metaData) {
+            metrics.add(ClusterState.Metric.METADATA.getValue());
+        }
+        if (this.nodes) {
+            metrics.add(ClusterState.Metric.NODES.getValue());
+        }
+        return metrics;
+    }
+
+    @Override
+    public String getEndPoint() {
+        return UriBuilder.newBuilder()
+                .slash("_cluster")
+                .slash("state")
+                .build();
     }
 }

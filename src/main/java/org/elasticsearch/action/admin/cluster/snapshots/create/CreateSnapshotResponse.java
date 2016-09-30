@@ -23,9 +23,7 @@ import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.snapshots.SnapshotInfo;
 
@@ -99,5 +97,14 @@ public class CreateSnapshotResponse extends ActionResponse implements ToXContent
             builder.field(Fields.ACCEPTED, true);
         }
         return builder;
+    }
+
+    @Override
+    public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
+        XContentObject xContentObject = versionedXContentParser.getParser().xContentObject();
+        XContentObject xSnapshot = xContentObject.getAsXContentObject("snapshot");
+        if (xSnapshot != null) {
+            snapshotInfo = SnapshotInfo.readSnapshotInfo(xSnapshot);
+        }
     }
 }

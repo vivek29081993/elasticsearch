@@ -23,6 +23,8 @@ import org.elasticsearch.Version;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
@@ -31,7 +33,7 @@ import java.io.IOException;
  * Controls how to deal with unavailable concrete indices (closed or missing), how wildcard expressions are expanded
  * to actual indices (all, closed or open indices) and how to deal with wildcard expressions that resolve to no indices.
  */
-public class IndicesOptions {
+public class IndicesOptions implements ToXContent {
 
     private static final IndicesOptions[] VALUES;
 
@@ -279,5 +281,13 @@ public class IndicesOptions {
             return defaultValue;
         }
         return !(sValue.equals("false") || sValue.equals("0") || sValue.equals("off"));
+    }
+
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.fieldIfTrue("ignore_unavailable", this.ignoreUnavailable());
+        builder.fieldIfTrue("allow_no_indices", this.allowNoIndices());
+        builder.fieldIfTrue("expand_wildcards_open", this.expandWildcardsOpen());
+        builder.fieldIfTrue("expand_wildcards_closed", this.expandWildcardsOpen());
+        return builder;
     }
 }

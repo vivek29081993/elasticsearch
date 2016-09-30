@@ -19,6 +19,8 @@
 
 package org.elasticsearch.action.admin.cluster.snapshots.create;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.ElasticsearchGenerationException;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -27,15 +29,17 @@ import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.action.support.master.MasterNodeOperationRequest;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.common.util.UriBuilder;
+import org.elasticsearch.common.xcontent.*;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +66,7 @@ import static org.elasticsearch.common.xcontent.support.XContentMapValues.nodeBo
  * <li>must not contain invalid file name characters {@link org.elasticsearch.common.Strings#INVALID_FILENAME_CHARS} </li>
  * </ul>
  */
-public class CreateSnapshotRequest extends MasterNodeOperationRequest<CreateSnapshotRequest> implements IndicesRequest.Replaceable {
+public class CreateSnapshotRequest extends MasterNodeOperationRequest<CreateSnapshotRequest> implements IndicesRequest.Replaceable, ToXContent {
 
     private String snapshot;
 
@@ -492,5 +496,45 @@ public class CreateSnapshotRequest extends MasterNodeOperationRequest<CreateSnap
         out.writeBoolean(includeGlobalState);
         out.writeBoolean(waitForCompletion);
         out.writeBoolean(partial);
+    }
+
+    @Override
+    public RestRequest.Method getMethod() {
+        return RestRequest.Method.PUT;
+    }
+
+    @Override
+    public String getEndPoint() {
+        return UriBuilder.newBuilder()
+                .slash("_snapshot")
+                .slash(this.repository)
+                .slash(this.snapshot)
+                .build();
+    }
+
+    @Override
+    public Map<String, String> getParams() {
+        return new MapBuilder<>(super.getParams())
+                .putIf("wait_for_completion", String.valueOf(waitForCompletion), waitForCompletion)
+                .map();
+
+    }
+
+    @Override
+    public HttpEntity getEntity() throws IOException {
+        return new NStringEntity(XContentHelper.toString(this), StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, ToXContent.Params params) throws IOException {
+        builder.fieldAsCsv("indices", this.indices());
+        builder.field("partial", partial);
+        builder.field("include_global_state", includeGlobalState);
+        indicesOptions.toXContent(builder, params);
+        builder.startObject("settings");
+        settings.toXContent(builder, params);
+        builder.endObject();
+
+        return builder;
     }
 }

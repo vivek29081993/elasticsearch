@@ -20,11 +20,13 @@ package org.elasticsearch.action.support.master;
 
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.cluster.ack.AckedRequest;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.TimeValue;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static org.elasticsearch.common.unit.TimeValue.readTimeValue;
 import static org.elasticsearch.common.unit.TimeValue.timeValueSeconds;
@@ -93,5 +95,11 @@ public abstract class AcknowledgedRequest<T extends MasterNodeOperationRequest> 
     @Override
     public TimeValue ackTimeout() {
         return timeout;
+    }
+
+    @Override
+    public Map<String, String> getParams() {
+        return MapBuilder.newMapBuilder(super.getParams())
+                .putIf("timeout", this.timeout.toString(), this.timeout != DEFAULT_ACK_TIMEOUT).map();
     }
 }

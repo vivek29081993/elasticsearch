@@ -45,10 +45,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.*;
 
 import java.io.IOException;
 import java.util.EnumSet;
@@ -284,6 +281,10 @@ public class ClusterState implements ToXContent {
 
         private Metric(String value) {
             this.value = value;
+        }
+
+        public String getValue() {
+            return value;
         }
 
         public static EnumSet<Metric> parseString(String param, boolean ignoreUnknown) {
@@ -685,5 +686,35 @@ public class ClusterState implements ToXContent {
             }
             return builder.build();
         }
+
+        /**
+         * @param in                 input stream
+         * @param localNode          used to set the local node in the cluster state. can be null.
+         * @param defaultClusterName this cluster name will be used of receiving a cluster state from a node on version older than 1.1.1
+         *                           or if the sending node did not set a cluster name
+         */
+        public static ClusterState readFrom(XContentObject in, @Nullable ClusterName defaultClusterName) throws IOException {
+            ClusterName clusterName = defaultClusterName;
+            Builder builder = new Builder(clusterName);
+            builder.version = in.getAsLong("version");
+            builder.metaData = MetaData.Builder.readFrom(in.getAsXContentObject("metadata"));
+            builder.routingTable = RoutingTable.Builder.readFrom(in.getAsXContentObject("routing_table"));
+            builder.nodes = DiscoveryNodes.Builder.readFrom(in);
+            builder.blocks = ClusterBlocks.Builder.readClusterBlocks(in);
+/*
+            if (in.getVersion().before(Version.V_1_1_0)) {
+                // Ignore the explanation read, since after 1.1.0 it's not part of the cluster state
+                AllocationExplanation.readAllocationExplanation(in);
+            }
+            int customSize = in.readVInt();
+            for (int i = 0; i < customSize; i++) {
+                String type = in.readString();
+                Custom customIndexMetaData = lookupFactorySafe(type).readFrom(in);
+                builder.putCustom(type, customIndexMetaData);
+            }
+*/
+            return builder.build();
+        }
+
     }
 }

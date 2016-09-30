@@ -24,6 +24,7 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.index.get.GetResult;
 import org.elasticsearch.search.aggregations.CommonJsonField;
+import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.util.List;
@@ -393,4 +394,8 @@ public interface XContentObject {
     String getAsJson(Enum key) throws IOException;
 
     XContentParser getAsXContentParser(String key) throws IOException;
+
+    DateTime getAsDate(String key);
+
+    List<String> getAsStrings(String key);
 }
