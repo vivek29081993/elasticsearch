@@ -229,7 +229,8 @@ public class Version implements Serializable {
     public static final Version V_1_4_5 = new Version(V_1_4_5_ID, false, org.apache.lucene.util.Version.LUCENE_4_10_4);
     public static final int V_1_4_6_ID = 1040699;
     public static final Version V_1_4_6 = new Version(V_1_4_6_ID, true, org.apache.lucene.util.Version.LUCENE_4_10_4);
-    public static final Version V_5_0_0 = Version.fromId(5000000);
+    public static final int V_5_0_0_ID = 5000000;
+    public static final Version V_5_0_0 = new Version(V_5_0_0_ID, false, Lucene.VERSION);
 
     public static final Version CURRENT = V_1_4_6;
 
@@ -243,6 +244,8 @@ public class Version implements Serializable {
 
     public static Version fromId(int id) {
         switch (id) {
+            case V_5_0_0_ID:
+                return V_5_0_0;
             case V_1_4_6_ID:
                 return V_1_4_6;
             case V_1_4_5_ID:
@@ -568,14 +571,7 @@ public class Version implements Serializable {
      * Just the version number (without -SNAPSHOT if snapshot).
      */
     public String number() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(major).append('.').append(minor).append('.').append(revision);
-        if (build < 50) {
-            sb.append(".Beta").append(build);
-        } else if (build < 99) {
-            sb.append(".RC").append(build - 50);
-        }
-        return sb.toString();
+        return toString();
     }
 
     public static void main(String[] args) {

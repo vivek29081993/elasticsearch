@@ -298,9 +298,10 @@ public abstract class ElasticsearchTestCase extends AbstractRandomizedTest {
      * @return the {@link Version} before the {@link Version#CURRENT}
      */
     public static Version getPreviousVersion() {
-        Version version = SORTED_VERSIONS.get(1);
-        assert version.before(Version.CURRENT) : "Version: " + version + " should be before: " + Version.CURRENT + " but wasn't";
-        return version;
+        int currentVersionIndex = SORTED_VERSIONS.indexOf(Version.CURRENT);
+        Version previous = SORTED_VERSIONS.get(Math.min(currentVersionIndex + 1, SORTED_VERSIONS.size() - 1));
+        assert previous.before(Version.CURRENT) : "Version: " + previous + " should be before: " + Version.CURRENT + " but wasn't";
+        return previous;
     }
     
     /**
