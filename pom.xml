@@ -754,6 +754,10 @@
                             <shadedPattern>org.elasticsearch.common.stats</shadedPattern>
                         </relocation>
                         <relocation>
+                            <pattern>org.apache.commons.lang</pattern>
+                            <shadedPattern>org.elasticsearch.common.lang</shadedPattern>
+                        </relocation>
+                        <relocation>
                             <pattern>org.apache.commons.cli</pattern>
                             <shadedPattern>org.elasticsearch.common.cli.commons</shadedPattern>
                         </relocation>
