@@ -21,10 +21,14 @@ package org.elasticsearch.action.admin.indices.refresh;
 
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationRequest;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.util.UriBuilder;
+import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * A refresh request making all operations performed since the last refresh available for search. The (near) real-time
@@ -75,5 +79,24 @@ public class RefreshRequest extends BroadcastOperationRequest<RefreshRequest> {
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
         out.writeBoolean(force);
+    }
+
+    @Override
+    public String getEndPoint() {
+        return UriBuilder.newBuilder()
+                .csv(indices())
+                .slash("_refresh").build();
+    }
+
+    @Override
+    public Map<String, String> getParams() {
+        return new MapBuilder<>(super.getParams())
+                .putIf("force", String.valueOf(force), force)
+                .map();
+    }
+
+    @Override
+    public RestRequest.Method getMethod() {
+        return RestRequest.Method.POST;
     }
 }
