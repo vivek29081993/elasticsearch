@@ -30,6 +30,7 @@ import org.elasticsearch.action.admin.indices.mapping.delete.DeleteMappingRespon
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
 import org.elasticsearch.action.admin.indices.open.OpenIndexResponse;
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
 import org.elasticsearch.client.rest.AbstractRestClientTest;
@@ -153,6 +154,12 @@ public class RestIndicesAdminClientTest extends AbstractRestClientTest {
                 .setSource(mapping)
                 .setIgnoreConflicts(true).get();
         assertAcknowledged(response);
+    }
+
+    @Test
+    public void testRefreshRequest() {
+        RefreshResponse response = indicesAdminClient.prepareRefresh(index).get();
+        assertBroadcastOperationResponse(response);
     }
 
     @Test
