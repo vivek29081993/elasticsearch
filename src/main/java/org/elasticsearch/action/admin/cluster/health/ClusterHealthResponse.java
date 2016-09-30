@@ -318,7 +318,6 @@ public class ClusterHealthResponse extends ActionResponse implements Iterable<Cl
 
     @Override
     public void readFrom(VersionedXContentParser versionedXContentParser) throws IOException {
-        System.out.println("parser = " + versionedXContentParser.getParser().xContentObject());
-//        XContentHelper.populate(parser, );
+        throw new UnsupportedOperationException("Implement me");
     }
 }
