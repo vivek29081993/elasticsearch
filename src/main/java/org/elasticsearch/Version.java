@@ -225,6 +225,8 @@ public class Version implements Serializable {
 
     public static Version fromId(int id) {
         switch (id) {
+            case V_5_0_0_ID:
+                return V_5_0_0;
             case V_1_4_1_ID:
                 return V_1_4_1;
             case V_1_4_0_ID:
@@ -530,14 +532,7 @@ public class Version implements Serializable {
      * Just the version number (without -SNAPSHOT if snapshot).
      */
     public String number() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(major).append('.').append(minor).append('.').append(revision);
-        if (build < 50) {
-            sb.append(".Beta").append(build);
-        } else if (build < 99) {
-            sb.append(".RC").append(build - 50);
-        }
-        return sb.toString();
+        return toString();
     }
 
     public static void main(String[] args) {
