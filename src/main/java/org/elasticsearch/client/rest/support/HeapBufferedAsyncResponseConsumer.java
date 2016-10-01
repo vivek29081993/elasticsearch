@@ -43,8 +43,8 @@ import java.io.IOException;
  */
 public class HeapBufferedAsyncResponseConsumer extends AbstractAsyncResponseConsumer<HttpResponse> {
 
-    //default buffer limit is 10MB
-    public static final int DEFAULT_BUFFER_LIMIT = 10 * 1024 * 1024;
+    //default buffer limit is 250MB
+    public static final int DEFAULT_BUFFER_LIMIT = 250 * 1024 * 1024;
 
     private final int bufferLimit;
     private volatile HttpResponse response;

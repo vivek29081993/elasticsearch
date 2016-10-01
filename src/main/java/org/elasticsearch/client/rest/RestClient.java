@@ -19,31 +19,21 @@
 
 package org.elasticsearch.client.rest;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.Version;
 import org.elasticsearch.action.*;
 import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.client.rest.support.HttpUtils;
 import org.elasticsearch.client.rest.support.InternalRestClient;
 import org.elasticsearch.client.rest.support.RestExecuteUtil;
-import org.elasticsearch.client.rest.support.RestResponse;
 import org.elasticsearch.client.support.AbstractClient;
-import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.inject.ModulesBuilder;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentHelper;
-import org.elasticsearch.common.xcontent.XContentObject;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.search.TransportSearchModule;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.IOException;
-import java.text.ParseException;
 
 /**
  */
@@ -65,6 +55,13 @@ public class RestClient extends AbstractClient implements Client {
         ModulesBuilder modules = new ModulesBuilder();
         modules.add(new TransportSearchModule());
         modules.createInjector();
+    }
+
+    public String getClusterName() {
+        if (this.internalRestClient.getClusterName() == null) {
+            this.internalRestClient.readVersionAndClusterName();
+        }
+        return this.internalRestClient.getClusterName();
     }
 
 
